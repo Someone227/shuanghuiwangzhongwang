@@ -133,13 +133,23 @@ function validatePolicy(policy, meta) {
 }
 
 function fillSectionOffsets(policy, rawText) {
+  // 原文里的换行/空格与模型输出的段落文本未必逐字一致，
+  // 因此按「去空白后匹配」定位，再映射回原文索引，保证前端能精确高亮原文。
+  let norm = '';
+  const map = [];
+  for (let i = 0; i < rawText.length; i += 1) {
+    if (/\s/.test(rawText[i])) continue;
+    norm += rawText[i];
+    map.push(i);
+  }
   for (const section of policy.sections || []) {
     if (typeof section.text !== 'string') continue;
-    const idx = rawText.indexOf(section.text);
-    if (idx >= 0) {
-      section.start = idx;
-      section.end = idx + section.text.length;
-    }
+    const target = section.text.replace(/\s+/g, '');
+    if (!target) continue;
+    const idx = norm.indexOf(target);
+    if (idx < 0) continue;
+    section.start = map[idx];
+    section.end = map[idx + target.length - 1] + 1;
   }
   return policy;
 }
