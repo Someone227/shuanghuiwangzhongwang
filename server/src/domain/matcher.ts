@@ -19,6 +19,22 @@ export function getField(profile: Profile, path: string): unknown {
   }, profile);
 }
 
+const TEMPLATE_RE = /^\{\{\s*([\w.]+)\s*\}\}$/;
+
+/**
+ * 解析条件值里的 {{field.path}} 模板。
+ * 典型场景：政策要求「学生户籍县 == 办理地县」，两个值都来自用户填表，只能相互比较。
+ */
+function resolveTemplate(value: unknown, profile?: Profile): { ok: boolean; value: unknown; missing?: string } {
+  if (typeof value !== 'string') return { ok: true, value };
+  const m = value.match(TEMPLATE_RE);
+  if (!m) return { ok: true, value };
+  if (!profile) return { ok: false, value: undefined, missing: m[1] };
+  const resolved = getField(profile, m[1]);
+  if (isEmpty(resolved)) return { ok: false, value: undefined, missing: m[1] };
+  return { ok: true, value: resolved };
+}
+
 function isEmpty(value: unknown): boolean {
   return value === undefined || value === null || value === '' || (Array.isArray(value) && value.length === 0);
 }
@@ -41,8 +57,14 @@ function humanize(value: unknown): string {
   return String(value);
 }
 
-export function describeExpected(condition: Condition): string {
-  const raw = Array.isArray(condition.value) ? condition.value.map(humanize).join(' 或 ') : humanize(condition.value);
+export function describeExpected(condition: Condition, profile?: Profile): string {
+  const templated = resolveTemplate(condition.value, profile);
+  const display = templated.ok ? templated.value : Array.isArray(condition.value) ? condition.value.join(' 或 ') : String(condition.value);
+  const raw = templated.missing
+    ? `你填写的「${templated.missing}」`
+    : Array.isArray(display)
+      ? display.map(humanize).join(' 或 ')
+      : humanize(display);
   const unit = condition.unit ? ` ${condition.unit}` : '';
   switch (condition.operator) {
     case 'eq':
@@ -76,9 +98,14 @@ interface CheckOutcome {
   reason: string;
 }
 
-export function checkCondition(condition: Condition, actual: unknown): CheckOutcome {
+export function checkCondition(condition: Condition, actual: unknown, profile?: Profile): CheckOutcome {
   if (condition.autoUncertain) {
     return { ok: null, reason: '该条件无法自动判定，需要人工确认' };
+  }
+
+  const templated = resolveTemplate(condition.value, profile);
+  if (!templated.ok) {
+    return { ok: null, reason: `需要先填写「${templated.missing}」才能对比` };
   }
 
   if (condition.operator === 'exists') {
@@ -90,7 +117,7 @@ export function checkCondition(condition: Condition, actual: unknown): CheckOutc
     return { ok: null, reason: '你的情况里缺少这一项，暂时无法判断' };
   }
 
-  const value = condition.value;
+  const value = templated.value;
 
   switch (condition.operator) {
     case 'in':
@@ -151,7 +178,7 @@ function evaluateGroup(policy: Policy, groupId: string, profile: Profile): Group
 
   const conditionResults: ConditionResult[] = group.conditions.map((condition) => {
     const actual = getField(profile, condition.field);
-    const outcome = checkCondition(condition, actual);
+    const outcome = checkCondition(condition, actual, profile);
     const verdict = verdictOf(condition, outcome.ok);
     return {
       conditionId: condition.id,
@@ -160,12 +187,12 @@ function evaluateGroup(policy: Policy, groupId: string, profile: Profile): Group
       verdict,
       reason: outcome.reason,
       actual,
-      expected: describeExpected(condition),
+      expected: describeExpected(condition, profile),
       quote: condition.quote,
       docRef: condition.docRef,
       gap:
         verdict === 'fail'
-          ? `不满足「${condition.label}」：要求${describeExpected(condition)}，你的情况是${isEmpty(actual) ? '未填写' : String(actual)}`
+          ? `不满足「${condition.label}」：要求${describeExpected(condition, profile)}，你的情况是${isEmpty(actual) ? '未填写' : String(actual)}`
           : undefined,
       hint: condition.hint,
     };
