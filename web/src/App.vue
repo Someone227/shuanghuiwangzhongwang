@@ -60,6 +60,13 @@ onMounted(async () => {
             {{ statusText[apiStatus] }}
           </div>
 
+          <RouterLink
+            to="/policies"
+            class="rounded-full bg-brand-600 px-4 py-1.5 text-xs font-medium text-white transition hover:bg-brand-700"
+          >
+            开始匹配
+          </RouterLink>
+
           <template v-if="isLoggedIn && currentUser">
             <RouterLink
               to="/account"

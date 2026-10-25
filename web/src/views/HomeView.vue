@@ -36,15 +36,9 @@ const stacks = ['Vue 3', 'Vite', 'Tailwind v4', 'TypeScript', 'Express', 'DeepSe
       <div class="mt-8 flex flex-wrap gap-3">
         <RouterLink
           to="/policies"
-          class="rounded-lg bg-brand-600 px-5 py-2.5 text-sm font-medium text-white shadow-sm transition hover:bg-brand-700"
+          class="rounded-lg bg-brand-600 px-6 py-3 text-sm font-medium text-white shadow-sm transition hover:bg-brand-700"
         >
-          开始匹配
-        </RouterLink>
-        <RouterLink
-          to="/match/national-scholarship"
-          class="rounded-lg border border-slate-300 bg-white px-5 py-2.5 text-sm font-medium text-slate-700 transition hover:border-slate-400"
-        >
-          看一份示例政策
+          开始匹配 →
         </RouterLink>
       </div>
 
