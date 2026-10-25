@@ -60,7 +60,9 @@ async function api(method, path, body) {
 
     lastError = new Error(method + ' ' + path + ' -> HTTP ' + res.status + ' ' + text.slice(0, 400));
     // GitHub 刚上传 blob 后建树偶发 422「is not a valid blob」（最终一致性），等一会儿重试即可
-    const transient = res.status >= 500 || (res.status === 422 && text.includes('is not a valid blob'));
+    const transient =
+      res.status >= 500 ||
+      (res.status === 422 && (text.includes('is not a valid blob') || text.includes('does not exist')));
     if (!transient || attempt === maxAttempts) throw lastError;
     console.warn('  ! 第 ' + attempt + ' 次请求失败（' + res.status + '），' + attempt + ' 秒后重试：' + path);
     await new Promise((r) => setTimeout(r, attempt * 1000));
