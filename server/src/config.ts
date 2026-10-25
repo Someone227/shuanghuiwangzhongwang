@@ -16,6 +16,13 @@ export const config = {
     modelChat: process.env.DEEPSEEK_MODEL_CHAT ?? 'deepseek-chat',
     modelReasoner: process.env.DEEPSEEK_MODEL_REASONER ?? 'deepseek-reasoner',
   },
+  auth: {
+    /**
+     * 演示账号密码：公开写在 README 里，供评委 / 老师在不同电脑上登录查验。
+     * 首次启动时若演示账号不存在会自动创建（之后改这里不会覆盖已有密码）。
+     */
+    demoPassword: process.env.DEMO_ACCOUNT_PASSWORD ?? 'NengShenMa2026',
+  },
   databaseFile: process.env.DATABASE_FILE ?? './data/app.db',
 };
 

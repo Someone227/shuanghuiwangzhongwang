@@ -33,6 +33,12 @@ data/uploads/
 *.sqlite
 *.sqlite3
 
+# 账号与个人数据（运行期生成，不入库；演示账号首次启动自动创建）
+data/users.json
+data/user-data.json
+data/.auth-secret
+data/*.tmp
+
 # 日志
 *.log
 logs/
