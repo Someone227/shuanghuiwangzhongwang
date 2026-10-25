@@ -373,6 +373,18 @@
       "rawFile": "data/policies/raw/veteran-education.txt",
       "chars": 3750,
       "fetchedAt": "2026-10-25"
+    },
+    {
+      "id": "temporary-assistance",
+      "title": "国务院关于全面建立临时救助制度的通知",
+      "level": "国家级",
+      "category": "社会救助",
+      "issuer": "国务院",
+      "year": 2014,
+      "url": "https://www.gov.cn/zhengce/content/2014-10/24/content_9165.htm",
+      "rawFile": "temporary-assistance.txt",
+      "chars": 5491,
+      "fetchedAt": "2026-10-25"
     }
   ]
 }
