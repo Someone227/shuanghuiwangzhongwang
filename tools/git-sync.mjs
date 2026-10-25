@@ -42,19 +42,30 @@ function getToken() {
 const token = getToken();
 
 async function api(method, path, body) {
-  const res = await fetch(API + path, {
-    method,
-    headers: {
-      Authorization: 'Bearer ' + token,
-      Accept: 'application/vnd.github+json',
-      'User-Agent': 'dsh-git-sync',
-      'X-GitHub-Api-Version': '2022-11-28',
-    },
-    body: body === undefined ? undefined : JSON.stringify(body),
-  });
-  const text = await res.text();
-  if (!res.ok) throw new Error(method + ' ' + path + ' -> HTTP ' + res.status + ' ' + text.slice(0, 400));
-  return text ? JSON.parse(text) : null;
+  const maxAttempts = 4;
+  let lastError = null;
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    const res = await fetch(API + path, {
+      method,
+      headers: {
+        Authorization: 'Bearer ' + token,
+        Accept: 'application/vnd.github+json',
+        'User-Agent': 'dsh-git-sync',
+        'X-GitHub-Api-Version': '2022-11-28',
+      },
+      body: body === undefined ? undefined : JSON.stringify(body),
+    });
+    const text = await res.text();
+    if (res.ok) return text ? JSON.parse(text) : null;
+
+    lastError = new Error(method + ' ' + path + ' -> HTTP ' + res.status + ' ' + text.slice(0, 400));
+    // GitHub 刚上传 blob 后建树偶发 422「is not a valid blob」（最终一致性），等一会儿重试即可
+    const transient = res.status >= 500 || (res.status === 422 && text.includes('is not a valid blob'));
+    if (!transient || attempt === maxAttempts) throw lastError;
+    console.warn('  ! 第 ' + attempt + ' 次请求失败（' + res.status + '），' + attempt + ' 秒后重试：' + path);
+    await new Promise((r) => setTimeout(r, attempt * 1000));
+  }
+  throw lastError;
 }
 
 function parseIdentity(commitObj, kind) {
