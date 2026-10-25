@@ -128,3 +128,24 @@ test('前端表单格式（扁平键画像）能驱动真实政策判定', () =>
   assert.match(byId.get('c10')?.reason ?? '', /否/);
   assert.ok(result.summary.pass >= 6, `只判出 ${result.summary.pass} 项符合，扁平画像可能没被读到`);
 });
+
+test('政策库：原文只保留条款，网页页脚噪声已清洗', () => {
+  const noiseTokens = [
+    '点击右上角',
+    '选择在浏览器中打开',
+    '网站声明',
+    '网站地图',
+    '版权所有：',
+    '京ICP备',
+    '京公网安备',
+    '网站标识码',
+  ];
+  for (const policy of policies) {
+    for (const token of noiseTokens) {
+      assert.ok(!policy.originalText.includes(token), `${policy.id} 原文仍含网页噪声「${token}」`);
+    }
+    if (policy.cleaning) {
+      assert.ok(policy.cleaning.removedChars > 0, `${policy.id} 的清洗记录缺字符数`);
+    }
+  }
+});
