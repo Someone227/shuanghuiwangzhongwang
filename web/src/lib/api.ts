@@ -5,6 +5,8 @@
  * 不携带、也不请求任何大模型密钥。
  */
 
+import { request } from './http';
+
 export type Verdict = 'pass' | 'fail' | 'unknown' | 'warn';
 export type FieldType = 'text' | 'number' | 'boolean' | 'select' | 'multiselect';
 export type PolicyLevel = '国家级' | '省级' | '市级' | '区级' | '校级';
@@ -154,33 +156,6 @@ export interface EvaluationResult {
 }
 
 export type Profile = Record<string, unknown>;
-
-interface ApiEnvelope<T> {
-  ok: boolean;
-  data?: T;
-  error?: string;
-}
-
-async function request<T>(path: string, init?: RequestInit): Promise<T> {
-  let res: Response;
-  try {
-    res = await fetch(path, init);
-  } catch {
-    throw new Error('连不上后端服务，请确认已运行 pnpm dev（server 端口 8787）');
-  }
-
-  let payload: ApiEnvelope<T> | null = null;
-  try {
-    payload = (await res.json()) as ApiEnvelope<T>;
-  } catch {
-    payload = null;
-  }
-
-  if (!res.ok || !payload || !payload.ok) {
-    throw new Error(payload?.error ?? `请求失败（HTTP ${res.status}）`);
-  }
-  return payload.data as T;
-}
 
 /** 政策列表（摘要） */
 export function listPolicies(): Promise<PolicySummary[]> {
