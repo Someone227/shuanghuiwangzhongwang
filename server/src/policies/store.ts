@@ -10,7 +10,7 @@ import type { Policy } from '../domain/types.js';
  * 政策库是静态数据（data/policies/*.json），由 AI 在开发期抽取、人工复核后入库。
  * 运行期只读文件、不联网、不调大模型，所以现场演示不会有任何延迟或费用。
  *
- * 这么多文件（5 个、约 200KB）每次全量读解析只需几毫秒，优先保证「改了文件立即生效」。
+ * 这么多文件（8 个、约 300KB）每次全量读解析只需几毫秒，优先保证「改了文件立即生效」。
  */
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));

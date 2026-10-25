@@ -28,6 +28,8 @@ const BODY_START = {
   'national-education-grant': '国务院有关部委、有关直属机构',
   'student-loan': '各省、自治区、直辖市、计划单列市财政厅（',
   'postgraduate-recommendation': '各省、自治区、直辖市教育厅（教委）',
+  'work-study': '各省、自治区、直辖市教育厅（教委）、财政厅（局）',
+  'military-service-grant': '党中央有关部门，国务院有关部委',
 };
 
 const NOISE_PATTERNS = [
@@ -43,6 +45,9 @@ const NOISE_PATTERNS = [
   /日期：\d{4}-\d{2}-\d{2}\s*收藏/,
   /全国学生资助管理中心\s*-/,
   /关注\s*微信公众号/,
+  /扫一扫分享本页/,
+  /责任编辑：/,
+  /相关阅读/,
 ];
 
 function findNoiseStart(text) {

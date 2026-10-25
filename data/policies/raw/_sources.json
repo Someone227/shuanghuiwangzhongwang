@@ -61,6 +61,42 @@
       "rawFile": "data/policies/raw/postgraduate-recommendation.txt",
       "chars": 5006,
       "fetchedAt": "2026-10-25"
+    },
+    {
+      "id": "financial-hardship",
+      "title": "教育部等六部门关于做好家庭经济困难学生认定工作的指导意见（教财〔2018〕16号）",
+      "level": "国家级",
+      "category": "困难认定",
+      "issuer": "教育部、财政部、民政部、人力资源社会保障部、国务院扶贫办、中国残联",
+      "year": 2018,
+      "url": "https://www.gov.cn/zhengce/zhengceku/2018-12/31/content_5443887.htm",
+      "rawFile": "data/policies/raw/financial-hardship.txt",
+      "chars": 3032,
+      "fetchedAt": "2026-10-25"
+    },
+    {
+      "id": "work-study",
+      "title": "高等学校勤工助学管理办法（2018年修订）（教财〔2018〕12号）",
+      "level": "国家级",
+      "category": "勤工助学",
+      "issuer": "教育部、财政部",
+      "year": 2018,
+      "url": "https://hudong.moe.gov.cn/srcsite/A05/s7505/201809/t20180903_347076.html",
+      "rawFile": "data/policies/raw/work-study.txt",
+      "chars": 3372,
+      "fetchedAt": "2026-10-25"
+    },
+    {
+      "id": "military-service-grant",
+      "title": "高等学校学生应征入伍服义务兵役国家资助办法（财教〔2013〕236号）",
+      "level": "国家级",
+      "category": "入伍资助",
+      "issuer": "财政部、教育部、总参谋部",
+      "year": 2013,
+      "url": "http://www.moe.gov.cn/jyb_xxgk/moe_1777/moe_1779/201308/t20130828_156387.html",
+      "rawFile": "data/policies/raw/military-service-grant.txt",
+      "chars": 4541,
+      "fetchedAt": "2026-10-25"
     }
   ]
 }
