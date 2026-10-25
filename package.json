@@ -1,0 +1,19 @@
+{
+  "name": "neng-shen-ma",
+  "private": true,
+  "version": "0.1.0",
+  "description": "能申吗 · 政策资格匹配器 —— 贴政策原文，AI 逐条判定你能不能申",
+  "type": "module",
+  "scripts": {
+    "dev": "pnpm --parallel --filter \"./*\" dev",
+    "dev:web": "pnpm --filter web dev",
+    "dev:server": "pnpm --filter server dev",
+    "build": "pnpm --filter web build && pnpm --filter server build",
+    "start": "pnpm --filter server start",
+    "typecheck": "pnpm --filter web typecheck && pnpm --filter server typecheck"
+  },
+  "packageManager": "pnpm@11.8.0",
+  "engines": {
+    "node": ">=20.19"
+  }
+}
