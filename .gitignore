@@ -24,7 +24,10 @@ __pycache__/
 .env.*.local
 
 # 运行数据：SQLite 数据库与上传缓存
-data/
+# 注意：data/policies/ 是政策库数据资产（原文 + AI 抽取的条件树），必须入库
+data/*.db
+data/*.db-journal
+data/uploads/
 *.db
 *.db-journal
 *.sqlite
