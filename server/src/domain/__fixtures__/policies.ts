@@ -1,0 +1,182 @@
+import type { Policy } from '../types.js';
+
+/**
+ * 测试用政策样本（fixture，非真实政策，仅用于验证匹配引擎的行为）。
+ * 真实政策库由 DeepSeek 抽取生成，落在 data/policies/*.json。
+ */
+export const scholarshipPolicy: Policy = {
+  id: 'fixture-scholarship',
+  title: '【测试样本】国家奖学金',
+  level: '国家级',
+  category: '奖学金',
+  issuer: '教育部',
+  year: 2026,
+  sourceUrl: 'https://example.edu.cn/policy',
+  originalText: '第一条 具有中华人民共和国国籍。第二条 二年级以上（含二年级）全日制普通本专科在校生。第三条 学习成绩排名与综合考评排名均位于前10%。第四条 评审时间为每年9-10月。',
+  sections: [
+    { id: 's1', heading: '第一条', text: '具有中华人民共和国国籍。', start: 0, end: 14 },
+    { id: 's2', heading: '第二条', text: '二年级以上（含二年级）全日制普通本专科在校生。', start: 15, end: 44 },
+    { id: 's3', heading: '第三条', text: '学习成绩排名与综合考评排名均位于前10%。', start: 45, end: 70 },
+    { id: 's4', heading: '第四条', text: '评审时间为每年9-10月。', start: 71, end: 90 },
+  ],
+  fields: [
+    { key: 'nationality', label: '国籍', type: 'select', options: ['中国', '其他'] },
+    { key: 'education.mode', label: '培养方式', type: 'select', options: ['全日制', '非全日制'] },
+    { key: 'education.grade', label: '年级', type: 'number' },
+    { key: 'rank.percent', label: '成绩排名百分比', type: 'number', unit: '%' },
+    { key: 'honor.any', label: '是否有校级以上荣誉', type: 'boolean' },
+  ],
+  conditions: [
+    {
+      id: 'g1',
+      name: '基本条件',
+      logic: 'all',
+      docRef: 's1',
+      conditions: [
+        {
+          id: 'c1',
+          field: 'nationality',
+          label: '具有中华人民共和国国籍',
+          operator: 'eq',
+          value: '中国',
+          docRef: 's1',
+          quote: '具有中华人民共和国国籍。',
+          required: true,
+          hint: '该奖项仅面向中国籍学生',
+        },
+        {
+          id: 'c2',
+          field: 'education.mode',
+          label: '全日制普通本专科在校生',
+          operator: 'eq',
+          value: '全日制',
+          docRef: 's2',
+          quote: '二年级以上（含二年级）全日制普通本专科在校生。',
+          required: true,
+        },
+        {
+          id: 'c3',
+          field: 'education.grade',
+          label: '二年级以上（含二年级）',
+          operator: 'gte',
+          value: 2,
+          docRef: 's2',
+          quote: '二年级以上（含二年级）全日制普通本专科在校生。',
+          required: true,
+          hint: '一年级新生不能申请，可关注明年的评审',
+        },
+      ],
+    },
+    {
+      id: 'g2',
+      name: '学业表现',
+      logic: 'all',
+      docRef: 's3',
+      conditions: [
+        {
+          id: 'c4',
+          field: 'rank.percent',
+          label: '成绩与综合考评排名均位于前10%',
+          operator: 'lte',
+          value: 10,
+          unit: '%',
+          docRef: 's3',
+          quote: '学习成绩排名与综合考评排名均位于前10%。',
+          required: true,
+          hint: '排名在10%-30%可关注国家励志奖学金',
+        },
+        {
+          id: 'c5',
+          field: 'honor.any',
+          label: '有校级以上荣誉（加分项，非硬性）',
+          operator: 'eq',
+          value: true,
+          docRef: 's3',
+          quote: '学习成绩排名与综合考评排名均位于前10%。',
+          required: false,
+        },
+      ],
+    },
+  ],
+  materials: [
+    { name: '国家奖学金申请审批表', required: true, docRef: 's1' },
+    { name: '成绩单（教务处盖章）', required: true, docRef: 's3' },
+    { name: '获奖证书复印件', required: false, docRef: 's3' },
+  ],
+  deadlines: [{ label: '校级评审', note: '每年9-10月', docRef: 's4' }],
+  notes: ['本文件为测试 fixture，不是真实政策。'],
+  extraction: { engine: 'manual', at: '2026-10-25T00:00:00+08:00' },
+};
+
+/** 带 any 组 + autoUncertain 条件的样本 */
+export const subsidyPolicy: Policy = {
+  id: 'fixture-subsidy',
+  title: '【测试样本】人才租房补贴',
+  level: '市级',
+  category: '人才补贴',
+  issuer: '某市人社局',
+  year: 2026,
+  originalText: '一、申请人须符合下列条件之一：本科及以上学历，或中级及以上职称。二、家庭在本市无自有住房（由系统核验）。三、首次来本市就业。',
+  sections: [
+    { id: 's1', heading: '一', text: '申请人须符合下列条件之一：本科及以上学历，或中级及以上职称。', start: 0, end: 30 },
+    { id: 's2', heading: '二', text: '家庭在本市无自有住房（由系统核验）。', start: 31, end: 52 },
+  ],
+  fields: [
+    { key: 'education.degree', label: '最高学历', type: 'select', options: ['专科', '本科', '硕士', '博士'] },
+    { key: 'title.level', label: '职称等级', type: 'select', options: ['无', '初级', '中级', '高级'] },
+    { key: 'housing.ownInCity', label: '本市是否有自有住房', type: 'boolean' },
+  ],
+  conditions: [
+    {
+      id: 'g1',
+      name: '学历或职称（满足其一）',
+      logic: 'any',
+      docRef: 's1',
+      conditions: [
+        {
+          id: 'c1',
+          field: 'education.degree',
+          label: '本科及以上学历',
+          operator: 'in',
+          value: ['本科', '硕士', '博士'],
+          docRef: 's1',
+          quote: '本科及以上学历，或中级及以上职称。',
+          required: true,
+        },
+        {
+          id: 'c2',
+          field: 'title.level',
+          label: '中级及以上职称',
+          operator: 'in',
+          value: ['中级', '高级'],
+          docRef: 's1',
+          quote: '本科及以上学历，或中级及以上职称。',
+          required: true,
+        },
+      ],
+    },
+    {
+      id: 'g2',
+      name: '住房核验',
+      logic: 'all',
+      docRef: 's2',
+      conditions: [
+        {
+          id: 'c3',
+          field: 'housing.checkResult',
+          label: '家庭在本市无自有住房（系统核验）',
+          operator: 'exists',
+          value: '',
+          docRef: 's2',
+          quote: '家庭在本市无自有住房（由系统核验）。',
+          required: true,
+          autoUncertain: true,
+        },
+      ],
+    },
+  ],
+  materials: [{ name: '学历证书', required: true, docRef: 's1' }],
+  deadlines: [],
+  notes: ['本文件为测试 fixture。'],
+  extraction: { engine: 'manual', at: '2026-10-25T00:00:00+08:00' },
+};
