@@ -9,8 +9,19 @@ import type {
   Verdict,
 } from './types.js';
 
-/** 读取点路径字段：education.level -> profile.education.level */
+/**
+ * 读取点路径字段：education.level -> profile.education.level
+ *
+ * 同时兼容两种画像结构：
+ * 1. 嵌套对象   { education: { level: '本科' } }
+ * 2. 扁平键值   { 'education.level': '本科' }（前端表单、localStorage 里更好存）
+ * 扁平键优先；取不到再按点路径逐层下钻。
+ */
 export function getField(profile: Profile, path: string): unknown {
+  if (profile !== null && typeof profile === 'object') {
+    const flat = (profile as Record<string, unknown>)[path];
+    if (flat !== undefined) return flat;
+  }
   return path.split('.').reduce<unknown>((acc, key) => {
     if (acc !== null && typeof acc === 'object') {
       return (acc as Record<string, unknown>)[key];
@@ -159,7 +170,7 @@ export function checkCondition(condition: Condition, actual: unknown, profile?: 
       const a = normalize(actual);
       const b = normalize(value);
       const eq = a === b || (toNumber(actual) !== null && toNumber(value) !== null && toNumber(actual) === toNumber(value));
-      return { ok: condition.operator === 'eq' ? eq : !eq, reason: `你的情况是「${String(actual)}」` };
+      return { ok: condition.operator === 'eq' ? eq : !eq, reason: `你的情况是「${humanize(actual)}」` };
     }
     default:
       return { ok: null, reason: '未知的比较方式，需人工确认' };
@@ -192,7 +203,7 @@ function evaluateGroup(policy: Policy, groupId: string, profile: Profile): Group
       docRef: condition.docRef,
       gap:
         verdict === 'fail'
-          ? `不满足「${condition.label}」：要求${describeExpected(condition, profile)}，你的情况是${isEmpty(actual) ? '未填写' : String(actual)}`
+          ? `不满足「${condition.label}」：要求${describeExpected(condition, profile)}，你的情况是${isEmpty(actual) ? '未填写' : humanize(actual)}`
           : undefined,
       hint: condition.hint,
     };

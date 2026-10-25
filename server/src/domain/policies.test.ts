@@ -100,3 +100,31 @@ test('政策库：五份政策都能完成判定并给出结论', () => {
     assert.ok(result.summary.requiredTotal > 0, `${policy.id} 没有硬性条件`);
   }
 });
+
+test('前端表单格式（扁平键画像）能驱动真实政策判定', () => {
+  const loan = policies.find((p) => p.id === 'student-loan')!;
+  const profile = {
+    'identity.nationality': '中华人民共和国',
+    'identity.creditStatus': true,
+    'education.enrollmentStatus': '高校在读学生',
+    'education.schoolType': '全日制普通本科高校',
+    'education.studentLevel': '本专科学生',
+    'household.studentHukouCounty': '江宁区',
+    'household.parentHukouCounty': '江宁区',
+    'household.applyCounty': '江宁区',
+    'household.province': '江苏',
+    'economy.familyDifficulty': true,
+    'loan.annualAmount': 8000,
+    'loan.hasNationalLoanThisYear': false,
+  };
+  const result = evaluate(loan, profile);
+  const byId = new Map(result.conditions.map((c) => [c.conditionId, c]));
+
+  // 模板条件 {{household.applyCounty}} 依赖扁平键读取
+  assert.equal(byId.get('c6')?.verdict, 'pass', '户籍县条件应判为符合');
+  assert.equal(byId.get('c7')?.verdict, 'pass', '父母户籍县条件应判为符合');
+  assert.equal(byId.get('c10')?.verdict, 'pass', '未获国家助学贷款应判为符合');
+  // 布尔值在理由里要显示成中文，而不是 true/false
+  assert.match(byId.get('c10')?.reason ?? '', /否/);
+  assert.ok(result.summary.pass >= 6, `只判出 ${result.summary.pass} 项符合，扁平画像可能没被读到`);
+});

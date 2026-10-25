@@ -130,3 +130,24 @@ test('数值比较：gte / lte 边界值', () => {
   const over = evaluate(scholarshipPolicy, { ...fullProfile, rank: { percent: 10.1 } });
   assert.equal(over.overall, 'fail');
 });
+
+test('getField 同时支持嵌套画像与扁平键画像', () => {
+  assert.equal(getField({ education: { level: '本科' } }, 'education.level'), '本科');
+  assert.equal(getField({ 'education.level': '本科' }, 'education.level'), '本科');
+  // 扁平键优先，避免两种写法混用时结果不确定
+  assert.equal(getField({ 'education.level': '本科', education: { level: '专科' } }, 'education.level'), '本科');
+  assert.equal(getField({ 'education.level': '本科' }, 'education.major'), undefined);
+});
+
+test('扁平键画像（前端表单格式）可直接判定并解析模板', () => {
+  const flat = evaluate(hukouPolicy, { 'household.studentCounty': '江宁区', 'household.applyCounty': '江宁区' });
+  assert.equal(flat.overall, 'pass');
+
+  const diff = evaluate(hukouPolicy, { 'household.studentCounty': '鼓楼区', 'household.applyCounty': '江宁区' });
+  assert.equal(diff.overall, 'fail');
+  assert.match(diff.conditions[0].gap ?? '', /江宁区/);
+
+  const missing = evaluate(hukouPolicy, { 'household.studentCounty': '江宁区' });
+  assert.equal(missing.overall, 'unknown');
+  assert.match(missing.conditions[0].reason, /applyCounty/);
+});
