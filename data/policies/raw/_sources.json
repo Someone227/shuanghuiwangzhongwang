@@ -1,50 +1,66 @@
 {
+  "updatedAt": "2026-10-25",
+  "note": "全部为全国性（国家级）政策文件，来源为教育部/全国学生资助管理中心官方站点，不含地方或校级细则",
   "sources": [
     {
       "id": "national-scholarship",
       "title": "本专科生国家奖学金评审办法（教财函〔2019〕105号）",
-      "url": "https://jyt.nmg.gov.cn/zzw/zzzc/bzk/zcwj/202512/t20251229_2842318.html",
       "level": "国家级",
       "category": "奖学金",
-      "chars": 3313,
-      "fetchedAt": "2026-10-25T09:27:03.616Z"
+      "issuer": "教育部、财政部",
+      "year": 2019,
+      "url": "http://www.moe.gov.cn/srcsite/A05/s7505/201909/t20190930_401817.html",
+      "rawFile": "data/policies/raw/national-scholarship.txt",
+      "chars": 3050,
+      "fetchedAt": "2026-10-25"
     },
     {
       "id": "national-inspiring-scholarship",
-      "title": "国家励志奖学金评审实施细则（南京晓庄学院）",
-      "url": "https://xsc.njxzc.edu.cn/f7/4a/c9156a128842/page.htm",
-      "level": "校级",
+      "title": "普通本科高校、高等职业学校国家励志奖学金管理暂行办法（财教〔2007〕91号）",
+      "level": "国家级",
       "category": "奖学金",
-      "chars": 2565,
-      "fetchedAt": "2026-10-25T09:27:03.863Z"
+      "issuer": "财政部、教育部",
+      "year": 2007,
+      "url": "http://www.moe.gov.cn/jyb_xwfb/xw_zt/s3639/moe_1541/moe_1533/moe_1534/tnull_23987.html",
+      "rawFile": "data/policies/raw/national-inspiring-scholarship.txt",
+      "chars": 2999,
+      "fetchedAt": "2026-10-25"
+    },
+    {
+      "id": "national-education-grant",
+      "title": "普通本科高校、高等职业学校国家助学金管理暂行办法（财教〔2007〕92号）",
+      "level": "国家级",
+      "category": "助学金",
+      "issuer": "财政部、教育部",
+      "year": 2007,
+      "url": "http://www.moe.gov.cn/jyb_xxgk/gk_gbgg/moe_0/moe_1443/moe_1581/tnull_25302.html",
+      "rawFile": "data/policies/raw/national-education-grant.txt",
+      "chars": 2914,
+      "fetchedAt": "2026-10-25"
     },
     {
       "id": "student-loan",
-      "title": "2026年国家开发银行生源地信用助学贷款办理指南（安徽）",
-      "url": "https://jyt.ah.gov.cn/content/article/40789484",
+      "title": "财政部 教育部 银监会关于大力开展生源地信用助学贷款的通知（财教〔2008〕196号）",
       "level": "国家级",
       "category": "助学贷款",
-      "chars": 3232,
-      "fetchedAt": "2026-10-25T09:27:04.391Z"
+      "issuer": "财政部、教育部、银监会",
+      "year": 2008,
+      "url": "https://www.xszz.edu.cn/n39/n54/c6699/content.html",
+      "rawFile": "data/policies/raw/student-loan.txt",
+      "chars": 4590,
+      "fetchedAt": "2026-10-25"
     },
     {
       "id": "postgraduate-recommendation",
       "title": "全国普通高等学校推荐优秀应届本科毕业生免试攻读硕士学位研究生工作管理办法（试行）",
-      "url": "http://www.moe.gov.cn/srcsite/A15/moe_778/s3113/200607/t20060712_79975.html",
       "level": "国家级",
       "category": "推免保研",
-      "chars": 5104,
-      "fetchedAt": "2026-10-25T09:27:04.475Z"
-    },
-    {
-      "id": "nanjing-housing-subsidy",
-      "title": "南京市高校毕业生住房租赁补贴政策解读",
-      "url": "https://rsj.nanjing.gov.cn/njsrlzyhshbzj/202510/t20251023_5674924.html",
-      "level": "市级",
-      "category": "人才补贴",
-      "chars": 1420,
-      "fetchedAt": "2026-10-25T09:27:04.983Z"
+      "issuer": "教育部",
+      "year": 2006,
+      "url": "https://hudong.moe.gov.cn/srcsite/A15/moe_778/s3113/200607/t20060712_79975.html",
+      "rawFile": "data/policies/raw/postgraduate-recommendation.txt",
+      "chars": 5006,
+      "fetchedAt": "2026-10-25"
     }
-  ],
-  "note": "政策原文抓取存档，供离线抽取与复核使用"
+  ]
 }
