@@ -28,7 +28,7 @@ onMounted(load);
   <div class="mx-auto max-w-6xl px-6 py-12">
     <header class="max-w-3xl">
       <span class="inline-flex items-center rounded-full border border-brand-200 bg-brand-50 px-3 py-1 text-xs font-medium text-brand-700">
-        政策库 · 已收录 {{ policies.length || 5 }} 份国家级政策
+        政策库 · 已收录 {{ policies.length || 8 }} 份国家级政策
       </span>
       <h1 class="mt-4 text-3xl font-bold tracking-tight text-slate-900">选一份政策，看看自己够不够格</h1>
       <p class="mt-3 text-sm leading-relaxed text-slate-600">
@@ -64,7 +64,6 @@ onMounted(load);
             >{{ policy.level }}</span
           >
           <span class="rounded-full border border-slate-200 bg-slate-50 px-2.5 py-0.5 text-xs text-slate-600">{{ policy.category }}</span>
-          <span class="rounded-full border border-slate-200 bg-slate-50 px-2.5 py-0.5 text-xs text-slate-600">{{ policy.year }} 年</span>
           <span
             v-if="policy.review?.humanReviewed"
             class="rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-0.5 text-xs text-emerald-700"
@@ -102,5 +101,11 @@ onMounted(load);
     <p class="mt-8 text-xs text-slate-400">
       政策原文均来自教育部、全国学生资助管理中心等官方网站；条款抽取由大模型完成，并逐条人工复核，过时条款已显式标注。
     </p>
+
+    <div v-if="!loading && !error && policies.length" class="mt-10 flex items-center gap-3 text-xs text-slate-300">
+      <span class="h-px flex-1 bg-slate-200" />
+      <span>没有更多了 · 共 {{ policies.length }} 份</span>
+      <span class="h-px flex-1 bg-slate-200" />
+    </div>
   </div>
 </template>
