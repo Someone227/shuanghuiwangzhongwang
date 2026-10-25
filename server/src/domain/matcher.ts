@@ -208,9 +208,13 @@ function evaluateGroup(policy: Policy, groupId: string, profile: Profile): Group
   const required = conditionResults.filter((r) => !isWarnOnly(policy, r));
   let verdict: Verdict;
   if (group.logic === 'any') {
-    const hasPass = required.some((r) => r.verdict === 'pass');
-    const hasUnknown = required.some((r) => r.verdict === 'unknown');
-    verdict = hasPass ? 'pass' : hasUnknown ? 'unknown' : 'fail';
+    // 「满足任意一条」：组内每条都是可选满足项，任一条 pass 即可。
+    // 建议项（required=false）即使不满足也只算 warn，不该让整组失败，
+    // 所以先剔除 warn 再看剩下的硬性结论。
+    const hard = conditionResults.filter((r) => r.verdict !== 'warn');
+    const hasPass = hard.some((r) => r.verdict === 'pass');
+    const hasUnknown = hard.some((r) => r.verdict === 'unknown');
+    verdict = hasPass ? 'pass' : hasUnknown ? 'unknown' : hard.length > 0 ? 'fail' : 'pass';
   } else {
     if (required.some((r) => r.verdict === 'fail')) verdict = 'fail';
     else if (required.some((r) => r.verdict === 'unknown')) verdict = 'unknown';

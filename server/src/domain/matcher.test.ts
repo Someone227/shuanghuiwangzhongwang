@@ -103,6 +103,31 @@ test('any 组：满足其一即通过', () => {
   assert.equal(neither.groups.find((g) => g.groupId === 'g1')?.verdict, 'fail');
 });
 
+test('any 组里全是建议项时：满足其一即通过，都不满足也不算失败', () => {
+  const optional = JSON.parse(JSON.stringify(subsidyPolicy)) as Policy;
+  const group = optional.conditions.find((g) => g.id === 'g1');
+  for (const c of group?.conditions ?? []) c.required = false;
+
+  const pass = evaluate(optional, {
+    education: { degree: '本科' },
+    title: { level: '无' },
+    'housing.checkResult': '已核验无房',
+  });
+  assert.equal(pass.groups.find((g) => g.groupId === 'g1')?.verdict, 'pass');
+
+  // 一条都没满足：组内没有硬性条件，按「可选满足项」处理，不把整份政策判死
+  const none = evaluate(optional, {
+    education: { degree: '专科' },
+    title: { level: '无' },
+    'housing.checkResult': '已核验无房',
+  });
+  assert.equal(none.groups.find((g) => g.groupId === 'g1')?.verdict, 'pass');
+
+  // 留空则仍按「待补充」处理
+  const missing = evaluate(optional, { 'housing.checkResult': '已核验无房' });
+  assert.equal(missing.groups.find((g) => g.groupId === 'g1')?.verdict, 'unknown');
+});
+
 test('留空的条件判为 unknown，填上后直接给出结论', () => {
   const missing = evaluate(subsidyPolicy, { education: { degree: '本科' }, title: { level: '无' } });
   const housing = missing.conditions.find((c) => c.conditionId === 'c3');
