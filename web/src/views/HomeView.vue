@@ -1,12 +1,16 @@
 <script setup lang="ts">
+import { RouterLink } from 'vue-router';
+
 const steps = [
-  { no: '01', title: '贴政策', desc: '粘贴政策原文，支持正文 + 附件条款一起入库' },
-  { no: '02', title: 'AI 抽条件', desc: '自动抽取成结构化条件树：学历、年级、成绩、户籍、时间…' },
-  { no: '03', title: '填自己', desc: '一张表单写清个人情况，字段随政策动态变化' },
-  { no: '04', title: '逐条判定', desc: '每条给出「符合 / 不符合（差在哪）/ 需人工确认」' },
-  { no: '05', title: '回溯原文', desc: '每条判定都能点回政策原文的对应条款' },
-  { no: '06', title: '出结果', desc: '材料清单 + 时间轴提醒，不再漏材料、错过截止日' },
+  { no: '01', title: '政策入库', desc: '原文来自教育部、全国学生资助管理中心官网，逐字存档不加工' },
+  { no: '02', title: 'AI 抽条件', desc: 'DeepSeek 把上万字原文抽成结构化条件树：学历、年级、户籍、金额…' },
+  { no: '03', title: '人工复核', desc: '逐条核对条款与引用，过时条款（如 2008 年的贷款额度）显式标注' },
+  { no: '04', title: '填自己', desc: '表单字段由政策动态生成，只问这份政策真正用得上的信息' },
+  { no: '05', title: '本地判定', desc: '运行期零 token：规则引擎在服务端本地逐条判定，可复现、可单测' },
+  { no: '06', title: '回溯原文', desc: '每条结论都能点回原文章节并高亮原句，结论有据可查' },
 ];
+
+const stacks = ['Vue 3', 'Vite', 'Tailwind v4', 'TypeScript', 'Express', 'DeepSeek'];
 </script>
 
 <template>
@@ -15,7 +19,7 @@ const steps = [
       <span
         class="inline-flex items-center gap-1.5 rounded-full border border-brand-200 bg-brand-50 px-3 py-1 text-xs font-medium text-brand-700"
       >
-        项目骨架已就绪 · 正在开发核心功能
+        已收录 5 份国家级政策 · 逐条判定 + 原文回溯
       </span>
 
       <h1 class="mt-5 text-4xl font-bold tracking-tight text-balance text-slate-900 sm:text-5xl">
@@ -30,21 +34,21 @@ const steps = [
       </p>
 
       <div class="mt-8 flex flex-wrap gap-3">
-        <button
-          type="button"
-          disabled
-          class="cursor-not-allowed rounded-lg bg-brand-600 px-5 py-2.5 text-sm font-medium text-white opacity-60"
+        <RouterLink
+          to="/policies"
+          class="rounded-lg bg-brand-600 px-5 py-2.5 text-sm font-medium text-white shadow-sm transition hover:bg-brand-700"
         >
-          开始匹配（开发中）
-        </button>
-        <button
-          type="button"
-          disabled
-          class="cursor-not-allowed rounded-lg border border-slate-300 bg-white px-5 py-2.5 text-sm font-medium text-slate-500"
+          开始匹配
+        </RouterLink>
+        <RouterLink
+          to="/match/national-scholarship"
+          class="rounded-lg border border-slate-300 bg-white px-5 py-2.5 text-sm font-medium text-slate-700 transition hover:border-slate-400"
         >
           看一份示例政策
-        </button>
+        </RouterLink>
       </div>
+
+      <p class="mt-3 text-xs text-slate-400">无需注册、无需 API Key，打开就能用。</p>
     </div>
 
     <section class="mt-16">
@@ -56,7 +60,7 @@ const steps = [
           class="rounded-2xl border border-slate-200 bg-white p-5 transition hover:border-brand-300 hover:shadow-sm"
         >
           <div class="flex items-baseline gap-3">
-            <span class="text-xs font-mono font-semibold text-brand-500">{{ step.no }}</span>
+            <span class="font-mono text-xs font-semibold text-brand-500">{{ step.no }}</span>
             <h3 class="text-base font-semibold text-slate-900">{{ step.title }}</h3>
           </div>
           <p class="mt-2 text-sm leading-relaxed text-slate-600">{{ step.desc }}</p>
@@ -65,17 +69,17 @@ const steps = [
     </section>
 
     <section class="mt-16 rounded-2xl border border-slate-200 bg-white p-6">
-      <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h2 class="text-base font-semibold text-slate-900">当前阶段</h2>
-          <p class="mt-1 text-sm text-slate-600">
-            骨架 / 依赖 / 前后端联调链路已通；下一步：数据模型 → 政策抽取 → 逐条判定。
+      <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+        <div class="max-w-2xl">
+          <h2 class="text-base font-semibold text-slate-900">大模型只用在「建库」这一步</h2>
+          <p class="mt-2 text-sm leading-relaxed text-slate-600">
+            政策解析是最难的一步，交给 DeepSeek：一次调用把原文抽成条件树，抽取请求与响应全部留档在
+            <code class="rounded bg-slate-100 px-1 py-0.5 text-xs">docs/ai-log</code>，可审计、可复现。
+            而每一个用户打开网页做判定时，调用的都是本地规则引擎 —— 不联网、不消耗 token、结果稳定可复现。
           </p>
         </div>
-        <div class="flex gap-2 text-xs text-slate-500">
-          <span class="rounded-md bg-slate-100 px-2.5 py-1">vue-router</span>
-          <span class="rounded-md bg-slate-100 px-2.5 py-1">pinia</span>
-          <span class="rounded-md bg-slate-100 px-2.5 py-1">tailwind v4</span>
+        <div class="flex shrink-0 flex-wrap gap-2 text-xs text-slate-500">
+          <span v-for="stack in stacks" :key="stack" class="rounded-md bg-slate-100 px-2.5 py-1">{{ stack }}</span>
         </div>
       </div>
     </section>
