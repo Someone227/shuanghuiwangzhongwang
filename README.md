@@ -9,6 +9,8 @@
 本地引擎逐条判定「符合 / 不符合（差在哪）/ 待补充」，每条结论都能点回原文的对应条款，
 再附上材料清单与时间节点。
 
+**在线演示**：<https://someone227.github.io/shuanghuiwangzhongwang/> —— 纯静态版，判定引擎直接在浏览器里跑，不需要后端、不需要 API Key，任何电脑打开就能用（见「在线演示版」小节）。
+
 ## 核心设计：大模型只在「建库」这一步用
 
 这是本项目和「接个聊天框套壳」最大的区别：
@@ -86,6 +88,7 @@
 | 大模型 | DeepSeek API `deepseek-chat`（JSON Output，temperature 0），仅用于开发期抽取 |
 | 账号体系 | 账号与个人数据存服务端 JSON（`data/users.json`、`data/user-data.json`，均在 `.gitignore` 中）；密码 scrypt 加盐哈希；登录令牌为无状态 HMAC-SHA256 签名，多台设备可同时登录 |
 | 测试 | `tsx --test`（判定引擎 + 政策库数据契约，覆盖条件判定、模板比较、原文回溯与噪声清洗） |
+| 部署 | 双模式：本地开发走 Express 后端；`gh-pages` 分支发布纯静态版（政策 JSON 静态化 + 判定引擎打包进前端），由 `tools/deploy-pages.mjs` 发布 |
 
 ## 快速开始
 
@@ -106,6 +109,29 @@ pnpm dev
 **不配置 API Key 也能完整使用**：政策库已随仓库提交，判定全部在本地完成。
 只有需要重新抽取政策时才需要 Key（见下文「环境变量」）。
 
+### 在线演示版（纯静态）
+
+同一份代码还能打成纯静态站点：政策 JSON 变成静态文件，`server/src/domain/matcher.ts` 这个纯函数判定引擎直接打包进浏览器运行 —— 零后端、零 token、断网也能判定。
+
+- 线上地址：<https://someone227.github.io/shuanghuiwangzhongwang/>
+- 本地构建与预览：
+
+```bash
+node server/scripts/export-static-data.mjs   # 导出政策 JSON 到 web/public/policies/
+pnpm --filter web run build:pages            # 以 pages 模式构建（base=/shuanghuiwangzhongwang/）
+pnpm --filter web run preview:pages          # 本地预览
+```
+
+- 发布（推到 `gh-pages` 分支，GitHub Pages 自动更新）：
+
+```bash
+node server/scripts/export-static-data.mjs
+pnpm --filter web run build:pages
+node tools/deploy-pages.mjs
+```
+
+静态版的限制：没有账号体系（登录与判定记录只在后端模式下可用），其余功能（政策库、筛选搜索、逐条判定、原文回溯）完全一致。
+
 ### 演示账号（评审查验用）
 
 | 账号 | 密码 | 说明 |
@@ -117,7 +143,8 @@ pnpm dev
 - **填写的内容不会被保存**：判定页的表单只存在当前页面内存里，离开或刷新即清空，浏览器本地和服务端都不留填报内容（填的是家庭经济、成绩排名这类个人信息）。
 - 演示账号由服务端首次启动时自动创建（幂等）；密码可用环境变量 `DEMO_ACCOUNT_PASSWORD` 覆盖，想换密码需先删除 `data/users.json` 再启动。
 - **不登录也能完整使用判定功能**，登录只用于多设备共享判定记录。
-- 同一局域网的其他电脑访问：前端默认只监听 `127.0.0.1`，需要时把 `web/vite.config.ts` 的 `server.host` 改为 `0.0.0.0`（后端同理改 `PORT` 监听地址），再用本机内网 IP 访问。
+- 同一局域网的其他电脑访问：前端已配置 `server.host = true`（监听所有网卡），用 `pnpm dev` 启动后，其他电脑访问 `http://<本机内网IP>:5173` 即可。
+- 机房/评委电脑不方便装环境时，直接用上面的**在线演示版**，不需要任何本地部署。
 
 ### 常用命令
 
@@ -159,7 +186,7 @@ pnpm build         # 前端生产构建
 │   │   ├── auth/                 # 密码哈希、账号存储、令牌签发、鉴权中间件
 │   │   ├── userdata/             # 按账号保存判定记录
 │   │   └── routes/               # /api/policies、/api/auth、/api/me、/api/health
-│   └── scripts/                  # 抽取、复核、清洗、偏移修复脚本
+│   └── scripts/                  # 抽取、复核、清洗、偏移修复、静态数据导出脚本
 ├── data/
 │   ├── policies/                 # 政策原文与条件树 JSON（随仓库提交）
 │   ├── users.json                # 账号数据（本地产物，不入库）
@@ -167,7 +194,8 @@ pnpm build         # 前端生产构建
 ├── docs/
 │   └── ai-log/                   # AI 协同记录（每次抽取的请求/响应/用量）
 ├── tools/
-│   └── git-sync.mjs              # 当前网络环境下的 GitHub 同步工具
+│   ├── git-sync.mjs              # 当前网络环境下的 GitHub 同步工具
+│   └── deploy-pages.mjs          # 把 web/dist 发布到 gh-pages，上线纯静态演示版
 └── AGENTS.md                     # 项目协作与版本管理约定
 ```
 
@@ -201,5 +229,6 @@ pnpm build         # 前端生产构建
 - [x] 前后端骨架、判定引擎、三十二份政策库（339 条判定条件）
 - [x] 政策库读取/判定 API 与前端三页面
 - [x] 注册登录、演示账号与多设备判定记录（填写内容离开页面即清空）
+- [x] 纯静态演示版上线 GitHub Pages（判定引擎打包进浏览器，任何电脑可访问）
 - [ ] 技术文档 PDF（≤30 页，需含架构图、时序图、AI 调用链路、数据来源与风险说明）
 - [ ] 演示视频（5–8 分钟，1080p）
