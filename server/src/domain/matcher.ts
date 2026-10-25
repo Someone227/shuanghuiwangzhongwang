@@ -247,7 +247,7 @@ function summarize(conditions: ConditionResult[]): EvaluationSummary {
   return summary;
 }
 
-function buildHeadline(policy: Policy, overall: Verdict, summary: EvaluationSummary): string {
+function buildHeadline(_policy: Policy, overall: Verdict, summary: EvaluationSummary): string {
   if (overall === 'pass') {
     return `符合条件的概率很高：${summary.pass} 项硬性条件全部满足，可以着手准备材料了。`;
   }

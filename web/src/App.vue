@@ -2,6 +2,7 @@
 import { computed, onMounted, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 
+import { isStaticMode } from '@/lib/api';
 import { currentUser, isLoggedIn, logout, restoreSession } from '@/lib/auth';
 
 type Status = 'checking' | 'ok' | 'down';
@@ -43,6 +44,11 @@ async function handleLogout(): Promise<void> {
 }
 
 onMounted(async () => {
+  // 静态演示版没有后端，健康检查直接算通过
+  if (isStaticMode) {
+    apiStatus.value = 'ok';
+    return;
+  }
   // 用本地令牌确认登录态，避免刷新后顶栏闪一下「未登录」
   void restoreSession();
   try {
@@ -92,8 +98,8 @@ onMounted(async () => {
           <div
             class="flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1 text-xs text-slate-600"
           >
-            <span class="h-1.5 w-1.5 rounded-full" :class="statusDot[apiStatus]" />
-            {{ statusText[apiStatus] }}
+            <span class="h-1.5 w-1.5 rounded-full" :class="isStaticMode ? 'bg-emerald-500' : statusDot[apiStatus]" />
+            {{ isStaticMode ? '在线演示版' : statusText[apiStatus] }}
           </div>
 
           <RouterLink
@@ -122,7 +128,7 @@ onMounted(async () => {
             </button>
           </template>
           <RouterLink
-            v-else
+            v-else-if="!isStaticMode"
             to="/login"
             class="rounded-full bg-slate-900 px-4 py-1.5 text-xs font-medium text-white transition hover:bg-brand-600"
           >

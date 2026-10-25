@@ -5,6 +5,9 @@
  * 不携带、也不请求任何大模型密钥。
  */
 
+import { evaluate } from '@domain/matcher';
+import type { Policy as DomainPolicy } from '@domain/types';
+
 import { request } from './http';
 
 export type Verdict = 'pass' | 'fail' | 'unknown' | 'warn';
@@ -173,18 +176,48 @@ export interface EvaluationResult {
 
 export type Profile = Record<string, unknown>;
 
+/**
+ * 两种运行模式：
+ * - 默认（dev / 自建服务器）：数据与判定都走后端 /api。
+ * - 静态模式（VITE_STATIC_DATA=true，GitHub Pages 用）：政策 JSON 作为静态文件加载，
+ *   判定引擎（server/src/domain/matcher.ts，纯函数）直接在浏览器里跑 —— 零后端、零 token。
+ */
+export const isStaticMode: boolean = import.meta.env.VITE_STATIC_DATA === 'true';
+
+const STATIC_BASE: string = import.meta.env.BASE_URL;
+
+const policyCache = new Map<string, Policy>();
+
+async function fetchStatic<T>(path: string): Promise<T> {
+  const res = await fetch(STATIC_BASE + path);
+  if (!res.ok) throw new Error(`加载政策数据失败（HTTP ${res.status}）`);
+  return (await res.json()) as T;
+}
+
 /** 政策列表（摘要） */
 export function listPolicies(): Promise<PolicySummary[]> {
+  if (isStaticMode) return fetchStatic<PolicySummary[]>('policies/index.json');
   return request<PolicySummary[]>('/api/policies');
 }
 
 /** 单份政策全量（原文、段落偏移、字段、条件树、材料、时限） */
-export function getPolicy(id: string): Promise<Policy> {
+export async function getPolicy(id: string): Promise<Policy> {
+  if (isStaticMode) {
+    const cached = policyCache.get(id);
+    if (cached) return cached;
+    const policy = await fetchStatic<Policy>(`policies/${encodeURIComponent(id)}.json`);
+    policyCache.set(id, policy);
+    return policy;
+  }
   return request<Policy>(`/api/policies/${encodeURIComponent(id)}`);
 }
 
-/** 逐条判定：把用户画像交给服务端本地引擎计算 */
-export function evaluatePolicy(id: string, profile: Profile): Promise<EvaluationResult> {
+/** 逐条判定：服务端模式交给后端引擎；静态模式在浏览器本地跑同一套引擎 */
+export async function evaluatePolicy(id: string, profile: Profile): Promise<EvaluationResult> {
+  if (isStaticMode) {
+    const policy = await getPolicy(id);
+    return evaluate(policy as unknown as DomainPolicy, profile) as unknown as EvaluationResult;
+  }
   return request<EvaluationResult>(`/api/policies/${encodeURIComponent(id)}/evaluate`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
