@@ -97,6 +97,54 @@
       "rawFile": "data/policies/raw/military-service-grant.txt",
       "chars": 4541,
       "fetchedAt": "2026-10-25"
+    },
+    {
+      "id": "graduate-national-scholarship",
+      "title": "研究生国家奖学金管理暂行办法（财教〔2012〕342号）",
+      "level": "国家级",
+      "category": "奖学金",
+      "issuer": "财政部、教育部",
+      "year": 2012,
+      "url": "http://www.moe.gov.cn/jyb_xxgk/moe_1777/moe_1779/201210/t20121022_143547.html",
+      "rawFile": "data/policies/raw/graduate-national-scholarship.txt",
+      "chars": 2613,
+      "fetchedAt": "2026-10-25"
+    },
+    {
+      "id": "graduate-academic-scholarship",
+      "title": "研究生学业奖学金管理暂行办法（财教〔2013〕219号）",
+      "level": "国家级",
+      "category": "奖学金",
+      "issuer": "财政部、教育部",
+      "year": 2013,
+      "url": "http://www.moe.gov.cn/jyb_xxgk/moe_1777/moe_1779/201308/t20130812_155562.html",
+      "rawFile": "data/policies/raw/graduate-academic-scholarship.txt",
+      "chars": 2197,
+      "fetchedAt": "2026-10-25"
+    },
+    {
+      "id": "graduate-stipend",
+      "title": "研究生国家助学金管理暂行办法（财教〔2013〕220号）",
+      "level": "国家级",
+      "category": "助学金",
+      "issuer": "财政部、教育部",
+      "year": 2013,
+      "url": "http://www.moe.gov.cn/jyb_xxgk/moe_1777/moe_1779/201308/t20130812_155561.html",
+      "rawFile": "data/policies/raw/graduate-stipend.txt",
+      "chars": 1850,
+      "fetchedAt": "2026-10-25"
+    },
+    {
+      "id": "grassroots-employment-repayment",
+      "title": "高等学校毕业生学费和国家助学贷款代偿暂行办法（财教〔2009〕15号）",
+      "level": "国家级",
+      "category": "基层就业代偿",
+      "issuer": "财政部、教育部",
+      "year": 2009,
+      "url": "http://www.moe.gov.cn/jyb_xxgk/moe_1777/moe_1779/tnull_46550.html",
+      "rawFile": "data/policies/raw/grassroots-employment-repayment.txt",
+      "chars": 3347,
+      "fetchedAt": "2026-10-25"
     }
   ]
 }
