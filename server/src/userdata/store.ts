@@ -81,6 +81,17 @@ export function saveDraft(userId: string, policyId: string, profile: Record<stri
   return entry;
 }
 
+/** 清掉某个账号在某份政策下的草稿：离开判定页时调用，不在服务端留填报内容 */
+export function clearDraft(userId: string, policyId: string): boolean {
+  const data = readData();
+  const bucket = data.drafts[userId];
+  if (!bucket || !(policyId in bucket)) return false;
+  delete bucket[policyId];
+  if (Object.keys(bucket).length === 0) delete data.drafts[userId];
+  writeData(data);
+  return true;
+}
+
 export function listRecords(userId: string): JudgementRecord[] {
   return readData().records[userId] ?? [];
 }

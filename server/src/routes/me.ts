@@ -3,6 +3,7 @@ import { Router } from 'express';
 import { currentUser, requireAuth } from '../auth/middleware.js';
 import {
   addRecord,
+  clearDraft,
   clearRecords,
   getDraft,
   listRecords,
@@ -24,7 +25,7 @@ function isValidPolicyId(value: string): boolean {
   return POLICY_ID_PATTERN.test(value);
 }
 
-/** 读取某份政策下当前账号的草稿（换电脑登录后能接着填） */
+/** 读取某份政策的草稿（保留接口；前端已不再读取，填写内容只在页面内存中） */
 meRouter.get('/me/drafts/:policyId', requireAuth, (req, res) => {
   const policyId = req.params.policyId ?? '';
   if (!isValidPolicyId(policyId)) {
@@ -34,7 +35,7 @@ meRouter.get('/me/drafts/:policyId', requireAuth, (req, res) => {
   res.json({ ok: true, data: getDraft(currentUser(res).id, policyId) });
 });
 
-/** 保存草稿（登录用户的填写进度存在服务端，而不是浏览器本地） */
+/** 保存草稿（保留接口；当前前端不落库，个人情况不离开页面） */
 meRouter.put('/me/drafts/:policyId', requireAuth, (req, res) => {
   const policyId = req.params.policyId ?? '';
   if (!isValidPolicyId(policyId)) {
@@ -47,6 +48,16 @@ meRouter.put('/me/drafts/:policyId', requireAuth, (req, res) => {
     return;
   }
   res.json({ ok: true, data: saveDraft(currentUser(res).id, policyId, profile) });
+});
+
+/** 清除某份政策的草稿（前端离开判定页时调用，个人情况不在服务端留存） */
+meRouter.delete('/me/drafts/:policyId', requireAuth, (req, res) => {
+  const policyId = req.params.policyId ?? '';
+  if (!isValidPolicyId(policyId)) {
+    res.status(400).json({ ok: false, error: '政策编号不合法' });
+    return;
+  }
+  res.json({ ok: true, data: { cleared: clearDraft(currentUser(res).id, policyId) } });
 });
 
 /** 该账号最近的判定记录 */

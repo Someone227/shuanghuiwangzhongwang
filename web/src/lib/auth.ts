@@ -2,8 +2,9 @@
  * 登录态与个人数据。
  *
  * 账号存在服务端（data/users.json），令牌无状态签名，所以同一个账号可以在
- * 多台电脑 / 多个浏览器里同时登录，各自拿到有效令牌。个人数据（草稿、判定记录）
- * 也存服务端，换电脑登录后能接着用。
+ * 多台电脑 / 多个浏览器里同时登录，各自拿到有效令牌。判定记录存服务端，
+ * 换电脑登录后仍能看到。**填写的内容不保存**：判定页表单只存在页面内存里，
+ * 草稿接口保留下来仅用于清理历史残留，避免旧数据留在浏览器或服务端。
  */
 import { computed, ref } from 'vue';
 
@@ -135,6 +136,29 @@ export function fetchRemoteDraft(policyId: string): Promise<RemoteDraft | null> 
 
 export function saveRemoteDraft(policyId: string, profile: Profile): Promise<RemoteDraft> {
   return sendJson<RemoteDraft>(`/api/me/drafts/${encodeURIComponent(policyId)}`, { profile }, 'PUT');
+}
+
+/** 清掉服务端草稿（离开判定页时调用，个人情况不在服务端留存） */
+export function clearRemoteDraft(policyId: string): Promise<{ cleared: boolean }> {
+  return request<{ cleared: boolean }>(`/api/me/drafts/${encodeURIComponent(policyId)}`, { method: 'DELETE' });
+}
+
+/**
+ * 关闭标签页 / 刷新时的清理：普通请求会被浏览器掐断，
+ * 这里用 fetch keepalive 尽量把删除请求送出去。
+ */
+export function clearRemoteDraftOnUnload(policyId: string): void {
+  const token = getToken();
+  if (!token) return;
+  try {
+    void fetch(`/api/me/drafts/${encodeURIComponent(policyId)}`, {
+      method: 'DELETE',
+      headers: { Authorization: `Bearer ${token}` },
+      keepalive: true,
+    }).catch(() => undefined);
+  } catch {
+    /* 页面正在关闭，失败也不影响用户 */
+  }
 }
 
 export function fetchRecords(): Promise<JudgementRecord[]> {

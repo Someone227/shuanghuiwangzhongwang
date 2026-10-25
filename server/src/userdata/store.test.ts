@@ -4,7 +4,7 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { after, before, beforeEach, describe, it } from 'node:test';
 
-import { MAX_RECORDS, addRecord, clearRecords, getDraft, listRecords, saveDraft } from './store.js';
+import { MAX_RECORDS, addRecord, clearDraft, clearRecords, getDraft, listRecords, saveDraft } from './store.js';
 
 let dir = '';
 
@@ -33,6 +33,17 @@ describe('个人数据', () => {
     assert.deepEqual(draft?.profile, { 'identity.nationality': '中华人民共和国' });
     assert.equal(getDraft('user-b', 'student-loan')?.profile['identity.nationality'], '其他');
     assert.equal(getDraft('user-a', 'national-scholarship'), null);
+  });
+
+  it('清掉草稿后读不到，且只影响这一份政策', () => {
+    saveDraft('user-a', 'student-loan', { 'identity.nationality': '中华人民共和国' });
+    saveDraft('user-a', 'national-scholarship', { 'identity.nationality': '中华人民共和国' });
+    assert.equal(clearDraft('user-a', 'student-loan'), true);
+    assert.equal(getDraft('user-a', 'student-loan'), null);
+    assert.ok(getDraft('user-a', 'national-scholarship'));
+    // 没保存过的草稿重复清除不报错
+    assert.equal(clearDraft('user-a', 'student-loan'), false);
+    assert.equal(clearDraft('user-b', 'student-loan'), false);
   });
 
   it('判定记录新的在前，且最多保留 20 条', () => {

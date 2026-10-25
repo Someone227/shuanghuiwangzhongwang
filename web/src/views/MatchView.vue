@@ -7,8 +7,8 @@ import ProfileForm from '@/components/ProfileForm.vue';
 import VerdictReport from '@/components/VerdictReport.vue';
 import type { EvaluationResult, Policy, Profile } from '@/lib/api';
 import { evaluatePolicy, getPolicy } from '@/lib/api';
-import { fetchRemoteDraft, isLoggedIn, saveRecord, saveRemoteDraft } from '@/lib/auth';
-import { cleanProfile, createEmptyProfile, loadDraft, saveDraft } from '@/lib/profile';
+import { clearRemoteDraft, isLoggedIn, saveRecord } from '@/lib/auth';
+import { cleanProfile, clearAllDrafts, createEmptyProfile } from '@/lib/profile';
 
 const route = useRoute();
 const policyId = computed(() => String(route.params.id ?? ''));
@@ -48,21 +48,10 @@ async function load(): Promise<void> {
   try {
     const data = await getPolicy(policyId.value);
     policy.value = data;
-    const empty = createEmptyProfile(data.fields);
-    let restored = loadDraft(data.id);
-    // 登录用户优先用服务端草稿：换一台电脑登录也能接着填
-    if (isLoggedIn.value) {
-      try {
-        const remote = await fetchRemoteDraft(data.id);
-        if (remote?.profile && Object.keys(remote.profile).length > 0) {
-          restored = remote.profile;
-          saveDraft(data.id, remote.profile);
-        }
-      } catch {
-        /* 服务端草稿读不到时退回本地草稿，不打断使用 */
-      }
-    }
-    profile.value = { ...empty, ...(restored ?? {}) };
+    // 填报的是个人情况：每次进来都用空白表单，并顺手清掉历史上可能残留的草稿
+    clearAllDrafts();
+    if (isLoggedIn.value) void clearRemoteDraft(data.id).catch(() => undefined);
+    profile.value = createEmptyProfile(data.fields);
   } catch (err) {
     error.value = err instanceof Error ? err.message : '政策加载失败';
     policy.value = null;
@@ -74,30 +63,13 @@ async function load(): Promise<void> {
 onMounted(load);
 watch(policyId, load);
 
-let remoteSaveTimer: ReturnType<typeof setTimeout> | null = null;
-
 watch(
   profile,
-  (value) => {
-    if (policy.value) saveDraft(policy.value.id, value);
+  () => {
     if (result.value) stale.value = true;
-    // 登录用户同时把草稿同步到服务端（防抖，避免每敲一个字就发一次请求）
-    if (isLoggedIn.value && policy.value) {
-      const policyIdToSave = policy.value.id;
-      if (remoteSaveTimer) clearTimeout(remoteSaveTimer);
-      remoteSaveTimer = setTimeout(() => {
-        void saveRemoteDraft(policyIdToSave, cleanProfile(value)).catch(() => {
-          /* 同步失败不打扰用户，本地草稿仍然在 */
-        });
-      }, 1200);
-    }
   },
   { deep: true },
 );
-
-onBeforeUnmount(() => {
-  if (remoteSaveTimer) clearTimeout(remoteSaveTimer);
-});
 
 async function runEvaluate(): Promise<void> {
   const current = policy.value;
@@ -149,10 +121,6 @@ async function locate(docRef: string, quote: string): Promise<void> {
   document.getElementById('verdict-top')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
-const filledFromDraft = ref(false);
-watch(policy, () => {
-  filledFromDraft.value = !!policy.value && Object.values(profile.value).some((v) => v !== '' && v !== undefined);
-});
 </script>
 
 <template>
@@ -244,13 +212,7 @@ watch(policy, () => {
               <p class="mt-1.5 text-center text-xs text-slate-400">填完可以按 Ctrl + Enter 直接判定</p>
               <p v-if="evaluateError" class="mt-2 text-xs text-rose-600">{{ evaluateError }}</p>
               <p v-if="stale" class="mt-2 text-xs text-amber-600">你改动了表单，建议重新判定以刷新结论。</p>
-              <p v-if="filledFromDraft" class="mt-2 text-xs text-slate-400">
-                <template v-if="isLoggedIn">已从账号同步上次填写的内容（换电脑登录也能恢复）。</template>
-                <template v-else>已从本地草稿恢复上次填写的内容（只存在你自己的浏览器里）。</template>
-              </p>
-              <p v-else-if="isLoggedIn" class="mt-2 text-xs text-slate-400">
-                已登录：填写进度会自动同步到你的账号。
-              </p>
+              <p class="mt-2 text-center text-xs text-slate-400">填的内容只在这个页面里，离开或刷新就会清空。</p>
             </div>
           </div>
         </div>

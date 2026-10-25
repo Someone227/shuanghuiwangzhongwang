@@ -84,10 +84,12 @@ export function filledCount(fields: ProfileField[], profile: Profile): number {
   return fields.filter((field) => !isEmptyValue(profile[field.key])).length;
 }
 
-/** 本地暂存：刷新页面不丢已填内容 */
+const DRAFT_PREFIX = 'nengshenma:draft:';
+
+/** 本地暂存：同一页面刷新不丢已填内容（离开判定页会清掉） */
 export function loadDraft(policyId: string): Profile | null {
   try {
-    const raw = localStorage.getItem(`nengshenma:draft:${policyId}`);
+    const raw = localStorage.getItem(`${DRAFT_PREFIX}${policyId}`);
     return raw ? (JSON.parse(raw) as Profile) : null;
   } catch {
     return null;
@@ -96,8 +98,25 @@ export function loadDraft(policyId: string): Profile | null {
 
 export function saveDraft(policyId: string, profile: Profile): void {
   try {
-    localStorage.setItem(`nengshenma:draft:${policyId}`, JSON.stringify(profile));
+    localStorage.setItem(`${DRAFT_PREFIX}${policyId}`, JSON.stringify(profile));
   } catch {
     /* 隐私模式下 localStorage 可能不可用，忽略即可 */
+  }
+}
+
+/**
+ * 清空所有本地草稿：离开判定页时调用。
+ * 填的是个人情况（家庭经济、成绩排名…），不应该留在共用电脑上。
+ */
+export function clearAllDrafts(): void {
+  try {
+    const keys: string[] = [];
+    for (let i = 0; i < localStorage.length; i += 1) {
+      const key = localStorage.key(i);
+      if (key?.startsWith(DRAFT_PREFIX)) keys.push(key);
+    }
+    for (const key of keys) localStorage.removeItem(key);
+  } catch {
+    /* 忽略 */
   }
 }
