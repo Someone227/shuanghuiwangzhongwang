@@ -143,7 +143,7 @@ onMounted(load);
               {{ record.policyTitle }}
             </RouterLink>
             <p class="mt-0.5 text-xs text-slate-400">
-              {{ formatAt(record.at) }} · 符合 {{ record.summary.pass }} · 不符合 {{ record.summary.fail }} · 需确认
+              {{ formatAt(record.at) }} · 符合 {{ record.summary.pass }} · 不符合 {{ record.summary.fail }} · 待补充
               {{ record.summary.unknown }}
             </p>
           </div>

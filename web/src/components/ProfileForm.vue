@@ -59,7 +59,7 @@ function isFilled(key: string): boolean {
       <div>
         <p class="text-sm font-medium text-slate-700">你的情况</p>
         <p class="mt-0.5 text-xs text-slate-400">
-          只填这一份政策真正用得到的字段，不知道的可以留空 —— 留空会被判为「需人工确认」，而不是「不符合」
+          只填这一份政策真正用得到的字段，不知道的可以留空 —— 留空只会标为「待补充」，不会算成「不符合」
         </p>
       </div>
       <div class="shrink-0 text-right">

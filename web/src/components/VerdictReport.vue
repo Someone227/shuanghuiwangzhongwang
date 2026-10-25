@@ -19,7 +19,7 @@ const meta = computed(() => VERDICT_META[props.result.overall]);
 const stats = computed(() => [
   { key: 'pass', label: '符合', value: summary.value.pass, tone: 'text-emerald-600' },
   { key: 'fail', label: '不符合', value: summary.value.fail, tone: 'text-rose-600' },
-  { key: 'unknown', label: '需确认', value: summary.value.unknown, tone: 'text-amber-600' },
+  { key: 'unknown', label: '待补充', value: summary.value.unknown, tone: 'text-amber-600' },
   { key: 'warn', label: '建议项', value: summary.value.warn, tone: 'text-slate-500' },
 ]);
 
@@ -60,7 +60,7 @@ function scrollTo(conditionId: string, docRef: string, quote: string): void {
         </div>
       </dl>
       <p class="mt-3 text-xs opacity-70">
-        共 {{ summary.requiredTotal }} 项参与结论计算；「需人工确认」的条件不影响你继续准备材料，但需要线下核实。
+        共 {{ summary.requiredTotal }} 项参与结论计算；「待补充」的条件填上之后再判定一次，结论会更明确。
       </p>
     </section>
 

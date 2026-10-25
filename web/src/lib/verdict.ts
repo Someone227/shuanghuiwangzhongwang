@@ -8,7 +8,7 @@ export interface VerdictMeta {
   dot: string;
 }
 
-/** 四种判定结果的统一视觉语言：绿色可申、红色不符合、琥珀需确认、灰色建议性 */
+/** 四种判定结果的统一视觉语言：绿色可申、红色不符合、琥珀待补充、灰色建议性 */
 export const VERDICT_META: Record<Verdict, VerdictMeta> = {
   pass: {
     label: '符合',
@@ -25,8 +25,8 @@ export const VERDICT_META: Record<Verdict, VerdictMeta> = {
     dot: 'bg-rose-500',
   },
   unknown: {
-    label: '需人工确认',
-    short: '待确认',
+    label: '待补充',
+    short: '待填',
     badge: 'bg-amber-50 text-amber-700 border-amber-200',
     card: 'border-amber-200 bg-amber-50/40',
     dot: 'bg-amber-500',
