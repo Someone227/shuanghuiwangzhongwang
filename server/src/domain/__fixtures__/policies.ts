@@ -108,7 +108,7 @@ export const scholarshipPolicy: Policy = {
   extraction: { engine: 'manual', at: '2026-10-25T00:00:00+08:00' },
 };
 
-/** 带 any 组 + autoUncertain 条件的样本 */
+/** 带 any 组的样本（另含一条留空才 unknown 的条件） */
 export const subsidyPolicy: Policy = {
   id: 'fixture-subsidy',
   title: '【测试样本】人才租房补贴',
@@ -170,7 +170,6 @@ export const subsidyPolicy: Policy = {
           docRef: 's2',
           quote: '家庭在本市无自有住房（由系统核验）。',
           required: true,
-          autoUncertain: true,
         },
       ],
     },

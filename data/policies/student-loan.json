@@ -113,37 +113,14 @@
       "type": "text"
     },
     {
-      "key": "household.province",
-      "label": "生源地所在省（区、市）",
-      "type": "text"
-    },
-    {
       "key": "economy.familyDifficulty",
       "label": "家庭经济困难情况（收入不足以支付在校期间基本费用）",
       "type": "boolean"
     },
     {
-      "key": "loan.annualAmount",
-      "label": "本年度申请贷款金额",
-      "type": "number",
-      "unit": "元"
-    },
-    {
       "key": "loan.hasNationalLoanThisYear",
       "label": "本年度是否已获得高校国家助学贷款",
       "type": "boolean"
-    },
-    {
-      "key": "education.programYears",
-      "label": "学制年限",
-      "type": "number",
-      "unit": "年"
-    },
-    {
-      "key": "education.remainingYears",
-      "label": "在校生剩余学习年限",
-      "type": "number",
-      "unit": "年"
     }
   ],
   "conditions": [
@@ -162,7 +139,6 @@
           "docRef": "s2",
           "quote": "1.具有中华人民共和国国籍；",
           "required": true,
-          "autoUncertain": false,
           "hint": "本贷款仅面向中国国籍学生，如非中国国籍可咨询就读高校的国际学生资助渠道"
         },
         {
@@ -174,7 +150,6 @@
           "docRef": "s2",
           "quote": "2.诚实守信，遵纪守法；",
           "required": true,
-          "autoUncertain": true,
           "hint": "需由县级学生资助管理中心及经办银行审核信用与品行情况，如有不良记录请先咨询当地资助中心"
         }
       ]
@@ -197,7 +172,6 @@
           "docRef": "s2",
           "quote": "取得真实、合法、有效的录取通知书的新生或高校在读的本专科学生、研究生和第二学士学生",
           "required": true,
-          "autoUncertain": false,
           "hint": "尚未被高校正式录取的学生暂不符合，可先申请生源地信用助学贷款预登记或入学后咨询高校资助中心"
         },
         {
@@ -215,7 +189,6 @@
           "docRef": "s2",
           "quote": "已被根据国家有关规定批准设立、实施高等学历教育的全日制普通本科高校、高等职业学校和高等专科学校（含民办高校和独立学院，学校名单以教育部公布的为准）正式录取",
           "required": true,
-          "autoUncertain": false,
           "hint": "请核对学校是否在教育部公布名单内，非学历教育机构不在贷款范围内"
         },
         {
@@ -231,7 +204,6 @@
           "docRef": "s2",
           "quote": "高校在读的本专科学生、研究生和第二学士学生",
           "required": true,
-          "autoUncertain": false,
           "hint": "其他类型学生请咨询当地县级学生资助管理中心确认是否符合"
         }
       ]
@@ -251,7 +223,6 @@
           "docRef": "s2",
           "quote": "4.学生本人入学前户籍、其父母（或其他法定监护人）户籍均在本县（市、区）；",
           "required": true,
-          "autoUncertain": false,
           "hint": "请到学生本人入学前户籍所在县（市、区）的学生资助管理中心办理，跨县无法受理"
         },
         {
@@ -263,7 +234,6 @@
           "docRef": "s2",
           "quote": "4.学生本人入学前户籍、其父母（或其他法定监护人）户籍均在本县（市、区）；",
           "required": true,
-          "autoUncertain": false,
           "hint": "父母或法定监护人户籍也须与申请县一致，如不一致请咨询当地资助中心是否有例外处理"
         }
       ]
@@ -283,30 +253,16 @@
           "docRef": "s2",
           "quote": "5.家庭经济困难，所能获得的收入不足以支付在校期间完成学业所需的基本费用。",
           "required": true,
-          "autoUncertain": true,
           "hint": "需由县级学生资助管理中心调查认定，请提前准备家庭经济困难证明材料"
         }
       ]
     },
     {
       "id": "g5",
-      "name": "贷款额度与不重复贷款条件",
+      "name": "不重复贷款条件",
       "logic": "all",
       "docRef": "s3",
       "conditions": [
-        {
-          "id": "c9",
-          "field": "loan.annualAmount",
-          "label": "每年申请贷款金额不超过6000元",
-          "operator": "lte",
-          "value": 6000,
-          "unit": "元",
-          "docRef": "s3",
-          "quote": "每个借款人每年申请的贷款原则上最高不超过6000元",
-          "required": true,
-          "autoUncertain": true,
-          "hint": "原文写的是2008年的标准（每年最高不超过6000元）。现行本专科生每年最高20000元、研究生25000元，请按当地经办银行和县级学生资助管理中心当年规定填写。"
-        },
         {
           "id": "c10",
           "field": "loan.hasNationalLoanThisYear",
@@ -316,46 +272,7 @@
           "docRef": "s3",
           "quote": "高校在读学生当年在高校获得了国家助学贷款的，不得同时申请生源地信用助学贷款。",
           "required": true,
-          "autoUncertain": false,
           "hint": "已获得高校国家助学贷款的学生不能重复申请，可在下一年度改申请生源地信用助学贷款"
-        }
-      ]
-    },
-    {
-      "id": "g6",
-      "name": "开展省份条件",
-      "logic": "any",
-      "docRef": "s6",
-      "conditions": [
-        {
-          "id": "c11",
-          "field": "household.province",
-          "label": "生源地为江苏、湖北、重庆、甘肃、陕西5省市",
-          "operator": "in",
-          "value": [
-            "江苏",
-            "湖北",
-            "重庆",
-            "甘肃",
-            "陕西"
-          ],
-          "docRef": "s6",
-          "quote": "江苏、湖北、重庆、甘肃、陕西5省市进一步总结经验，完善机制，巩固成果，继续开展生源地信用助学贷款工作。",
-          "required": true,
-          "autoUncertain": true,
-          "hint": "原文只列出5个试点省份，那是2008年的情况；目前全国各省（区、市）都已开展生源地信用助学贷款，请向户籍所在县级学生资助管理中心确认。"
-        },
-        {
-          "id": "c12",
-          "field": "household.province",
-          "label": "其他省份已按自愿原则报财政部、教育部备案开展",
-          "operator": "eq",
-          "value": "已备案开展",
-          "docRef": "s6",
-          "quote": "其他各省（区、市）按照自愿原则，综合考虑当地高校家庭经济困难学生贷款需求和高校国家助学贷款工作开展情况，经报财政部、教育部备案，可开展生源地信用助学贷款。",
-          "required": true,
-          "autoUncertain": true,
-          "hint": "原文的“已备案开展”无法从个人信息中判定；目前全国均已开展，请向户籍所在县级学生资助管理中心确认。"
         }
       ]
     }
@@ -424,7 +341,8 @@
       "notes 追加【现行范围】提示：原文5个试点省份已过时，现全国均已开展。",
       "条件 c9（贷款金额不超过6000元）标为 autoUncertain，改为「需人工确认」并提示现行额度。",
       "条件 c11（生源地为5个试点省份）标为 autoUncertain，避免非试点省份用户被误判为不符合。",
-      "条件 c12（其他省份已备案开展）标为 autoUncertain：该条无法由个人信息判定。"
+      "条件 c12（其他省份已备案开展）标为 autoUncertain：该条无法由个人信息判定。",
+      "按反馈调整：取消「需人工确认」状态，主观类条件改由用户自填后直接判定；删除已过时的 6000 元贷款额度条款与 2008 年试点省份条款（现行标准见 notes）。 删除字段：household.province、loan.annualAmount、education.programYears、education.remainingYears"
     ]
   },
   "cleaning": {

@@ -110,22 +110,18 @@ interface CheckOutcome {
 }
 
 export function checkCondition(condition: Condition, actual: unknown, profile?: Profile): CheckOutcome {
-  if (condition.autoUncertain) {
-    return { ok: null, reason: '该条件无法自动判定，需要人工确认' };
-  }
-
   const templated = resolveTemplate(condition.value, profile);
   if (!templated.ok) {
     return { ok: null, reason: `需要先填写「${templated.missing}」才能对比` };
   }
 
-  if (condition.operator === 'exists') {
-    const ok = !isEmpty(actual) && actual !== false;
-    return { ok, reason: ok ? '已提供相关信息' : '缺少这项信息' };
+  if (isEmpty(actual)) {
+    return { ok: null, reason: '你还没填写这一项' };
   }
 
-  if (isEmpty(actual)) {
-    return { ok: null, reason: '你的情况里缺少这一项，暂时无法判断' };
+  if (condition.operator === 'exists') {
+    const ok = actual !== false;
+    return { ok, reason: ok ? '已提供相关信息' : '缺少这项信息' };
   }
 
   const value = templated.value;
@@ -173,7 +169,7 @@ export function checkCondition(condition: Condition, actual: unknown, profile?: 
       return { ok: condition.operator === 'eq' ? eq : !eq, reason: `你的情况是「${humanize(actual)}」` };
     }
     default:
-      return { ok: null, reason: '未知的比较方式，需人工确认' };
+      return { ok: null, reason: '未知的比较方式' };
   }
 }
 
@@ -254,7 +250,7 @@ function buildHeadline(policy: Policy, overall: Verdict, summary: EvaluationSumm
   if (overall === 'fail') {
     return `暂不符合：有 ${summary.fail} 项硬性条件不满足，具体差在哪见下方逐条判定。`;
   }
-  return `还不能下结论：有 ${summary.unknown} 项条件需要你补充信息或人工确认。`;
+  return `还不能下结论：有 ${summary.unknown} 项还没填写，补上就能出结论。`;
 }
 
 function buildMissingMaterials(policy: Policy, conditions: ConditionResult[]): string[] {

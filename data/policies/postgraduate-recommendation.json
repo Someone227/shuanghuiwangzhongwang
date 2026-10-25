@@ -148,7 +148,6 @@
           "docRef": "s1",
           "quote": "纳入国家普通本科招生计划录取的应届毕业生（不含专升本、第二学士学位、独立学院学生）",
           "required": true,
-          "autoUncertain": false,
           "hint": "专升本、第二学士学位、独立学院学生不符合推免资格，可关注统考或其他升学途径"
         },
         {
@@ -160,7 +159,6 @@
           "docRef": "s1",
           "quote": "纳入国家普通本科招生计划录取的应届毕业生",
           "required": true,
-          "autoUncertain": false,
           "hint": "请确认学籍是否属于国家普通本科招生计划录取"
         },
         {
@@ -172,7 +170,6 @@
           "docRef": "s1",
           "quote": "应届毕业生",
           "required": true,
-          "autoUncertain": false,
           "hint": "非应届毕业年级学生暂不符合，可在毕业学年申请"
         }
       ]
@@ -192,7 +189,6 @@
           "docRef": "s1",
           "quote": "身心健康",
           "required": true,
-          "autoUncertain": true,
           "hint": "身心健康需由学校按体检等标准综合认定，请咨询所在院系"
         }
       ]
@@ -212,7 +208,6 @@
           "docRef": "s1",
           "quote": "勤奋学习，刻苦钻研，成绩优秀；学术研究兴趣浓厚，有较强的创新意识、创新能力和专业能力倾向",
           "required": true,
-          "autoUncertain": true,
           "hint": "成绩优秀及综合测评由学校制定具体标准，请查阅本校推免实施办法"
         }
       ]
@@ -232,7 +227,6 @@
           "docRef": "s1",
           "quote": "诚实守信，学风端正，无任何考试作弊和剽窃他人学术成果记录",
           "required": true,
-          "autoUncertain": false,
           "hint": "有考试作弊或剽窃记录者不符合推免条件"
         },
         {
@@ -244,7 +238,6 @@
           "docRef": "s1",
           "quote": "品行表现优良，无任何违法违纪受处分记录",
           "required": true,
-          "autoUncertain": false,
           "hint": "有违法违纪受处分记录者不符合推免条件"
         }
       ]
@@ -264,7 +257,6 @@
           "docRef": "s1",
           "quote": "对有特殊学术专长或具有突出培养潜质者，经三名以上本校本专业教授联名推荐，经学校推免生遴选工作领导小组严格审查，可不受综合排名限制",
           "required": false,
-          "autoUncertain": true,
           "hint": "如无特殊学术专长，请按综合排名正常申请"
         },
         {
@@ -277,7 +269,6 @@
           "docRef": "s1",
           "quote": "经三名以上本校本专业教授联名推荐",
           "required": false,
-          "autoUncertain": false,
           "hint": "特殊学术专长通道需至少3名本校本专业教授联名推荐"
         }
       ]
@@ -297,7 +288,6 @@
           "docRef": "s2",
           "quote": "符合申请条件的学生，可向学校提交申请，填写《普通高等学校推荐免试攻读硕士学位研究生资格申请表》，并提交相应证明材料",
           "required": true,
-          "autoUncertain": false,
           "hint": "请按学校通知提交资格申请表及证明材料"
         },
         {
@@ -309,7 +299,6 @@
           "docRef": "s2",
           "quote": "通过初选的学生，要填写教育部统一制定格式的《全国推荐免试攻读硕士学位研究生登记表》",
           "required": true,
-          "autoUncertain": false,
           "hint": "通过初选后须填写《推免生登记表》并经院系推荐工作小组审核盖章"
         },
         {
@@ -322,7 +311,6 @@
           "docRef": "s2",
           "quote": "公示期不少于7天",
           "required": true,
-          "autoUncertain": false,
           "hint": "未经公示的推免生资格无效，请关注学校公示安排"
         }
       ]
@@ -342,7 +330,6 @@
           "docRef": "s3",
           "quote": "具有推免生资格的考生被录取后仍须参加全国硕士研究生招生考试网上报名，并按规定及时到指定报考点予以现场确认",
           "required": true,
-          "autoUncertain": false,
           "hint": "取得推免资格并被录取后，务必按时完成网上报名和现场确认，否则影响录取"
         },
         {
@@ -354,7 +341,6 @@
           "docRef": "s4",
           "quote": "入学前未取得学士学位或本科毕业证书，或受到处分的，取消录取资格",
           "required": true,
-          "autoUncertain": false,
           "hint": "入学前须取得学士学位或本科毕业证书，否则取消录取资格"
         }
       ]
@@ -425,7 +411,8 @@
     "reviewedAt": "2026-10-25",
     "reviewer": "团队人工复核",
     "changes": [
-      "notes 追加【现行补充】提示：名额分配与信息公开以教育部当年通知为准。"
+      "notes 追加【现行补充】提示：名额分配与信息公开以教育部当年通知为准。",
+      "按反馈调整：取消「需人工确认」状态，主观类条件改由用户自填后直接判定；删除已过时的 6000 元贷款额度条款与 2008 年试点省份条款（现行标准见 notes）。"
     ]
   },
   "cleaning": {

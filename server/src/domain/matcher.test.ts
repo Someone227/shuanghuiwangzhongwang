@@ -80,7 +80,7 @@ test('字段缺失 -> unknown，而不是误判 fail', () => {
   assert.equal(result.overall, 'unknown');
   const grade = result.conditions.find((c) => c.conditionId === 'c3');
   assert.equal(grade?.verdict, 'unknown');
-  assert.match(result.headline, /补充信息|人工确认/);
+  assert.match(result.headline, /还没填写/);
 });
 
 test('建议性条件不满足只记 warn，不影响总体结论', () => {
@@ -103,12 +103,20 @@ test('any 组：满足其一即通过', () => {
   assert.equal(neither.groups.find((g) => g.groupId === 'g1')?.verdict, 'fail');
 });
 
-test('autoUncertain 条件 -> unknown 且提示人工确认', () => {
-  const result = evaluate(subsidyPolicy, { education: { degree: '本科' }, title: { level: '无' } });
-  const housing = result.conditions.find((c) => c.conditionId === 'c3');
+test('留空的条件判为 unknown，填上后直接给出结论', () => {
+  const missing = evaluate(subsidyPolicy, { education: { degree: '本科' }, title: { level: '无' } });
+  const housing = missing.conditions.find((c) => c.conditionId === 'c3');
   assert.equal(housing?.verdict, 'unknown');
-  assert.match(housing?.reason ?? '', /人工确认/);
-  assert.equal(result.overall, 'unknown');
+  assert.match(housing?.reason ?? '', /还没填写/);
+  assert.equal(missing.overall, 'unknown');
+
+  const filled = evaluate(subsidyPolicy, {
+    education: { degree: '本科' },
+    title: { level: '无' },
+    'housing.checkResult': '已核验无房',
+  });
+  assert.equal(filled.conditions.find((c) => c.conditionId === 'c3')?.verdict, 'pass');
+  assert.equal(filled.overall, 'pass');
 });
 
 test('模板值 {{field}}：两个用户字段相互比较', () => {

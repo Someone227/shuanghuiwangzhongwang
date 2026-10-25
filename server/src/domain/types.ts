@@ -5,7 +5,7 @@
  * 1. 政策原文切成 section，每个条件都能通过 docRef 精确回溯到原文段落 —— 判定有据可查。
  * 2. 条件是可判定的原子表达式（operator + field + value），不依赖大模型 —— 运行期零 token。
  * 3. 条件组支持 all / any 逻辑，覆盖「同时满足若干基本条件」与「满足任一专项条件」两类政策写法。
- * 4. autoUncertain 标记不可自动判定的条件（如「家庭经济困难」需认定），一律输出「需人工确认」而不误判。
+ * 4. 所有条件都按用户填写直接判定：填了就给出符合/不符合，留空才标记「待补充」，不替用户拍板。
  */
 
 export type PolicyLevel = '国家级' | '省级' | '市级' | '区级' | '校级';
@@ -56,8 +56,6 @@ export interface Condition {
   quote: string;
   /** 硬性条件（true）不满足即不具备资格；false 为建议性条件，不满足只提示 */
   required: boolean;
-  /** 无法自动判定，必须人工确认 */
-  autoUncertain?: boolean;
   /** 不满足时给用户的建议 */
   hint?: string;
 }

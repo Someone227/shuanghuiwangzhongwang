@@ -77,22 +77,24 @@ test('政策库：每段都有准确的字符偏移（前端高亮依赖）', ()
   }
 });
 
-test('人工复核：助学贷款的过时条件判为「需确认」而不是误判', () => {
+test('人工复核：助学贷款的过时条款已从条件树移除，不参与判定', () => {
   const loan = policies.find((p) => p.id === 'student-loan');
   assert.ok(loan, '缺少 student-loan 政策');
   assert.equal(loan!.review?.humanReviewed, true, 'student-loan 未标记人工复核');
 
-  const result = evaluate(loan!, {});
-  const byId = new Map(result.conditions.map((c) => [c.conditionId, c]));
+  const ids = loan!.conditions.flatMap((g) => g.conditions.map((c) => c.id));
   for (const id of ['c9', 'c11', 'c12']) {
-    const cond = byId.get(id);
-    assert.ok(cond, `判定结果缺少条件 ${id}`);
-    assert.equal(cond!.verdict, 'unknown', `${id} 应判为需人工确认，实际是 ${cond!.verdict}`);
+    assert.ok(!ids.includes(id), `过时条件 ${id} 仍在条件树里`);
   }
+
+  const result = evaluate(loan!, {});
   assert.notEqual(result.overall, 'fail', '空资料下不应直接判为不符合');
+  for (const cond of result.conditions) {
+    assert.equal(cond.verdict, 'unknown', `空资料时 ${cond.conditionId} 应等待补充，实际是 ${cond.verdict}`);
+  }
 });
 
-test('政策库：五份政策都能完成判定并给出结论', () => {
+test('政策库：每份政策都能完成判定并给出结论', () => {
   for (const policy of policies) {
     const result = evaluate(policy, {});
     assert.equal(result.policyId, policy.id);
@@ -112,9 +114,7 @@ test('前端表单格式（扁平键画像）能驱动真实政策判定', () =>
     'household.studentHukouCounty': '江宁区',
     'household.parentHukouCounty': '江宁区',
     'household.applyCounty': '江宁区',
-    'household.province': '江苏',
     'economy.familyDifficulty': true,
-    'loan.annualAmount': 8000,
     'loan.hasNationalLoanThisYear': false,
   };
   const result = evaluate(loan, profile);
@@ -126,7 +126,7 @@ test('前端表单格式（扁平键画像）能驱动真实政策判定', () =>
   assert.equal(byId.get('c10')?.verdict, 'pass', '未获国家助学贷款应判为符合');
   // 布尔值在理由里要显示成中文，而不是 true/false
   assert.match(byId.get('c10')?.reason ?? '', /否/);
-  assert.ok(result.summary.pass >= 6, `只判出 ${result.summary.pass} 项符合，扁平画像可能没被读到`);
+  assert.ok(result.summary.pass >= 8, `只判出 ${result.summary.pass} 项符合，扁平画像可能没被读到`);
 });
 
 test('政策库：原文只保留条款，网页页脚噪声已清洗', () => {
