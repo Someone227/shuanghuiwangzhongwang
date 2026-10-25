@@ -22,9 +22,9 @@ const stacks = ['Vue 3', 'Vite', 'Tailwind v4', 'TypeScript', 'Express', 'DeepSe
         已收录 5 份国家级政策 · 逐条判定 + 原文回溯
       </span>
 
-      <h1 class="mt-5 text-4xl font-bold tracking-tight text-balance text-slate-900 sm:text-5xl">
+      <h1 class="mt-5 text-3xl leading-snug font-semibold tracking-tight text-balance text-slate-800 sm:text-4xl">
         贴一份政策原文，
-        <span class="text-brand-600">30 秒</span>
+        <span class="text-brand-500">30 秒</span>
         知道自己够不够格。
       </h1>
 
