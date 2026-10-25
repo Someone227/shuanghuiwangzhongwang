@@ -21,7 +21,7 @@
 这样设计的原因：
 
 1. **现场演示不烧钱**：任何人克隆仓库、不配 Key 就能完整跑通判定（政策库已随仓库提交）。
-2. **可复现、可测试**：判定结果只由「条件树 + 用户输入」决定，同一份输入永远同一份结论，19 个单元测试覆盖引擎与政策库数据契约。
+2. **可复现、可测试**：判定结果只由「条件树 + 用户输入」决定，同一份输入永远同一份结论，34 个单元测试覆盖判定引擎、政策库数据契约与账号体系。
 3. **可解释、可追溯**：每条条件都带原文段落引用（`docRef` + `quote`），测试断言每句 quote 都能在原文中逐字找到 —— 大模型没有编造条款的空间。
 4. **过时条款显式标注**：政策原文里的历史金额、试点省份等已失效条款被标为「需人工确认」，并在页面顶部提示现行标准，不假装它还有效。
 
@@ -57,6 +57,7 @@
 | 政策数据 | JSON 条件树（`data/policies/`），无数据库、无运行期外部依赖 |
 | 判定引擎 | `server/src/domain/matcher.ts`：纯函数，支持 eq/ne/in/notIn/gte/lte/gt/lt/contains/exists 与字段间模板比较 |
 | 大模型 | DeepSeek API `deepseek-chat`（JSON Output，temperature 0），仅用于开发期抽取 |
+| 账号体系 | 账号与个人数据存服务端 JSON（`data/users.json`、`data/user-data.json`，均在 `.gitignore` 中）；密码 scrypt 加盐哈希；登录令牌为无状态 HMAC-SHA256 签名，多台设备可同时登录 |
 | 测试 | `tsx --test`（判定引擎 + 政策库数据契约，覆盖条件判定、模板比较、原文回溯与噪声清洗） |
 
 ## 快速开始
@@ -78,6 +79,19 @@ pnpm dev
 **不配置 API Key 也能完整使用**：政策库已随仓库提交，判定全部在本地完成。
 只有需要重新抽取政策时才需要 Key（见下文「环境变量」）。
 
+### 演示账号（评审查验用）
+
+| 账号 | 密码 | 说明 |
+| --- | --- | --- |
+| `demo` | `NengShenMa2026` | 公开演示账号，多台电脑可同时登录 |
+
+- 登录页：http://localhost:5173/login，左侧有「一键填入演示账号」按钮。
+- 账号、填写草稿与判定记录都存在**服务端**（`data/users.json`、`data/user-data.json`）：
+  在学校机房填到一半、回宿舍换台电脑用同一账号登录，草稿和判定记录仍在 —— 评审可以在任何一台电脑上直接登录查验。
+- 演示账号由服务端首次启动时自动创建（幂等）；密码可用环境变量 `DEMO_ACCOUNT_PASSWORD` 覆盖，想换密码需先删除 `data/users.json` 再启动。
+- **不登录也能完整使用判定功能**，登录只用于跨设备同步草稿与判定记录。
+- 同一局域网的其他电脑访问：前端默认只监听 `127.0.0.1`，需要时把 `web/vite.config.ts` 的 `server.host` 改为 `0.0.0.0`（后端同理改 `PORT` 监听地址），再用本机内网 IP 访问。
+
 ### 常用命令
 
 ```bash
@@ -97,6 +111,9 @@ pnpm build         # 前端生产构建
 | `DEEPSEEK_API_KEY` | DeepSeek API Key（只在运行抽取脚本时需要） |
 | `DEEPSEEK_BASE_URL` | 默认 `https://api.deepseek.com` |
 | `DEEPSEEK_MODEL_CHAT` | 默认 `deepseek-chat` |
+| `DEMO_ACCOUNT_PASSWORD` | 演示账号 `demo` 的密码，默认 `NengShenMa2026` |
+| `AUTH_SECRET` | 登录令牌签名密钥；不填则首次启动自动生成 `data/.auth-secret` |
+| `USERS_FILE` / `USERDATA_FILE` | 账号与个人数据文件路径，默认 `data/users.json`、`data/user-data.json` |
 
 ## 目录结构
 
@@ -104,18 +121,22 @@ pnpm build         # 前端生产构建
 .
 ├── web/                          # 前端（Vue 3 + Vite）
 │   └── src/
-│       ├── views/                # 落地页 / 政策库 / 匹配页
+│       ├── views/                # 落地页 / 政策库 / 匹配页 / 登录注册 / 个人中心
 │       ├── components/           # 动态表单、判定报告、原文对照
-│       ├── lib/                  # API 封装、字段分组、结论样式
+│       ├── lib/                  # API 封装、登录态与个人数据同步、字段分组、结论样式
 │       └── router/
 ├── server/                       # 后端（Express + TypeScript）
 │   ├── src/
 │   │   ├── domain/               # 条件树类型、判定引擎及其测试
 │   │   ├── policies/             # 读取 data/policies 的存储层
-│   │   └── routes/               # /api/policies、/api/health
+│   │   ├── auth/                 # 密码哈希、账号存储、令牌签发、鉴权中间件
+│   │   ├── userdata/             # 按账号保存草稿与判定记录
+│   │   └── routes/               # /api/policies、/api/auth、/api/me、/api/health
 │   └── scripts/                  # 抽取、复核、清洗、偏移修复脚本
 ├── data/
-│   └── policies/                 # 政策原文与条件树 JSON（随仓库提交）
+│   ├── policies/                 # 政策原文与条件树 JSON（随仓库提交）
+│   ├── users.json                # 账号数据（本地产物，不入库）
+│   └── user-data.json            # 草稿与判定记录（本地产物，不入库）
 ├── docs/
 │   └── ai-log/                   # AI 协同记录（每次抽取的请求/响应/用量）
 ├── tools/
@@ -152,5 +173,6 @@ pnpm build         # 前端生产构建
 
 - [x] 前后端骨架、判定引擎、五份政策库
 - [x] 政策库读取/判定 API 与前端三页面
+- [x] 注册登录、演示账号与多设备草稿/记录同步
 - [ ] 技术文档 PDF（≤30 页，需含架构图、时序图、AI 调用链路、数据来源与风险说明）
 - [ ] 演示视频（5–8 分钟，1080p）
