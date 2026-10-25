@@ -96,7 +96,7 @@ onMounted(load);
         </button>
       </div>
       <p class="mt-4 rounded-lg bg-slate-50 px-3 py-2 text-xs leading-relaxed text-slate-500">
-        账号与填写进度都存在服务端：换一台电脑用同一账号登录，草稿和判定记录会自动同步过来。
+        账号和判定记录都存在服务端：换一台电脑用同一账号登录，历史判定仍能看到。填写的内容不会被保存，离开判定页就清空。
       </p>
     </section>
 
