@@ -65,7 +65,7 @@ const statItems = [
       <span
         class="inline-flex items-center gap-1.5 rounded-full border border-brand-200 bg-brand-50 px-3 py-1 text-xs font-medium text-brand-700"
       >
-        已收录 {{ totals?.policies ?? 31 }} 份国家级政策 · 逐条判定 + 原文回溯
+        已收录 {{ totals?.policies ?? 32 }} 份国家级政策 · 逐条判定 + 原文回溯
       </span>
 
       <h1 class="mt-5 text-3xl leading-snug font-semibold tracking-tight text-balance text-slate-800 sm:text-4xl">

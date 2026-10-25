@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue';
+import { computed, onMounted, ref, watch } from 'vue';
 import { RouterLink } from 'vue-router';
 
 import type { PolicySummary } from '@/lib/api';
@@ -66,6 +66,29 @@ const filtered = computed(() => {
   });
 });
 
+/** 每页 8 份，32 份政策正好四页 */
+const PAGE_SIZE = 8;
+const currentPage = ref(1);
+
+const totalPages = computed(() => Math.max(1, Math.ceil(filtered.value.length / PAGE_SIZE)));
+const paged = computed(() => {
+  const start = (currentPage.value - 1) * PAGE_SIZE;
+  return filtered.value.slice(start, start + PAGE_SIZE);
+});
+
+function goPage(n: number): void {
+  currentPage.value = Math.min(Math.max(1, n), totalPages.value);
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// 换筛选条件或搜新词时回到第一页；结果变少时把页码夹回范围内
+watch([keyword, activeCategory], () => {
+  currentPage.value = 1;
+});
+watch(totalPages, (n) => {
+  if (currentPage.value > n) currentPage.value = n;
+});
+
 onMounted(load);
 </script>
 
@@ -73,7 +96,7 @@ onMounted(load);
   <div class="mx-auto max-w-6xl px-6 py-12">
     <header class="max-w-3xl">
       <span class="inline-flex items-center rounded-full border border-brand-200 bg-brand-50 px-3 py-1 text-xs font-medium text-brand-700">
-        政策库 · 已收录 {{ policies.length || 31 }} 份国家级政策
+        政策库 · 已收录 {{ policies.length || 32 }} 份国家级政策
       </span>
       <h1 class="mt-4 text-3xl font-bold tracking-tight text-slate-900">选一份政策，看看自己够不够格</h1>
       <p class="mt-3 text-sm leading-relaxed text-slate-600">
@@ -83,7 +106,7 @@ onMounted(load);
     </header>
 
     <div v-if="loading" class="mt-10 grid gap-4 sm:grid-cols-2">
-      <div v-for="i in 4" :key="i" class="h-48 animate-pulse rounded-2xl border border-slate-200 bg-white" />
+      <div v-for="i in 8" :key="i" class="h-48 animate-pulse rounded-2xl border border-slate-200 bg-white" />
     </div>
 
     <div v-else-if="error" class="mt-10 rounded-2xl border border-rose-200 bg-rose-50 p-6">
@@ -141,7 +164,7 @@ onMounted(load);
 
       <div v-else class="mt-5 grid gap-4 sm:grid-cols-2">
         <article
-          v-for="policy in filtered"
+          v-for="policy in paged"
           :key="policy.id"
           class="group flex flex-col rounded-2xl border border-slate-200 bg-white p-5 transition hover:border-brand-300 hover:shadow-sm"
         >
@@ -191,14 +214,54 @@ onMounted(load);
       </div>
     </template>
 
+    <nav v-if="!loading && !error && filtered.length > 0" class="mt-8 flex flex-col items-center gap-3">
+      <div class="flex flex-wrap items-center justify-center gap-2">
+        <button
+          type="button"
+          class="rounded-lg border px-3 py-2 text-sm transition"
+          :class="
+            currentPage === 1
+              ? 'cursor-not-allowed border-slate-200 bg-white text-slate-300'
+              : 'border-slate-200 bg-white text-slate-600 hover:border-brand-300 hover:text-brand-700'
+          "
+          :disabled="currentPage === 1"
+          @click="goPage(currentPage - 1)"
+        >
+          ← 上一页
+        </button>
+        <button
+          v-for="n in totalPages"
+          :key="n"
+          type="button"
+          class="h-9 w-9 rounded-lg border text-sm font-medium tabular-nums transition"
+          :class="
+            n === currentPage
+              ? 'border-brand-600 bg-brand-600 text-white'
+              : 'border-slate-200 bg-white text-slate-600 hover:border-brand-300 hover:text-brand-700'
+          "
+          @click="goPage(n)"
+        >
+          {{ n }}
+        </button>
+        <button
+          type="button"
+          class="rounded-lg border px-3 py-2 text-sm transition"
+          :class="
+            currentPage === totalPages
+              ? 'cursor-not-allowed border-slate-200 bg-white text-slate-300'
+              : 'border-slate-200 bg-white text-slate-600 hover:border-brand-300 hover:text-brand-700'
+          "
+          :disabled="currentPage === totalPages"
+          @click="goPage(currentPage + 1)"
+        >
+          下一页 →
+        </button>
+      </div>
+      <p class="text-xs text-slate-400">第 {{ currentPage }} / {{ totalPages }} 页 · 共 {{ filtered.length }} 份</p>
+    </nav>
+
     <p class="mt-8 text-xs text-slate-400">
       政策原文均来自教育部、全国学生资助管理中心等官方网站；条款抽取由大模型完成，并逐条人工复核，过时条款已显式标注。
     </p>
-
-    <div v-if="!loading && !error && filtered.length" class="mt-10 flex items-center gap-3 text-xs text-slate-300">
-      <span class="h-px flex-1 bg-slate-200" />
-      <span>没有更多了 · 共 {{ filtered.length }} 份</span>
-      <span class="h-px flex-1 bg-slate-200" />
-    </div>
   </div>
 </template>
