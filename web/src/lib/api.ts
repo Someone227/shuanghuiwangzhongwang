@@ -10,7 +10,24 @@ import { request } from './http';
 export type Verdict = 'pass' | 'fail' | 'unknown' | 'warn';
 export type FieldType = 'text' | 'number' | 'boolean' | 'select' | 'multiselect';
 export type PolicyLevel = '国家级' | '省级' | '市级' | '区级' | '校级';
-export type PolicyCategory = '奖学金' | '助学金' | '助学贷款' | '推免保研' | '人才补贴' | '专项补贴' | '其他';
+export type PolicyCategory =
+  | '奖学金'
+  | '助学金'
+  | '助学贷款'
+  | '勤工助学'
+  | '入伍资助'
+  | '困难认定'
+  | '基层就业'
+  | '推免保研'
+  | '升学专项'
+  | '学前教育'
+  | '义务教育'
+  | '普通高中'
+  | '中职资助'
+  | '社会救助'
+  | '人才补贴'
+  | '专项补贴'
+  | '其他';
 
 export interface PolicySection {
   id: string;
@@ -41,7 +58,6 @@ export interface Condition {
   docRef: string;
   quote: string;
   required: boolean;
-  autoUncertain?: boolean;
   hint?: string;
 }
 

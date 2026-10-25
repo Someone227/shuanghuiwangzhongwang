@@ -15,7 +15,20 @@ const steps = [
 
 const stacks = ['Vue 3', 'Vite', 'Tailwind v4', 'TypeScript', 'Express', 'DeepSeek'];
 
-const sceneTags = ['国家奖学金', '励志奖学金', '助学金', '助学贷款', '勤工助学', '入伍资助', '困难认定', '基层就业代偿', '推免保研'];
+const sceneTags = [
+  '国家奖学金',
+  '励志奖学金',
+  '助学金',
+  '助学贷款',
+  '勤工助学',
+  '入伍资助',
+  '困难认定',
+  '基层就业',
+  '推免保研',
+  '公费师范',
+  '中职资助',
+  '社会救助',
+];
 
 const faqs = [
   {
@@ -75,7 +88,7 @@ const statItems = [
       <span
         class="inline-flex items-center gap-1.5 rounded-full border border-brand-200 bg-brand-50 px-3 py-1 text-xs font-medium text-brand-700"
       >
-        已收录 {{ totals?.policies ?? 12 }} 份国家级政策 · 逐条判定 + 原文回溯
+        已收录 {{ totals?.policies ?? 31 }} 份国家级政策 · 逐条判定 + 原文回溯
       </span>
 
       <h1 class="mt-5 text-3xl leading-snug font-semibold tracking-tight text-balance text-slate-800 sm:text-4xl">

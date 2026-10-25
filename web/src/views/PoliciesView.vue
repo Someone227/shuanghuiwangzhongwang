@@ -5,6 +5,24 @@ import { RouterLink } from 'vue-router';
 import type { PolicySummary } from '@/lib/api';
 import { listPolicies } from '@/lib/api';
 
+/** 分类筛选的固定顺序：先高校资助，再升学就业，最后基础教育与民生兜底 */
+const CATEGORY_ORDER = [
+  '奖学金',
+  '助学金',
+  '助学贷款',
+  '勤工助学',
+  '入伍资助',
+  '困难认定',
+  '基层就业',
+  '推免保研',
+  '升学专项',
+  '学前教育',
+  '义务教育',
+  '普通高中',
+  '中职资助',
+  '社会救助',
+];
+
 const policies = ref<PolicySummary[]>([]);
 const loading = ref(true);
 const error = ref('');
@@ -15,7 +33,13 @@ async function load(): Promise<void> {
   loading.value = true;
   error.value = '';
   try {
-    policies.value = await listPolicies();
+    const list = await listPolicies();
+    // 按分类顺序排列，同类内保持接口返回顺序，翻起来更像一本政策目录
+    const rank = (c: string): number => {
+      const i = CATEGORY_ORDER.indexOf(c);
+      return i === -1 ? CATEGORY_ORDER.length : i;
+    };
+    policies.value = [...list].sort((a, b) => rank(a.category) - rank(b.category));
   } catch (err) {
     error.value = err instanceof Error ? err.message : '政策库加载失败';
   } finally {
@@ -24,11 +48,13 @@ async function load(): Promise<void> {
 }
 
 const categories = computed(() => {
-  const seen: string[] = [];
+  const seen = new Set<string>();
   for (const p of policies.value) {
-    if (p.category && !seen.includes(p.category)) seen.push(p.category);
+    if (p.category) seen.add(p.category);
   }
-  return ['全部', ...seen];
+  const ordered = CATEGORY_ORDER.filter((c) => seen.has(c));
+  const rest = [...seen].filter((c) => !CATEGORY_ORDER.includes(c));
+  return ['全部', ...ordered, ...rest];
 });
 
 const filtered = computed(() => {
@@ -47,7 +73,7 @@ onMounted(load);
   <div class="mx-auto max-w-6xl px-6 py-12">
     <header class="max-w-3xl">
       <span class="inline-flex items-center rounded-full border border-brand-200 bg-brand-50 px-3 py-1 text-xs font-medium text-brand-700">
-        政策库 · 已收录 {{ policies.length || 12 }} 份国家级政策
+        政策库 · 已收录 {{ policies.length || 31 }} 份国家级政策
       </span>
       <h1 class="mt-4 text-3xl font-bold tracking-tight text-slate-900">选一份政策，看看自己够不够格</h1>
       <p class="mt-3 text-sm leading-relaxed text-slate-600">
