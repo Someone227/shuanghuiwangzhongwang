@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
 
 import { currentUser, isLoggedIn, logout, restoreSession } from '@/lib/auth';
 
@@ -21,6 +22,22 @@ const statusDot: Record<Status, string> = {
 
 const initial = computed(() => (currentUser.value?.displayName || currentUser.value?.username || '?').slice(0, 1).toUpperCase());
 
+const route = useRoute();
+const router = useRouter();
+
+// 首页不显示返回键；其余页面左上角常驻
+const showBack = computed(() => route.path !== '/');
+
+function goBack(): void {
+  const state = window.history.state as { back?: string | null } | null;
+  if (!state || typeof state.back !== 'string') {
+    // 没有站内上一页（如直接从外部链接打开），回首页而不是退出站点
+    void router.push('/');
+    return;
+  }
+  router.back();
+}
+
 async function handleLogout(): Promise<void> {
   await logout();
 }
@@ -41,16 +58,35 @@ onMounted(async () => {
   <div class="min-h-full flex flex-col bg-slate-50 text-slate-900">
     <header class="sticky top-0 z-10 border-b border-slate-200 bg-white/85 backdrop-blur">
       <div class="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-3 px-6 py-3">
-        <RouterLink to="/" class="flex items-center gap-3">
-          <span
-            class="flex h-9 w-9 items-center justify-center rounded-xl bg-brand-600 text-base font-bold text-white shadow-sm"
-            >申</span
+        <div class="flex items-center gap-3">
+          <button
+            v-if="showBack"
+            type="button"
+            title="返回上一页"
+            aria-label="返回上一页"
+            class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-500 transition hover:border-slate-300 hover:bg-slate-50 hover:text-slate-900"
+            @click="goBack"
           >
-          <span class="leading-tight">
-            <span class="block text-base font-semibold tracking-tight">能申吗</span>
-            <span class="block text-xs text-slate-500">政策资格匹配器</span>
-          </span>
-        </RouterLink>
+            <svg viewBox="0 0 20 20" fill="currentColor" class="h-4 w-4" aria-hidden="true">
+              <path
+                fill-rule="evenodd"
+                d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z"
+                clip-rule="evenodd"
+              />
+            </svg>
+          </button>
+
+          <RouterLink to="/" class="flex items-center gap-3">
+            <span
+              class="flex h-9 w-9 items-center justify-center rounded-xl bg-brand-600 text-base font-bold text-white shadow-sm"
+              >申</span
+            >
+            <span class="leading-tight">
+              <span class="block text-base font-semibold tracking-tight">能申吗</span>
+              <span class="block text-xs text-slate-500">政策资格匹配器</span>
+            </span>
+          </RouterLink>
+        </div>
 
         <div class="flex items-center gap-2">
           <div
