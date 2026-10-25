@@ -22,6 +22,8 @@ export interface PolicySection {
   /** 在 originalText 中的字符起始位置（用于前端高亮），由抽取阶段计算 */
   start?: number;
   end?: number;
+  /** 人工复核时按原文补齐过段落文本（修复 AI 抽取的截断/断句错误） */
+  repaired?: boolean;
 }
 
 /** 表单字段定义：前端据此动态生成「填自己」表单 */
@@ -83,6 +85,23 @@ export interface DeadlineItem {
   docRef?: string;
 }
 
+/**
+ * 人工复核记录。
+ *
+ * AI 抽取的是「原文写了什么」，但政策原文可能已经过时（如 2008 年的贷款额度）。
+ * 运行期不能联网取最新政策，所以在建库阶段由人复核，把「原文过时之处」显式标注出来，
+ * 让判定结果既忠于原文、又不会误导用户。
+ */
+export interface PolicyReview {
+  /** 是否已人工复核 */
+  humanReviewed: boolean;
+  /** 复核日期 YYYY-MM-DD */
+  reviewedAt: string;
+  reviewer?: string;
+  /** 具体改了什么，逐条留痕（可审计） */
+  changes: string[];
+}
+
 export interface Policy {
   id: string;
   title: string;
@@ -105,6 +124,8 @@ export interface Policy {
     model?: string;
     at: string;
   };
+  /** 人工复核记录：AI 建库 + 人工校订，两者叠加才是可用的政策库 */
+  review?: PolicyReview;
 }
 
 /** 用户填报的个人情况，键为 ProfileField.key */
