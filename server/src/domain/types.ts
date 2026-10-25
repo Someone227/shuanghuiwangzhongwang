@@ -126,6 +126,13 @@ export interface Policy {
   };
   /** 人工复核记录：AI 建库 + 人工校订，两者叠加才是可用的政策库 */
   review?: PolicyReview;
+  /** 原文清洗记录：只截断抓取时带入的网页页脚/移动端提示，正文条款未改动 */
+  cleaning?: {
+    cleanedAt: string;
+    removedChars: number;
+    removedFrom: string;
+    note: string;
+  };
 }
 
 /** 用户填报的个人情况，键为 ProfileField.key */
