@@ -45,16 +45,26 @@ async function api(method, path, body) {
   const maxAttempts = 4;
   let lastError = null;
   for (let attempt = 1; attempt <= maxAttempts; attempt++) {
-    const res = await fetch(API + path, {
-      method,
-      headers: {
-        Authorization: 'Bearer ' + token,
-        Accept: 'application/vnd.github+json',
-        'User-Agent': 'dsh-git-sync',
-        'X-GitHub-Api-Version': '2022-11-28',
-      },
-      body: body === undefined ? undefined : JSON.stringify(body),
-    });
+    let res;
+    try {
+      res = await fetch(API + path, {
+        method,
+        headers: {
+          Authorization: 'Bearer ' + token,
+          Accept: 'application/vnd.github+json',
+          'User-Agent': 'dsh-git-sync',
+          'X-GitHub-Api-Version': '2022-11-28',
+        },
+        body: body === undefined ? undefined : JSON.stringify(body),
+      });
+    } catch (err) {
+      // 网络抖动（DNS、连接被重置）在直连 api.github.com 时偶发，按瞬态错误重试
+      lastError = new Error(method + ' ' + path + ' -> 网络错误 ' + (err && err.message ? err.message : err));
+      if (attempt === maxAttempts) throw lastError;
+      console.warn('  ! 第 ' + attempt + ' 次请求网络错误，' + attempt + ' 秒后重试：' + path);
+      await new Promise((r) => setTimeout(r, attempt * 1500));
+      continue;
+    }
     const text = await res.text();
     if (res.ok) return text ? JSON.parse(text) : null;
 
