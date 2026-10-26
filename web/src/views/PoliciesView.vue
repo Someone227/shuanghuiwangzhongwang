@@ -186,8 +186,18 @@ onMounted(load);
             >
           </div>
 
-          <h2 class="mt-3 text-base font-semibold leading-snug text-ink">{{ policy.title }}</h2>
+          <h2 class="mt-3 text-base font-semibold leading-snug text-ink">
+            <RouterLink :to="`/policies/${policy.id}`" class="transition hover:text-brand-600">
+              {{ policy.title }}
+            </RouterLink>
+          </h2>
           <p class="mt-1 text-xs text-faint">{{ policy.issuer }}</p>
+          <RouterLink
+            :to="`/policies/${policy.id}`"
+            class="mt-1.5 inline-flex items-center gap-1 text-xs text-muted transition hover:text-brand-600"
+          >
+            看条件 / 材料 / 原文 →
+          </RouterLink>
 
           <dl class="mt-4 flex flex-wrap gap-x-5 gap-y-1 text-xs text-muted">
             <div class="flex items-baseline gap-1">

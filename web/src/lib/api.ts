@@ -8,7 +8,7 @@
 import type { CalendarData } from '@domain/calendar';
 import { evaluate } from '@domain/matcher';
 import type { RadarPolicyBundle, RadarSlot } from '@domain/radar';
-import type { Policy as DomainPolicy } from '@domain/types';
+import type { Operator, Policy as DomainPolicy } from '@domain/types';
 
 import { request } from './http';
 
@@ -71,7 +71,8 @@ export interface Condition {
   id: string;
   field: string;
   label: string;
-  operator: string;
+  /** 算子与后端领域层保持一致：前端手写类型不能放松成 string，否则没法直接喂领域函数 */
+  operator: Operator;
   value: string | number | boolean | string[];
   unit?: string;
   docRef: string;

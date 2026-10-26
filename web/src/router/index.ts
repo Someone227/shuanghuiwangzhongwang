@@ -19,6 +19,11 @@ const router = createRouter({
   routes: [
     { path: '/', name: 'home', component: HomeView },
     { path: '/policies', name: 'policies', component: () => import('@/views/PoliciesView.vue') },
+    {
+      path: '/policies/:id',
+      name: 'policy-detail',
+      component: () => import('@/views/PolicyDetailView.vue'),
+    },
     { path: '/calendar', name: 'calendar', component: () => import('@/views/CalendarView.vue') },
     { path: '/radar', name: 'radar', component: () => import('@/views/RadarView.vue') },
     { path: '/match/:id', name: 'match', component: () => import('@/views/MatchView.vue') },
