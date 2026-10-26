@@ -31,12 +31,29 @@ export interface DraftEntry {
   updatedAt: string;
 }
 
+/**
+ * 填报进度：只记录「填了几项」，不记录填了什么。
+ *
+ * 判定页的填写内容按设计不落库（离开页面即清空），但用户换台设备后
+ * 需要知道「上次还有哪几份没填完」，所以这里存极少量的元数据：
+ * 政策、已填项数、总项数、更新时间。任何一个字段值都不会被保存。
+ */
+export interface ProgressEntry {
+  policyId: string;
+  policyTitle: string;
+  filled: number;
+  total: number;
+  updatedAt: string;
+}
+
 interface UserDataFile {
   version: 1;
   /** userId -> policyId -> 草稿 */
   drafts: Record<string, Record<string, DraftEntry>>;
   /** userId -> 最近的判定记录（新的在前） */
   records: Record<string, JudgementRecord[]>;
+  /** userId -> policyId -> 填报进度（只有数量，没有内容） */
+  progress: Record<string, Record<string, ProgressEntry>>;
 }
 
 /** 每个账号最多保留的判定记录条数 */
@@ -46,18 +63,21 @@ function userDataFile(): string {
   return process.env.USERDATA_FILE ?? path.join(REPO_ROOT, 'data', 'user-data.json');
 }
 
+const EMPTY_DATA = (): UserDataFile => ({ version: 1, drafts: {}, records: {}, progress: {} });
+
 function readData(): UserDataFile {
   const file = userDataFile();
-  if (!existsSync(file)) return { version: 1, drafts: {}, records: {} };
+  if (!existsSync(file)) return EMPTY_DATA();
   try {
     const parsed = JSON.parse(readFileSync(file, 'utf8')) as Partial<UserDataFile>;
     return {
       version: 1,
       drafts: parsed.drafts ?? {},
       records: parsed.records ?? {},
+      progress: parsed.progress ?? {},
     };
   } catch {
-    return { version: 1, drafts: {}, records: {} };
+    return EMPTY_DATA();
   }
 }
 
@@ -117,6 +137,50 @@ export function addRecord(userId: string, input: AddRecordInput): JudgementRecor
   data.records[userId] = list;
   writeData(data);
   return record;
+}
+
+/** 某账号下所有「填到一半」的进度，按更新时间倒序 */
+export function listProgress(userId: string): ProgressEntry[] {
+  const bucket = readData().progress[userId] ?? {};
+  return Object.values(bucket).sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
+}
+
+/** 上报一份政策的填报进度：只有数量，没有内容 */
+export function saveProgress(
+  userId: string,
+  policyId: string,
+  input: { policyTitle: string; filled: number; total: number },
+): ProgressEntry {
+  const data = readData();
+  const entry: ProgressEntry = {
+    policyId,
+    policyTitle: input.policyTitle,
+    filled: input.filled,
+    total: input.total,
+    updatedAt: new Date().toISOString(),
+  };
+  data.progress[userId] = { ...(data.progress[userId] ?? {}), [policyId]: entry };
+  writeData(data);
+  return entry;
+}
+
+/** 清掉某份政策的填报进度：判定完成后调用 */
+export function clearProgress(userId: string, policyId: string): boolean {
+  const data = readData();
+  const bucket = data.progress[userId];
+  if (!bucket || !(policyId in bucket)) return false;
+  delete bucket[policyId];
+  if (Object.keys(bucket).length === 0) delete data.progress[userId];
+  writeData(data);
+  return true;
+}
+
+/** 清空全部填报进度（「清空我的数据」用） */
+export function clearAllProgress(userId: string): void {
+  const data = readData();
+  if (!data.progress[userId]) return;
+  delete data.progress[userId];
+  writeData(data);
 }
 
 export function clearRecords(userId: string): void {

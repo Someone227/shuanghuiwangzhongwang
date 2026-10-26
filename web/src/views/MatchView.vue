@@ -7,8 +7,8 @@ import ProfileForm from '@/components/ProfileForm.vue';
 import VerdictReport from '@/components/VerdictReport.vue';
 import type { EvaluationResult, Policy, Profile } from '@/lib/api';
 import { evaluatePolicy, getPolicy } from '@/lib/api';
-import { clearRemoteDraft, isLoggedIn, saveRecord } from '@/lib/auth';
-import { cleanProfile, clearAllDrafts, createEmptyProfile } from '@/lib/profile';
+import { clearProgress, clearRemoteDraft, isLoggedIn, saveProgress, saveRecord } from '@/lib/auth';
+import { cleanProfile, clearAllDrafts, createEmptyProfile, filledCount } from '@/lib/profile';
 
 const route = useRoute();
 const policyId = computed(() => String(route.params.id ?? ''));
@@ -67,9 +67,40 @@ watch(
   profile,
   () => {
     if (result.value) stale.value = true;
+    scheduleProgress();
   },
   { deep: true },
 );
+
+/**
+ * 填报进度上报：只告诉服务端「填了几项」，不发送任何字段值。
+ * 表单每敲一个字都会触发 watch，这里节流到最后一次输入后 1.2 秒再报，
+ * 换设备登录时能接上「上次填到哪」，但服务端看不到填了什么。
+ */
+let progressTimer: ReturnType<typeof setTimeout> | null = null;
+
+function scheduleProgress(): void {
+  if (!isLoggedIn.value || !policy.value) return;
+  if (progressTimer) clearTimeout(progressTimer);
+  progressTimer = setTimeout(() => {
+    progressTimer = null;
+    void flushProgress();
+  }, 1200);
+}
+
+async function flushProgress(): Promise<void> {
+  const current = policy.value;
+  if (!current || !isLoggedIn.value) return;
+  const total = current.fields.length;
+  if (total === 0) return;
+  const filled = filledCount(current.fields, profile.value);
+  try {
+    if (filled === 0) await clearProgress(current.id);
+    else await saveProgress(current.id, { policyTitle: current.title, filled, total });
+  } catch {
+    /* 进度只是辅助信息，上报失败不影响填写与判定 */
+  }
+}
 
 async function runEvaluate(): Promise<void> {
   const current = policy.value;
@@ -91,6 +122,8 @@ async function runEvaluate(): Promise<void> {
       }).catch(() => {
         /* 记录失败不影响判定结果展示 */
       });
+      // 已经判完，就不再算「填到一半」
+      void clearProgress(current.id).catch(() => undefined);
     }
     await nextTick();
     document.getElementById('verdict-top')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -110,7 +143,10 @@ function onKeydown(event: KeyboardEvent): void {
 }
 
 onMounted(() => window.addEventListener('keydown', onKeydown));
-onBeforeUnmount(() => window.removeEventListener('keydown', onKeydown));
+onBeforeUnmount(() => {
+  window.removeEventListener('keydown', onKeydown);
+  if (progressTimer) clearTimeout(progressTimer);
+});
 
 async function locate(docRef: string, quote: string): Promise<void> {
   activeSectionId.value = docRef;

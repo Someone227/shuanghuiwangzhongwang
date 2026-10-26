@@ -177,3 +177,38 @@ export function saveRecord(input: {
 export function clearRecords(): Promise<{ cleared: boolean }> {
   return request<{ cleared: boolean }>('/api/me/records', { method: 'DELETE' });
 }
+
+// ===== 填报进度：只有数量，没有内容 =====
+
+/**
+ * 一份政策填到一半的进度。
+ * 按设计，判定页填写的字段值不落库，这里只保存「填了几项」，
+ * 换设备登录后能知道上次还有哪几份没填完，但看不到任何填写内容。
+ */
+export interface ProgressEntry {
+  policyId: string;
+  policyTitle: string;
+  filled: number;
+  total: number;
+  updatedAt: string;
+}
+
+export function fetchProgress(): Promise<ProgressEntry[]> {
+  return request<ProgressEntry[]>('/api/me/progress');
+}
+
+export function saveProgress(
+  policyId: string,
+  input: { policyTitle: string; filled: number; total: number },
+): Promise<ProgressEntry> {
+  return sendJson<ProgressEntry>('/api/me/progress/' + encodeURIComponent(policyId), input, 'PUT');
+}
+
+export function clearProgress(policyId: string): Promise<{ cleared: boolean }> {
+  return request<{ cleared: boolean }>('/api/me/progress/' + encodeURIComponent(policyId), { method: 'DELETE' });
+}
+
+/** 清空账号下全部个人数据（判定记录 + 填报进度） */
+export function clearAllData(): Promise<{ cleared: boolean }> {
+  return request<{ cleared: boolean }>('/api/me/data', { method: 'DELETE' });
+}

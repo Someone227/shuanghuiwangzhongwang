@@ -4,7 +4,19 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { after, before, beforeEach, describe, it } from 'node:test';
 
-import { MAX_RECORDS, addRecord, clearDraft, clearRecords, getDraft, listRecords, saveDraft } from './store.js';
+import {
+  MAX_RECORDS,
+  addRecord,
+  clearAllProgress,
+  clearDraft,
+  clearProgress,
+  clearRecords,
+  getDraft,
+  listProgress,
+  listRecords,
+  saveDraft,
+  saveProgress,
+} from './store.js';
 
 let dir = '';
 
@@ -65,5 +77,48 @@ describe('个人数据', () => {
     addRecord('user-a', { policyId: 'student-loan', policyTitle: '助学贷款', overall: 'pass', summary });
     clearRecords('user-a');
     assert.deepEqual(listRecords('user-a'), []);
+  });
+
+  it('填报进度只存数量，不存任何填写内容', () => {
+    saveProgress('user-a', 'student-loan', { policyTitle: '助学贷款', filled: 8, total: 14 });
+    const [entry] = listProgress('user-a');
+    assert.equal(entry?.policyId, 'student-loan');
+    assert.equal(entry?.policyTitle, '助学贷款');
+    assert.equal(entry?.filled, 8);
+    assert.equal(entry?.total, 14);
+    // 进度对象里不应该出现字段值
+    assert.deepEqual(Object.keys(entry ?? {}).sort(), ['filled', 'policyId', 'policyTitle', 'total', 'updatedAt']);
+    // 不同账号互不影响
+    assert.deepEqual(listProgress('user-b'), []);
+  });
+
+  it('填报进度按更新时间倒序，且可单条清除', () => {
+    saveProgress('user-a', 'student-loan', { policyTitle: '助学贷款', filled: 1, total: 14 });
+    saveProgress('user-a', 'national-scholarship', { policyTitle: '国家奖学金', filled: 6, total: 12 });
+    const list = listProgress('user-a');
+    assert.equal(list.length, 2);
+    assert.equal(list[0]?.policyId, 'national-scholarship');
+    assert.equal(clearProgress('user-a', 'student-loan'), true);
+    assert.deepEqual(
+      listProgress('user-a').map((item) => item.policyId),
+      ['national-scholarship'],
+    );
+    assert.equal(clearProgress('user-a', 'student-loan'), false);
+  });
+
+  it('同一份政策重复上报只保留最新进度', () => {
+    saveProgress('user-a', 'student-loan', { policyTitle: '助学贷款', filled: 3, total: 14 });
+    saveProgress('user-a', 'student-loan', { policyTitle: '助学贷款', filled: 9, total: 14 });
+    const list = listProgress('user-a');
+    assert.equal(list.length, 1);
+    assert.equal(list[0]?.filled, 9);
+  });
+
+  it('可以一次清掉全部填报进度', () => {
+    saveProgress('user-a', 'student-loan', { policyTitle: '助学贷款', filled: 3, total: 14 });
+    saveProgress('user-b', 'student-loan', { policyTitle: '助学贷款', filled: 5, total: 14 });
+    clearAllProgress('user-a');
+    assert.deepEqual(listProgress('user-a'), []);
+    assert.equal(listProgress('user-b').length, 1);
   });
 });

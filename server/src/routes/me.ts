@@ -3,11 +3,15 @@ import { Router } from 'express';
 import { currentUser, requireAuth } from '../auth/middleware.js';
 import {
   addRecord,
+  clearAllProgress,
   clearDraft,
+  clearProgress,
   clearRecords,
   getDraft,
+  listProgress,
   listRecords,
   saveDraft,
+  saveProgress,
   type JudgementSummary,
   type VerdictValue,
 } from '../userdata/store.js';
@@ -110,5 +114,67 @@ meRouter.post('/me/records', requireAuth, (req, res) => {
 /** 清空判定记录 */
 meRouter.delete('/me/records', requireAuth, (_req, res) => {
   clearRecords(currentUser(res).id);
+  res.json({ ok: true, data: { cleared: true } });
+});
+
+// ===== 填报进度：只有数量，没有内容 =====
+
+/** 该账号所有「填到一半」的政策，按更新时间倒序 */
+meRouter.get('/me/progress', requireAuth, (_req, res) => {
+  res.json({ ok: true, data: listProgress(currentUser(res).id) });
+});
+
+/** 上报一份政策的填报进度（前端按填写变化节流上报，不包含任何字段值） */
+meRouter.put('/me/progress/:policyId', requireAuth, (req, res) => {
+  const policyId = req.params.policyId ?? '';
+  if (!isValidPolicyId(policyId)) {
+    res.status(400).json({ ok: false, error: '政策编号不合法' });
+    return;
+  }
+  const body = (req.body ?? {}) as Record<string, unknown>;
+  const policyTitle = typeof body.policyTitle === 'string' ? body.policyTitle.trim() : '';
+  const filled = body.filled;
+  const total = body.total;
+  if (!policyTitle) {
+    res.status(400).json({ ok: false, error: '缺少政策标题' });
+    return;
+  }
+  if (
+    typeof filled !== 'number' ||
+    typeof total !== 'number' ||
+    !Number.isInteger(filled) ||
+    !Number.isInteger(total) ||
+    filled < 0 ||
+    total <= 0 ||
+    filled > total
+  ) {
+    res.status(400).json({ ok: false, error: '进度数值不合法' });
+    return;
+  }
+  res.json({
+    ok: true,
+    data: saveProgress(currentUser(res).id, policyId, {
+      policyTitle: policyTitle.slice(0, 120),
+      filled,
+      total,
+    }),
+  });
+});
+
+/** 判定完成后清掉该政策的填报进度 */
+meRouter.delete('/me/progress/:policyId', requireAuth, (req, res) => {
+  const policyId = req.params.policyId ?? '';
+  if (!isValidPolicyId(policyId)) {
+    res.status(400).json({ ok: false, error: '政策编号不合法' });
+    return;
+  }
+  res.json({ ok: true, data: { cleared: clearProgress(currentUser(res).id, policyId) } });
+});
+
+/** 清空账号下的全部个人数据（判定记录 + 填报进度），用于隐私自查 */
+meRouter.delete('/me/data', requireAuth, (req, res) => {
+  const userId = currentUser(res).id;
+  clearRecords(userId);
+  clearAllProgress(userId);
   res.json({ ok: true, data: { cleared: true } });
 });
