@@ -84,6 +84,11 @@ if (!fs.existsSync(DIST)) {
 // GitHub Pages 默认跑 Jekyll，加 .nojekyll 跳过（否则下划线开头的文件会被忽略）
 fs.writeFileSync(path.join(DIST, '.nojekyll'), '');
 
+// GitHub Pages 没有 SPA 回退规则：直接访问深链（/calendar、/match/xxx）会落到
+// GitHub 自带的 404 页。把 index.html 复制一份成 404.html，由前端路由接管地址，
+// 这样别人粘贴任意页面地址、或在页面上刷新，都能正常打开。
+fs.copyFileSync(path.join(DIST, 'index.html'), path.join(DIST, '404.html'));
+
 const files = walk(DIST).sort();
 console.log(`准备发布 ${files.length} 个文件到 ${OWNER}/${REPO}@${BRANCH}`);
 

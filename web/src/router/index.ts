@@ -9,7 +9,9 @@ import { getToken } from '@/lib/http';
 const useHash = import.meta.env.VITE_ROUTER_HASH === 'true';
 
 const router = createRouter({
-  history: useHash ? createWebHashHistory() : createWebHistory(),
+  // history 模式必须带上 BASE_URL：GitHub Pages 部署在 /<repo>/ 子路径下，
+  // 否则刷新子页面时 vue-router 会把「/repo/calendar」当成未知路径、重定向回首页。
+  history: useHash ? createWebHashHistory() : createWebHistory(import.meta.env.BASE_URL),
   scrollBehavior(to) {
     if (to.hash) return { el: to.hash, behavior: 'smooth' };
     return { top: 0 };
