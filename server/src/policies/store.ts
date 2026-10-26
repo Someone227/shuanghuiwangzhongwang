@@ -71,6 +71,11 @@ export function listPolicies(): PolicySummary[] {
     .sort((a, b) => a.title.localeCompare(b.title, 'zh-CN'));
 }
 
+/** 全量政策（含原文、条件树）：申报日历这类跨政策聚合功能用 */
+export function listAllPolicies(): Policy[] {
+  return readPolicyFiles();
+}
+
 /** 只允许 [a-z0-9-] 的 id，顺带防住 ../ 之类的路径穿越 */
 export function getPolicy(id: string): Policy | null {
   if (!/^[a-z0-9-]+$/.test(id)) return null;

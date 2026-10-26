@@ -86,6 +86,12 @@ const statItems = [
         >
           开始匹配 →
         </RouterLink>
+        <RouterLink
+          to="/calendar"
+          class="rounded-lg border border-slate-300 bg-white px-6 py-3 text-sm font-medium text-slate-700 transition hover:border-brand-400 hover:text-brand-700"
+        >
+          看全年申报日历
+        </RouterLink>
       </div>
 
       <p class="mt-3 text-xs text-slate-400">无需注册、无需 API Key，打开就能用。</p>
@@ -126,7 +132,25 @@ const statItems = [
       </div>
     </section>
 
-    <section class="mt-16 rounded-2xl border border-slate-200 bg-white p-6">
+    <section class="mt-16 rounded-2xl border border-brand-200 bg-brand-50/60 p-6">
+      <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div class="max-w-2xl">
+          <h2 class="text-base font-semibold text-slate-900">判定之外，还差一问：什么时候申？</h2>
+          <p class="mt-2 text-sm leading-relaxed text-slate-600">
+            奖助学金不是全年都能申请。把 {{ totals?.policies ?? 32 }} 份政策里的时间节点按月份摊开，
+            一眼看到哪几个月该准备材料、哪几个月只剩等结果 —— 全部规则解析，可回到原文核对。
+          </p>
+        </div>
+        <RouterLink
+          to="/calendar"
+          class="shrink-0 rounded-lg bg-slate-900 px-5 py-2.5 text-sm font-medium text-white transition hover:bg-brand-600"
+        >
+          打开申报日历 →
+        </RouterLink>
+      </div>
+    </section>
+
+    <section class="mt-6 rounded-2xl border border-slate-200 bg-white p-6">
       <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div class="max-w-2xl">
           <h2 class="text-base font-semibold text-slate-900">大模型只用在「建库」这一步</h2>

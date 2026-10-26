@@ -69,6 +69,13 @@ const indexOut = path.join(OUT_DIR, 'index.json');
 fs.writeFileSync(indexOut, JSON.stringify(summary));
 bytes += fs.statSync(indexOut).size;
 
+// 年度申报日历：和判定引擎一样是纯函数，前端静态模式直接消费
+// （node 24 能直接 import .ts，type stripping 会擦掉这里的 type-only import）
+const { buildCalendar } = await import('../src/domain/calendar.ts');
+const calendarOut = path.join(OUT_DIR, 'calendar.json');
+fs.writeFileSync(calendarOut, JSON.stringify(buildCalendar(policies)));
+bytes += fs.statSync(calendarOut).size;
+
 console.log(
-  `✓ 导出 ${policies.length} 份政策到 web/public/policies/（index.json + 每份全文，共 ${(bytes / 1024).toFixed(0)} KB）`,
+  `✓ 导出 ${policies.length} 份政策到 web/public/policies/（index.json + calendar.json + 每份全文，共 ${(bytes / 1024).toFixed(0)} KB）`,
 );

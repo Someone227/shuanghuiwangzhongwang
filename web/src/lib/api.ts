@@ -5,10 +5,15 @@
  * 不携带、也不请求任何大模型密钥。
  */
 
+import type { CalendarData } from '@domain/calendar';
 import { evaluate } from '@domain/matcher';
 import type { Policy as DomainPolicy } from '@domain/types';
 
 import { request } from './http';
+
+// 申报日历的结构定义在后端领域层（server/src/domain/calendar.ts），
+// 前端只复用类型 —— 静态模式下直接消费导出的 JSON，不重复实现解析规则。
+export type { CalendarData, CalendarEvent, CalendarKind, CalendarMonth } from '@domain/calendar';
 
 export type Verdict = 'pass' | 'fail' | 'unknown' | 'warn';
 export type FieldType = 'text' | 'number' | 'boolean' | 'select' | 'multiselect';
@@ -210,6 +215,12 @@ export async function getPolicy(id: string): Promise<Policy> {
     return policy;
   }
   return request<Policy>(`/api/policies/${encodeURIComponent(id)}`);
+}
+
+/** 年度申报日历：把各政策的「时间节点」按月份聚合 */
+export function getCalendar(): Promise<CalendarData> {
+  if (isStaticMode) return fetchStatic<CalendarData>('policies/calendar.json');
+  return request<CalendarData>('/api/calendar');
 }
 
 /** 逐条判定：服务端模式交给后端引擎；静态模式在浏览器本地跑同一套引擎 */

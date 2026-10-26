@@ -1,13 +1,22 @@
 import { Router } from 'express';
 
+import { buildCalendar } from '../domain/calendar.js';
 import { evaluate } from '../domain/matcher.js';
-import { getPolicy, listPolicies } from '../policies/store.js';
+import { getPolicy, listAllPolicies, listPolicies } from '../policies/store.js';
 
 export const policiesRouter = Router();
 
 /** 政策列表（摘要） */
 policiesRouter.get('/policies', (_req, res) => {
   res.json({ ok: true, data: listPolicies() });
+});
+
+/**
+ * 年度申报日历：把 32 份政策里的 60 个时间节点按月份聚合。
+ * 纯规则解析，不调用大模型。
+ */
+policiesRouter.get('/calendar', (_req, res) => {
+  res.json({ ok: true, data: buildCalendar(listAllPolicies()) });
 });
 
 /** 单份政策全量（原文、段落、字段、条件树、材料） */
