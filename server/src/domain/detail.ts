@@ -50,6 +50,18 @@ export interface DetailSectionView {
   repaired: boolean;
 }
 
+/** 并列通道视图：说明这份政策有哪几条路能走通 */
+export interface DetailChannelView {
+  id: string;
+  name: string;
+  description?: string;
+  /** 通道内包含的条件组 id */
+  groupIds: string[];
+  /** 通道内包含的条件组名称，方便对照下文逐条判定 */
+  groupNames: string[];
+  conditionCount: number;
+}
+
 export interface DetailStats {
   groups: number;
   conditions: number;
@@ -89,6 +101,8 @@ export interface RelatedCandidate {
 
 export interface PolicyDetail {
   id: string;
+  /** 并列通道（没有通道的政策是空数组）：满足任一条即可 */
+  channelViews: DetailChannelView[];
   groupViews: DetailGroupView[];
   sectionViews: DetailSectionView[];
   materials: MaterialItem[];
@@ -292,10 +306,25 @@ export function pickRelated(
 }
 
 /** 一份政策详情页需要的视图数据（推荐单独用 pickRelated，两种数据源都能喂） */
+export function buildChannelViews(policy: Policy): DetailChannelView[] {
+  return (policy.channels ?? []).map((channel) => {
+    const groups = policy.conditions.filter((group) => channel.groupIds.includes(group.id));
+    return {
+      id: channel.id,
+      name: channel.name,
+      description: channel.description,
+      groupIds: groups.map((group) => group.id),
+      groupNames: groups.map((group) => group.name),
+      conditionCount: groups.reduce((total, group) => total + group.conditions.length, 0),
+    };
+  });
+}
+
 export function buildPolicyDetail(policy: Policy): PolicyDetail {
   const { alertNotes, normalNotes } = splitNotes(policy.notes);
   return {
     id: policy.id,
+    channelViews: buildChannelViews(policy),
     groupViews: buildGroupViews(policy),
     sectionViews: buildSectionViews(policy),
     materials: policy.materials,

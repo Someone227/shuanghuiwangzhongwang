@@ -15,6 +15,21 @@ import type { Policy } from './types.js';
 
 export type CalendarKind = 'annual' | 'specific' | 'semester' | 'process' | 'history' | 'other';
 
+/**
+ * 节点该谁去做。
+ *
+ * 政策原文里同一份文件既有「学生向学校提出申请」，也有「中央高校报送评审结果」，
+ * 混在一起排进日历会让人以为学校报送也需要自己跑一趟 —— 所以逐条标出责任方。
+ */
+export type CalendarResponsibility = 'applicant' | 'school' | 'authority' | 'unknown';
+
+export const RESPONSIBILITY_LABEL: Record<CalendarResponsibility, string> = {
+  applicant: '个人要办',
+  school: '学校/院系',
+  authority: '主管部门',
+  unknown: '未标注',
+};
+
 export interface CalendarEvent {
   /** 稳定 id：<policyId>-<序号> */
   id: string;
@@ -31,6 +46,12 @@ export interface CalendarEvent {
   months: number[];
   day?: number;
   kind: CalendarKind;
+  /** 一次性节点的年份（如 2025-10-31）；「每年 X 月」这类年度循环节点没有 */
+  year?: number;
+  /** 这条节点该谁去做：个人 / 学校 / 主管部门 */
+  responsibility: CalendarResponsibility;
+  /** 已过期的当年一次性节点会沉到「政策沿革」 */
+  expired?: boolean;
   /** 月内排序键 MM-DD */
   sortKey: string;
 }
@@ -73,6 +94,8 @@ interface ParsedDeadline {
   kind: CalendarKind;
   months: number[];
   day?: number;
+  /** 「2025-08-31」这类一次性日期带的年份 */
+  year?: number;
   sortKey: string;
 }
 
@@ -105,10 +128,11 @@ export function parseDeadlineText(text: string | undefined): ParsedDeadline {
   // 1. ISO 日期：2025-08-31
   const iso = raw.match(/(\d{4})-(\d{1,2})-(\d{1,2})/);
   if (iso) {
+    const year = Number(iso[1]);
     const month = Number(iso[2]);
     const day = Number(iso[3]);
     if (month >= 1 && month <= 12) {
-      return { kind: 'specific', months: [month], day, sortKey: `${pad2(month)}-${pad2(day)}` };
+      return { kind: 'specific', months: [month], day, year, sortKey: `${pad2(month)}-${pad2(day)}` };
     }
   }
 
@@ -152,6 +176,41 @@ export function parseDeadlineText(text: string | undefined): ParsedDeadline {
   return EMPTY;
 }
 
+/** 学校/院系是主语 */
+const SCHOOL_SUBJECT = /学校|高校|院系|学院|校内|辅导员|班主任|培养单位|就读院校/;
+/** 只有学校才做的经办动作 */
+const SCHOOL_ACT = /报送|上报|汇总|审核|评审|公示|备案|告知|组织|完成|公布|推荐|存档|归档/;
+/** 主管部门是主语 */
+const AUTHORITY_SUBJECT =
+  /教育部|教育厅|教育行政部门|教育部门|主管部门|省级|中央部门|财政|人力资源|人社|国务院|民政|乡镇|街道|县级|人民政府/;
+/** 只有主管部门才做的动作 */
+const AUTHORITY_ACT = /审批|审核|下达|划拨|拨付|备案|汇总|逐级|报教育部|确认|查验|受理|推送|公示|公布|监管/;
+/** 学生本人是主语 */
+const APPLICANT_SUBJECT = /学生|本人|个人|申请人/;
+/** 申请人要做的动作 */
+const APPLICANT_ACT = /申请|申领|提交|报名|填报|签署|办理|领取|报到|提出|上交|递交|参加|返校/;
+/** 节点名本身就是申请人动作，如「见习补贴申领」「高考报名」「协议签署」 */
+const APPLICANT_LEAD = /申领|报名|填报|申请|办理|签署|提交|递交|领取/;
+
+/**
+ * 从节点名称判断这条该谁去做。
+ *
+ * 用「主语 + 动作」组合判断，而不是看到「学校」就判学校：
+ * 「学校报送学生申请」是学校的事，「学生向学校提出申请」是学生的事，两者都含「学校」。
+ * 顺序：学校主语 → 主管部门 → 学生主语 → 节点名直接是申请动作 → 未标注。
+ */
+export function classifyResponsibility(label: string, note?: string): CalendarResponsibility {
+  const text = `${label} ${note ?? ''}`;
+  // 学校主语只用节点名判断：note 里常出现「学生向学校提出申请」，带上 note 会把个人节点误判成学校的
+  if (SCHOOL_SUBJECT.test(label) && SCHOOL_ACT.test(label)) return 'school';
+  if (AUTHORITY_SUBJECT.test(text)) return 'authority';
+  if (AUTHORITY_ACT.test(text) && !APPLICANT_SUBJECT.test(text)) return 'authority';
+  if (APPLICANT_SUBJECT.test(text) && APPLICANT_ACT.test(text)) return 'applicant';
+  // 「申请受理」「补贴审批」这类是部门动作，不是申请人动作
+  if (APPLICANT_LEAD.test(text) && !/受理$|审批$/.test(label)) return 'applicant';
+  return 'unknown';
+}
+
 /** 从一批政策里汇总出申报日历 */
 export function buildCalendar(policies: Policy[]): CalendarData {
   const months: CalendarMonth[] = Array.from({ length: 12 }, (_, i) => ({ month: i + 1, events: [] }));
@@ -160,6 +219,9 @@ export function buildCalendar(policies: Policy[]): CalendarData {
   const history: CalendarEvent[] = [];
   const other: CalendarEvent[] = [];
   const policyIds = new Set<string>();
+  // 一次性节点（「2025-10-31」）过了年份就不该再出现在今年的日历里，
+  // 否则会把往年的一次性报送节点混进当前月份的「待办」
+  const currentYear = new Date().getFullYear();
 
   for (const policy of policies) {
     const deadlines = policy.deadlines || [];
@@ -172,6 +234,8 @@ export function buildCalendar(policies: Policy[]): CalendarData {
         parsed = parseDeadlineText(deadline.note);
       }
 
+      const expired = parsed.kind === 'specific' && parsed.year !== undefined && parsed.year < currentYear;
+      const kind: CalendarKind = expired ? 'history' : parsed.kind;
       const event: CalendarEvent = {
         id: `${policy.id}-${index}`,
         policyId: policy.id,
@@ -183,18 +247,21 @@ export function buildCalendar(policies: Policy[]): CalendarData {
         note: deadline.note,
         months: parsed.months,
         day: parsed.day,
-        kind: parsed.kind,
+        kind,
+        year: parsed.year,
+        responsibility: classifyResponsibility(deadline.label, deadline.note),
+        expired: expired || undefined,
         sortKey: parsed.sortKey,
       };
 
-      if ((parsed.kind === 'annual' || parsed.kind === 'specific') && parsed.months.length > 0) {
+      if ((kind === 'annual' || kind === 'specific') && parsed.months.length > 0) {
         const month = parsed.months[0];
         months[month - 1].events.push(event);
-      } else if (parsed.kind === 'semester') {
+      } else if (kind === 'semester') {
         semester.push(event);
-      } else if (parsed.kind === 'history') {
+      } else if (kind === 'history') {
         history.push(event);
-      } else if (parsed.kind === 'other') {
+      } else if (kind === 'other') {
         other.push(event);
       } else {
         process.push(event);
@@ -202,7 +269,15 @@ export function buildCalendar(policies: Policy[]): CalendarData {
     });
   }
 
-  const bySort = (a: CalendarEvent, b: CalendarEvent): number => a.sortKey.localeCompare(b.sortKey);
+  // 同一天里个人要办的排前面：日历首先回答「我什么时候该动手」
+  const responsibilityOrder: Record<CalendarResponsibility, number> = {
+    applicant: 0,
+    school: 1,
+    authority: 2,
+    unknown: 3,
+  };
+  const bySort = (a: CalendarEvent, b: CalendarEvent): number =>
+    a.sortKey.localeCompare(b.sortKey) || responsibilityOrder[a.responsibility] - responsibilityOrder[b.responsibility];
   for (const month of months) month.events.sort(bySort);
   semester.sort(bySort);
   process.sort(bySort);

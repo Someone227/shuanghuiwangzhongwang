@@ -16,6 +16,24 @@ const emit = defineEmits<{
 const summary = computed(() => props.result.summary);
 const meta = computed(() => VERDICT_META[props.result.overall]);
 
+/** 并列通道：满足任一条即可（老数据可能没有这个字段，兜底成空数组） */
+const channels = computed(() => props.result.channels ?? []);
+
+/** groupId → 所属通道名，用来在条件组标题旁标出「这组属于哪条通道」 */
+const channelByGroup = computed(() => {
+  const map = new Map<string, string>();
+  for (const channel of channels.value) {
+    for (const groupId of channel.groupIds) map.set(groupId, channel.name);
+  }
+  return map;
+});
+
+/** 走「任一通道」的政策，在结论下方提示一句，避免用户以为每组都要满足 */
+const channelHint = computed(() => {
+  if (!channels.value.length) return '';
+  return `这份政策有 ${channels.value.length} 条并列通道，满足其中任意一条即可。`;
+});
+
 const stats = computed(() => [
   { key: 'pass', label: '符合', value: summary.value.pass, tone: 'text-emerald-600' },
   { key: 'fail', label: '不符合', value: summary.value.fail, tone: 'text-rose-600' },
@@ -59,6 +77,9 @@ function scrollTo(conditionId: string, docRef: string, quote: string): void {
           <dd class="text-xl font-semibold tabular-nums" :class="item.tone">{{ item.value }}</dd>
         </div>
       </dl>
+      <p v-if="channelHint" class="mt-3 rounded-lg bg-surface/60 px-3 py-2 text-xs opacity-90">
+        {{ channelHint }}
+      </p>
       <p class="mt-3 text-xs opacity-70">
         共 {{ summary.requiredTotal }} 项参与结论计算；「待补充」的条件填上之后再判定一次，结论会更明确。
       </p>
@@ -67,6 +88,31 @@ function scrollTo(conditionId: string, docRef: string, quote: string): void {
     <!-- 逐条判定 -->
     <section class="space-y-3">
       <h3 class="text-sm font-semibold tracking-wider text-faint uppercase">逐条判定</h3>
+
+      <!-- 并列通道：先把「哪几条路能走通」摊开，再列出每组条件 -->
+      <div v-if="channels.length" class="rounded-xl border border-brand-200 bg-brand-50/60 p-3.5">
+        <p class="text-xs font-medium tracking-wider text-brand-700">并列通道 · 满足任一即可</p>
+        <ul class="mt-2 grid gap-2 sm:grid-cols-2">
+          <li
+            v-for="channel in channels"
+            :key="channel.id"
+            class="rounded-lg border border-line bg-surface px-3 py-2.5"
+          >
+            <div class="flex items-start justify-between gap-2">
+              <p class="min-w-0 text-sm font-semibold text-ink">{{ channel.name }}</p>
+              <span
+                class="shrink-0 rounded-full border px-2 py-0.5 text-[11px]"
+                :class="VERDICT_META[channel.verdict].badge"
+              >
+                {{ VERDICT_META[channel.verdict].label }}
+              </span>
+            </div>
+            <p v-if="channel.description" class="mt-1 text-xs leading-relaxed text-muted">
+              {{ channel.description }}
+            </p>
+          </li>
+        </ul>
+      </div>
 
       <article
         v-for="group in result.groups"
@@ -77,6 +123,9 @@ function scrollTo(conditionId: string, docRef: string, quote: string): void {
           <div class="min-w-0">
             <h4 class="truncate text-sm font-semibold text-ink">{{ group.name }}</h4>
             <p class="mt-0.5 text-xs text-faint">
+              <span v-if="channelByGroup.get(group.groupId)" class="text-brand-600">
+                通道「{{ channelByGroup.get(group.groupId) }}」·
+              </span>
               {{ group.logic === 'any' ? '满足其中任意一条即可' : '需同时满足组内全部条件' }}
             </p>
           </div>

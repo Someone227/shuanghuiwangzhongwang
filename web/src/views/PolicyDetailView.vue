@@ -23,6 +23,15 @@ const error = ref('');
 
 const detail = computed(() => (policy.value ? buildPolicyDetail(policy.value) : null));
 
+/** groupId → 所属并列通道名：条件组标题旁标出「这组属于哪条通道」 */
+const channelByGroup = computed(() => {
+  const map = new Map<string, string>();
+  for (const channel of detail.value?.channelViews ?? []) {
+    for (const groupId of channel.groupIds) map.set(groupId, channel.name);
+  }
+  return map;
+});
+
 /** 同类政策推荐：用政策库摘要算，静态版不必为了推荐去拉 32 份全文 */
 const related = computed(() => {
   if (!policy.value) return [];
@@ -209,6 +218,32 @@ watch(policyId, (id) => void load(id), { immediate: true });
               </p>
             </div>
 
+            <!-- 并列通道：同一份政策里满足任一条即可 -->
+            <div v-if="detail.channelViews.length" class="mt-4 rounded-2xl border border-brand-200 bg-brand-50/60 p-4">
+              <div class="flex flex-wrap items-baseline justify-between gap-2">
+                <p class="text-xs font-medium tracking-wider text-brand-700">并列通道 · 满足任一即可</p>
+                <p class="text-xs text-brand-700/70">{{ detail.channelViews.length }} 条路径</p>
+              </div>
+              <ul class="mt-3 grid gap-3 sm:grid-cols-2">
+                <li
+                  v-for="channel in detail.channelViews"
+                  :key="channel.id"
+                  class="rounded-xl border border-line bg-surface p-3.5"
+                >
+                  <p class="text-sm font-semibold text-ink">{{ channel.name }}</p>
+                  <p v-if="channel.description" class="mt-1 text-xs leading-relaxed text-muted">
+                    {{ channel.description }}
+                  </p>
+                  <p class="mt-2 text-[11px] text-faint">
+                    {{ channel.groupNames.join('、') }} · 共 {{ channel.conditionCount }} 条条件
+                  </p>
+                </li>
+              </ul>
+              <p class="mt-3 text-xs text-brand-700/80">
+                下面条件组中标有「通道」的，各自只需满足所在通道内的条件；通道以外的条件组仍需全部满足。
+              </p>
+            </div>
+
             <div class="mt-4 space-y-4">
               <article
                 v-for="group in detail.groupViews"
@@ -217,6 +252,12 @@ watch(policyId, (id) => void load(id), { immediate: true });
               >
                 <div class="flex flex-wrap items-center gap-2">
                   <h3 class="text-base font-semibold text-ink">{{ group.name }}</h3>
+                  <span
+                    v-if="channelByGroup.get(group.id)"
+                    class="rounded-full border border-brand-200 bg-brand-50 px-2 py-0.5 text-[11px] text-brand-700"
+                  >
+                    通道 · {{ channelByGroup.get(group.id) }}
+                  </span>
                   <span
                     class="rounded-full px-2 py-0.5 text-[11px]"
                     :class="

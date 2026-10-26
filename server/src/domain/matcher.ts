@@ -1,4 +1,5 @@
 import type {
+  ChannelResult,
   Condition,
   ConditionResult,
   EvaluationResult,
@@ -238,6 +239,20 @@ function isWarnOnly(policy: Policy, result: ConditionResult): boolean {
   return false;
 }
 
+/** 组间「全部满足」：任一 fail 则 fail，否则任一 unknown 则 unknown，否则 pass */
+function combineAll(verdicts: Verdict[]): Verdict {
+  if (verdicts.includes('fail')) return 'fail';
+  if (verdicts.includes('unknown')) return 'unknown';
+  return 'pass';
+}
+
+/** 通道间「满足任一」：任一 pass 则 pass，否则任一 unknown 则 unknown，全部 fail 才 fail */
+function combineAny(verdicts: Verdict[]): Verdict {
+  if (verdicts.some((v) => v === 'pass')) return 'pass';
+  if (verdicts.some((v) => v === 'unknown')) return 'unknown';
+  return 'fail';
+}
+
 function summarize(conditions: ConditionResult[]): EvaluationSummary {
   const summary: EvaluationSummary = { pass: 0, fail: 0, unknown: 0, warn: 0, requiredTotal: 0 };
   for (const item of conditions) {
@@ -247,12 +262,29 @@ function summarize(conditions: ConditionResult[]): EvaluationSummary {
   return summary;
 }
 
-function buildHeadline(_policy: Policy, overall: Verdict, summary: EvaluationSummary): string {
+function buildHeadline(
+  _policy: Policy,
+  overall: Verdict,
+  summary: EvaluationSummary,
+  channels: ChannelResult[] = [],
+): string {
   if (overall === 'pass') {
+    if (channels.length > 0) {
+      const hit = channels.filter((c) => c.verdict === 'pass').map((c) => c.name);
+      return hit.length > 0
+        ? `符合条件：已满足「${hit.join('」或「')}」，可以着手准备材料了。`
+        : `符合条件的概率很高：${summary.pass} 项硬性条件全部满足，可以着手准备材料了。`;
+    }
     return `符合条件的概率很高：${summary.pass} 项硬性条件全部满足，可以着手准备材料了。`;
   }
   if (overall === 'fail') {
+    if (channels.length > 0) {
+      return `暂不符合：${channels.map((c) => c.name).join('、')}都没满足，具体差在哪见下方逐条判定。`;
+    }
     return `暂不符合：有 ${summary.fail} 项硬性条件不满足，具体差在哪见下方逐条判定。`;
+  }
+  if (channels.length > 0) {
+    return `还不能下结论：还有 ${summary.unknown} 项没填写，补上就能判断走哪条通道。`;
   }
   return `还不能下结论：有 ${summary.unknown} 项还没填写，补上就能出结论。`;
 }
@@ -299,13 +331,32 @@ export function evaluate(policy: Policy, profile: Profile): EvaluationResult {
   const groups = policy.conditions.map((group) => evaluateGroup(policy, group.id, profile));
   const conditions = groups.flatMap((g) => g.conditionResults);
 
-  // 总体结论由「条件组」决定：any 组内部单个条件失败不代表整体不通过
-  const groupVerdicts = groups.map((g) => g.verdict);
+  // 并列通道：通道内各组按 all 合并，通道之间按 any 合并。
+  // 典型场景（国家奖学金）：常规成绩通道 或 突出表现通道，满足其一即可。
+  const channels: ChannelResult[] = (policy.channels ?? []).map((channel) => {
+    const members = channel.groupIds
+      .map((id) => groups.find((g) => g.groupId === id))
+      .filter((g): g is GroupResult => Boolean(g));
+    return {
+      id: channel.id,
+      name: channel.name,
+      description: channel.description,
+      verdict: combineAll(members.map((g) => g.verdict)),
+      groupIds: [...channel.groupIds],
+    };
+  });
+
+  // 总体结论：不配通道时 = 所有组 all（保持原行为）；配了通道时 = 通道外各组 all，再与「通道满足任一」合并
+  const channelGroupIds = new Set(channels.flatMap((c) => c.groupIds));
+  const baseGroups = groups.filter((g) => !channelGroupIds.has(g.groupId));
   let overall: Verdict;
-  if (groupVerdicts.includes('fail')) overall = 'fail';
-  else if (groupVerdicts.includes('unknown')) overall = 'unknown';
-  else if (groupVerdicts.length === 0) overall = 'unknown';
-  else overall = 'pass';
+  if (groups.length === 0) {
+    overall = 'unknown';
+  } else if (channels.length > 0) {
+    overall = combineAll([combineAll(baseGroups.map((g) => g.verdict)), combineAny(channels.map((c) => c.verdict))]);
+  } else {
+    overall = combineAll(groups.map((g) => g.verdict));
+  }
 
   const summary = summarize(conditions);
 
@@ -313,9 +364,10 @@ export function evaluate(policy: Policy, profile: Profile): EvaluationResult {
     policyId: policy.id,
     overall,
     groups,
+    channels,
     conditions,
     summary,
-    headline: buildHeadline(policy, overall, summary),
+    headline: buildHeadline(policy, overall, summary, channels),
     missingMaterials: buildMissingMaterials(policy, conditions),
     nextSteps: buildNextSteps(policy, conditions),
   };

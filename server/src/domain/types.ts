@@ -90,6 +90,25 @@ export interface ConditionGroup {
   docRef: string;
 }
 
+/**
+ * 并列通道（满足任一通道即可）。
+ *
+ * 政策原文里常见「常规通道」与「突出通道」并列表述：
+ * 例如国家奖学金「排名前 10% 可以申请；没进前 10% 但达到前 30% 且表现特别突出，也可申请」。
+ * 这类政策不能把两组条件同时要求（那会把符合突出通道的人误判成不符合），
+ * 所以建模为：通道之外的条件组按 all 合并，通道之间按 any 合并。
+ *
+ * 不配通道的政策保持原行为（所有条件组 all）。
+ */
+export interface PolicyChannel {
+  id: string;
+  name: string;
+  /** 通道说明，前端展示在通道标题下方 */
+  description?: string;
+  /** 该通道包含的条件组 id；通道内仍按各组的 logic 判定，通道内组合为 all */
+  groupIds: string[];
+}
+
 export interface MaterialItem {
   name: string;
   required: boolean;
@@ -134,6 +153,8 @@ export interface Policy {
   sections: PolicySection[];
   fields: ProfileField[];
   conditions: ConditionGroup[];
+  /** 并列通道：满足任一通道即可；未配置时所有条件组按 all 合并 */
+  channels?: PolicyChannel[];
   materials: MaterialItem[];
   deadlines: DeadlineItem[];
   notes: string[];
@@ -195,10 +216,21 @@ export interface EvaluationSummary {
   requiredTotal: number;
 }
 
+/** 某个并列通道的聚合结论（通道内各组 all） */
+export interface ChannelResult {
+  id: string;
+  name: string;
+  description?: string;
+  verdict: Verdict;
+  groupIds: string[];
+}
+
 export interface EvaluationResult {
   policyId: string;
   overall: Verdict;
   groups: GroupResult[];
+  /** 并列通道的聚合结论；无通道政策为空数组 */
+  channels: ChannelResult[];
   conditions: ConditionResult[];
   summary: EvaluationSummary;
   /** 一句话结论，前端直接展示 */

@@ -5,16 +5,51 @@ import { RouterLink, useRoute } from 'vue-router';
 import PolicyText from '@/components/PolicyText.vue';
 import ProfileForm from '@/components/ProfileForm.vue';
 import VerdictReport from '@/components/VerdictReport.vue';
+import type { Policy as DomainPolicy } from '@domain/types';
+import { buildPolicyProfile } from '@domain/radar';
 import type { EvaluationResult, Policy, Profile } from '@/lib/api';
 import { evaluatePolicy, getPolicy } from '@/lib/api';
 import { clearProgress, clearRemoteDraft, isLoggedIn, saveProgress, saveRecord } from '@/lib/auth';
 import { cleanProfile, clearAllDrafts, createEmptyProfile, filledCount } from '@/lib/profile';
+
+/** 与 RadarView / AccountView 共用同一个草稿 key：雷达里填过的画像可以直接带进判定页 */
+const RADAR_DRAFT_KEY = 'radar-draft-v1';
+
+/** 从政策雷达画像里，把这份政策用得到的字段预先填好（用户可改） */
+function inheritFromRadar(policy: Policy): { profile: Profile; count: number } {
+  const base = createEmptyProfile(policy.fields);
+  let raw: string | null = null;
+  try {
+    raw = localStorage.getItem(RADAR_DRAFT_KEY);
+  } catch {
+    return { profile: base, count: 0 };
+  }
+  if (!raw) return { profile: base, count: 0 };
+
+  try {
+    const slots = JSON.parse(raw) as Record<string, unknown>;
+    if (!slots || typeof slots !== 'object') return { profile: base, count: 0 };
+    const { profile: mapped } = buildPolicyProfile(policy as unknown as DomainPolicy, slots);
+    let count = 0;
+    for (const [key, value] of Object.entries(mapped)) {
+      // 只写政策里确实存在的字段，且只填空值 —— 不覆盖任何已有内容
+      if (!(key in base) || value === undefined) continue;
+      base[key] = value;
+      count += 1;
+    }
+    return { profile: base, count };
+  } catch {
+    return { profile: base, count: 0 };
+  }
+}
 
 const route = useRoute();
 const policyId = computed(() => String(route.params.id ?? ''));
 
 const policy = ref<Policy | null>(null);
 const profile = ref<Profile>({});
+/** 从政策雷达画像带入了几项（0 表示没填过雷达 / 这份政策用不上画像） */
+const inheritedCount = ref(0);
 const result = ref<EvaluationResult | null>(null);
 const loading = ref(true);
 const error = ref('');
@@ -48,10 +83,12 @@ async function load(): Promise<void> {
   try {
     const data = await getPolicy(policyId.value);
     policy.value = data;
-    // 填报的是个人情况：每次进来都用空白表单，并顺手清掉历史上可能残留的草稿
+    // 填报的是个人情况：不保留上一次的填写内容，但会带入「政策雷达」里已经填过的画像
     clearAllDrafts();
     if (isLoggedIn.value) void clearRemoteDraft(data.id).catch(() => undefined);
-    profile.value = createEmptyProfile(data.fields);
+    const inherited = inheritFromRadar(data);
+    profile.value = inherited.profile;
+    inheritedCount.value = inherited.count;
   } catch (err) {
     error.value = err instanceof Error ? err.message : '政策加载失败';
     policy.value = null;
@@ -234,6 +271,16 @@ async function locate(docRef: string, quote: string): Promise<void> {
         <!-- 左：填表 -->
         <div class="lg:col-span-5">
           <div class="lg:sticky lg:top-20">
+            <div
+              v-if="inheritedCount > 0"
+              class="mb-3 flex flex-wrap items-center gap-x-2 gap-y-1 rounded-xl border border-brand-200 bg-brand-50 px-3 py-2 text-xs text-brand-700"
+            >
+              <span class="font-medium">已从你的政策雷达画像带入 {{ inheritedCount }} 项</span>
+              <span class="text-brand-700/80">可以直接改，判不准的再手动补</span>
+              <RouterLink to="/radar" class="ml-auto shrink-0 underline underline-offset-2 hover:text-brand-800">
+                回去改画像
+              </RouterLink>
+            </div>
             <ProfileForm v-model="profile" :fields="policy.fields" />
 
             <div class="mt-4 rounded-xl border border-line bg-surface p-4">

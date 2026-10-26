@@ -54,7 +54,7 @@ onMounted(async () => {
 const statItems = [
   { label: '份国家级政策', key: 'policies' as const },
   { label: '条可判定条件', key: 'conditions' as const },
-  { label: '个表单字段', key: 'fields' as const },
+  { label: '个表单字段 · 已归并为 26 项画像', key: 'fields' as const },
   { label: '份申请材料', key: 'materials' as const },
 ];
 </script>
@@ -71,28 +71,29 @@ const statItems = [
       <h1
         class="mt-6 border-l-[3px] border-accent pl-5 text-4xl leading-[1.24] font-bold tracking-tight text-ink sm:text-[2.6rem]"
       >
-        贴一份政策原文，
+        填一次自己的情况，
         <span class="whitespace-nowrap text-brand-500">30 秒</span>
-        知道自己够不够格。
+        知道哪些钱能申。
       </h1>
 
       <p class="mt-5 text-base leading-relaxed text-ink-2">
-        奖助学金、专项补贴、保研推免、人才落户 —— 政策文件动辄上万字，条件散落在正文、附件和脚注里。
-        学生和普通市民最常问的其实只有一句话：<strong class="font-semibold text-ink">「我能申吗？」</strong>
+        奖助学金、专项补贴、保研推免、基层就业 —— 政策文件动辄上万字，条件散落在正文、附件和脚注里。
+        {{ totals?.policies ?? 32 }} 份国家级政策的原文我们已经逐条拆成可判定的条件，
+        <strong class="font-semibold text-ink">你只需要回答一次「我是谁」</strong>，剩下的交给规则引擎。
       </p>
 
       <div class="mt-8 flex flex-wrap gap-3">
         <RouterLink
-          to="/policies"
+          to="/radar"
           class="rounded-lg bg-brand-600 px-6 py-3 text-sm font-medium text-on-brand shadow-sm transition hover:bg-brand-700"
         >
-          开始匹配 →
+          查我能申请什么 →
         </RouterLink>
         <RouterLink
-          to="/radar"
+          to="/policies"
           class="rounded-lg border border-brand-300 bg-brand-50 px-6 py-3 text-sm font-medium text-brand-700 transition hover:border-brand-400 hover:bg-brand-100"
         >
-          政策雷达 · 横评 32 份
+          我已有目标政策
         </RouterLink>
         <RouterLink
           to="/calendar"
@@ -143,10 +144,11 @@ const statItems = [
     <section class="mt-16 rounded-2xl border border-brand-200 bg-brand-50/60 p-6">
       <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div class="max-w-2xl">
-          <h2 class="text-base font-semibold text-ink">不确定从哪份看起？先做一次横向体检</h2>
+          <h2 class="text-base font-semibold text-ink">第一次来？先填一次个人情况</h2>
           <p class="mt-2 text-sm leading-relaxed text-ink-2">
-            32 份政策里共有 333 个表单字段、285 种写法，一份份填不现实。政策雷达只问 26 项共性信息，
-            把这些字段映射到每份政策自己的写法上，一次给出「能申 / 差一点 / 还缺信息 / 不符合」四层结论。
+            32 份政策里共有 {{ totals?.fields ?? 333 }} 个表单字段、285 种写法，一份份填不现实。政策雷达只问 26 项共性信息，
+            把这些字段映射到每份政策自己的写法上，一次给出「初筛适合 / 差几项 / 信息不够 / 不符」四层结论 ——
+            判定只说明「画像覆盖的硬性条件」，不代替学校或主管部门审核。
           </p>
         </div>
         <RouterLink

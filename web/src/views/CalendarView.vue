@@ -2,8 +2,16 @@
 import { computed, onMounted, ref, watch } from 'vue';
 import { RouterLink, useRoute, useRouter } from 'vue-router';
 
-import type { CalendarData, CalendarEvent } from '@/lib/api';
-import { getCalendar } from '@/lib/api';
+import type { CalendarData, CalendarEvent, CalendarResponsibility } from '@/lib/api';
+import { RESPONSIBILITY_LABEL, getCalendar } from '@/lib/api';
+
+/** 责任方配色：个人要办的用主色强调，其余保持中性，避免和「个人节点」抢注意力 */
+const RESPONSIBILITY_STYLE: Record<CalendarResponsibility, { badge: string; text: string }> = {
+  applicant: { badge: 'border-brand-300 bg-brand-50 text-brand-700', text: 'text-brand-700' },
+  school: { badge: 'border-sky-200 bg-sky-50 text-sky-700', text: 'text-sky-700' },
+  authority: { badge: 'border-line bg-surface-2 text-muted', text: 'text-muted' },
+  unknown: { badge: 'border-line bg-surface-2 text-faint', text: 'text-faint' },
+};
 
 /**
  * 年度申报日历。
@@ -43,6 +51,8 @@ const currentMonth = today.getMonth() + 1;
 
 const activeMonth = ref(currentMonth);
 const activeCategory = ref('全部');
+/** 只看「个人要办」的节点：日历先回答「我什么时候动手」，学校报送类默认折叠掉 */
+const onlyPersonal = ref(false);
 const openGroups = ref<Set<string>>(new Set());
 
 /** 所有事件摊平，用于统计类别 */
@@ -61,7 +71,9 @@ const categories = computed<string[]>(() => {
 });
 
 function matches(event: CalendarEvent): boolean {
-  return activeCategory.value === '全部' || event.category === activeCategory.value;
+  const byCategory = activeCategory.value === '全部' || event.category === activeCategory.value;
+  if (!byCategory) return false;
+  return !onlyPersonal.value || event.responsibility === 'applicant';
 }
 
 /** 每个月在当前筛选下有几个节点 */
@@ -114,7 +126,7 @@ const nonAnnualGroups = computed(() => {
     {
       key: 'history',
       title: '政策沿革',
-      hint: '政策施行或调整的历史时间，不是申报节点，列出来方便判断条款新旧。',
+      hint: '政策施行或调整的历史时间，以及往年已截止的一次性节点，列出来方便判断条款新旧。',
       events: d.history.filter(matches),
     },
   ].filter((g) => g.events.length > 0);
@@ -196,6 +208,11 @@ onMounted(load);
         按月份摊开，就能提前知道几月该准备材料、几月只剩等结果。
         节点全部由规则解析得出，不调用大模型，可对照原文逐条核对。
       </p>
+      <p class="mt-2 text-xs leading-relaxed text-muted">
+        每条节点都标了责任方：<span class="font-medium text-brand-700">个人要办</span> 的才是你需要动手的，
+        标「学校/院系」「主管部门」的是校内或上级部门的流程节点，你只要知道进度即可。
+        往年已过期的一次性节点会沉到页面底部的「政策沿革」，不会混进今年的待办。
+      </p>
     </header>
 
     <div v-if="loading" class="mt-10 space-y-4">
@@ -260,7 +277,21 @@ onMounted(load);
             {{ c }}
           </button>
         </div>
-        <p class="text-xs text-faint">当前筛选出 {{ filteredTotal }} 个节点</p>
+        <div class="flex flex-wrap items-center gap-3">
+          <button
+            type="button"
+            class="rounded-full border px-3 py-1.5 text-xs font-medium transition"
+            :class="
+              onlyPersonal
+                ? 'border-brand-600 bg-brand-600 text-on-brand'
+                : 'border-line bg-surface text-ink-2 hover:border-brand-300 hover:text-brand-700'
+            "
+            @click="onlyPersonal = !onlyPersonal"
+          >
+            只看个人要办
+          </button>
+          <p class="text-xs text-faint">当前筛选出 {{ filteredTotal }} 个节点</p>
+        </div>
       </div>
 
       <!-- 12 个月 -->
@@ -323,6 +354,12 @@ onMounted(load);
               <div class="flex flex-wrap items-center gap-2">
                 <span class="rounded-full border border-brand-200 bg-brand-50 px-2 py-0.5 text-[11px] font-medium text-brand-700">{{ event.category }}</span>
                 <span class="rounded-full border border-line bg-surface-2 px-2 py-0.5 text-[11px] text-muted">{{ event.level }}</span>
+                <span
+                  class="rounded-full border px-2 py-0.5 text-[11px] font-medium"
+                  :class="RESPONSIBILITY_STYLE[event.responsibility].badge"
+                >
+                  {{ RESPONSIBILITY_LABEL[event.responsibility] }}
+                </span>
                 <span class="text-xs text-faint">{{ deadlineLabel(event) }}</span>
               </div>
               <h3 class="mt-1.5 text-sm font-semibold leading-snug text-ink">{{ event.label }}</h3>
@@ -379,6 +416,9 @@ onMounted(load);
               <li v-for="event in group.events" :key="event.id" class="flex flex-wrap items-baseline gap-x-3 gap-y-1 px-5 py-3">
                 <span class="text-sm font-medium text-ink">{{ event.label }}</span>
                 <span v-if="event.dateText" class="rounded bg-surface-3 px-1.5 py-0.5 text-[11px] text-ink-2">{{ event.dateText }}</span>
+                <span v-if="event.expired" class="rounded border border-line bg-surface-2 px-1.5 py-0.5 text-[11px] text-faint">
+                  已过期
+                </span>
                 <span class="text-xs text-faint">{{ event.policyTitle }}</span>
                 <RouterLink :to="`/match/${event.policyId}`" class="ml-auto text-xs font-medium text-brand-700 hover:text-brand-800">
                   判定 →

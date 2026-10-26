@@ -4,7 +4,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { buildCalendar, parseDeadlineText } from './calendar.js';
+import { RESPONSIBILITY_LABEL, buildCalendar, classifyResponsibility, parseDeadlineText } from './calendar.js';
 import type { Policy } from './types.js';
 
 /**
@@ -76,6 +76,52 @@ test('申报日历：政策沿革与空值', () => {
   assert.equal(parseDeadlineText('2014年底前').kind, 'history');
   assert.equal(parseDeadlineText('').kind, 'other');
   assert.equal(parseDeadlineText(undefined).kind, 'other');
+});
+
+test('申报日历：往年的一次性节点沉到政策沿革，不再混进今年月份', () => {
+  const calendar = buildCalendar(loadPolicies());
+  const currentYear = new Date().getFullYear();
+
+  for (const month of calendar.months) {
+    for (const event of month.events) {
+      if (event.year === undefined) continue;
+      assert.ok(
+        event.year >= currentYear,
+        `${event.label}（${event.dateText}）是往年节点，不应出现在 ${month.month} 月`,
+      );
+    }
+  }
+
+  // 过期的一次性节点仍保留在历史里，并带上标记，方便核对「这个节点已经过去了」
+  const expired = calendar.history.filter((event) => event.expired);
+  assert.ok(expired.length > 0, '历史分组里应保留带过期标记的一次性节点');
+});
+
+test('申报日历：逐条标出责任方，个人节点不跟学校报送混在一起', () => {
+  assert.equal(classifyResponsibility('学生向学校提出申请'), 'applicant');
+  assert.equal(classifyResponsibility('学生本人登录系统提交申请'), 'applicant');
+  assert.equal(classifyResponsibility('中央高校报送评审结果'), 'school');
+  assert.equal(classifyResponsibility('校内公示'), 'school');
+  assert.equal(classifyResponsibility('省级教育行政部门统一报教育部审批'), 'authority');
+  assert.equal(classifyResponsibility('地方教育行政部门审核汇总'), 'authority');
+  // 「学校报送学生申请」是学校的事，不能因为含「学生申请」就判成个人
+  assert.equal(classifyResponsibility('学校报送学生申请'), 'school');
+  // 节点名本身就是申请人动作
+  assert.equal(classifyResponsibility('见习补贴申领'), 'applicant');
+  assert.equal(classifyResponsibility('高考报名'), 'applicant');
+  // 「申请受理」是部门动作，不是申请人动作
+  assert.equal(classifyResponsibility('申请受理'), 'authority');
+
+  // 排在月份里的每条节点都必须有责任方，且落在四种取值内
+  const calendar = buildCalendar(loadPolicies());
+  for (const month of calendar.months) {
+    for (const event of month.events) {
+      assert.ok(
+        event.responsibility in RESPONSIBILITY_LABEL,
+        `${event.label} 的责任方未标注`,
+      );
+    }
+  }
 });
 
 test('申报日历：真实政策库能汇总出 12 个月份结构', () => {

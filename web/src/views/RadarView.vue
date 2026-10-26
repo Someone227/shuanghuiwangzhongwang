@@ -19,27 +19,32 @@ import { scanBundles } from '@domain/radar';
  * 2. 每条结论都能说清「差在哪一条」，并能点回政策页补政策特有的那几条。
  */
 
+/**
+ * 四层状态的措辞按「阶段」而不是「结论」来写：
+ * 雷达只做了画像里的机械比对，不能替学校下「你能拿」的结论，
+ * 所以这里说「初筛适合 / 差几项 / 信息不够 / 不符」，把「还差什么」交给卡片里的具体条目。
+ */
 const STATUS_META: Record<RadarStatus, { label: string; badge: string; dot: string; hint: string }> = {
   eligible: {
-    label: '大概率能申',
+    label: '初筛适合',
     badge: 'bg-emerald-50 text-emerald-700 border-emerald-200',
     dot: 'bg-emerald-500',
-    hint: '画像里的硬性条件都过了',
+    hint: '画像覆盖的硬性条件都过了，进政策页核对其余条款后再准备材料',
   },
   near: {
-    label: '差一点',
+    label: '差几项',
     badge: 'bg-sky-50 text-sky-700 border-sky-200',
     dot: 'bg-sky-500',
-    hint: '还差一两条就能判断',
+    hint: '再补一两项画像信息（或进政策页填特有条款）就能判断',
   },
   incomplete: {
-    label: '还缺信息',
+    label: '信息不够',
     badge: 'bg-amber-50 text-amber-700 border-amber-200',
     dot: 'bg-amber-500',
-    hint: '要再补几项，或进政策页填特有条款',
+    hint: '画像里还有不少信息没填，填完再判一次更准',
   },
   ineligible: {
-    label: '不符合',
+    label: '不符',
     badge: 'bg-surface-3 text-muted border-line',
     dot: 'bg-line-2',
     hint: '有硬性条件明确不符',
@@ -48,10 +53,10 @@ const STATUS_META: Record<RadarStatus, { label: string; badge: string; dot: stri
 
 const STATUS_TABS: Array<{ key: RadarStatus | 'all'; label: string }> = [
   { key: 'all', label: '全部' },
-  { key: 'eligible', label: '能申' },
-  { key: 'near', label: '差一点' },
-  { key: 'incomplete', label: '还缺信息' },
-  { key: 'ineligible', label: '不符合' },
+  { key: 'eligible', label: '初筛适合' },
+  { key: 'near', label: '差几项' },
+  { key: 'incomplete', label: '信息不够' },
+  { key: 'ineligible', label: '不符' },
 ];
 
 const GROUP_ORDER = ['学业情况', '身份与阶段', '家庭情况', '品行与其他'] as const;
@@ -220,16 +225,20 @@ function filledOf(slot: RadarSlot): boolean {
   return isAnswered(slot.key);
 }
 
-/** 结论一句话：把「差在哪」翻译成人话 */
+/** 结论一句话：说清「走到哪一步 / 下一步做什么」，而不是只给一个结论词 */
 function itemReason(item: RadarScanItem): string {
   if (item.blockers.length > 0) {
     const first = item.blockers[0];
-    return first.gap ? `${first.label}：${first.gap}` : first.label;
+    return first.gap ? `硬性不符：${first.label} · ${first.gap}` : `硬性不符：${first.label}`;
+  }
+  if (item.status === 'eligible') {
+    if (item.unknown === 0) return '画像覆盖的硬性条件已全部满足，可以开始核对材料清单';
+    return `画像覆盖的硬性条件已满足，还有 ${item.unknown} 项政策特有条款要进政策页核对`;
   }
   const radarMissing = item.missing.filter((entry) => entry.kind === 'radar');
-  if (radarMissing.length > 0) return `还差「${radarMissing[0].label}」`;
+  if (radarMissing.length > 0) return `下一步补「${radarMissing[0].label}」，补上就能往下一层判断`;
   const policyMissing = item.missing.filter((entry) => entry.kind === 'policy');
-  if (policyMissing.length > 0) return `政策特有条款：${policyMissing[0].label}`;
+  if (policyMissing.length > 0) return `下一步进政策页确认：${policyMissing[0].label}`;
   return STATUS_META[item.status].hint;
 }
 
@@ -309,7 +318,7 @@ watch(answers, saveDraft, { deep: true });
     </h1>
     <p class="mt-3 max-w-3xl text-sm leading-relaxed text-ink-2">
       32 份政策里一共有 333 个表单字段、285 种不同写法，一份份填是不现实的 ——
-      这里只问 26 项共性信息，用规则表把它们映射到每份政策自己的字段上，得出「能申 / 差一点 / 还缺信息 / 不符合」。
+      这里只问 26 项共性信息，用规则表把它们映射到每份政策自己的字段上，得出「初筛适合 / 差几项 / 信息不够 / 不符」。
       没填的信息不会算成「不符合」，只会标「待补充」。
     </p>
 
@@ -481,6 +490,10 @@ watch(answers, saveDraft, { deep: true });
               </dt>
             </div>
           </dl>
+          <p class="text-xs leading-relaxed text-faint">
+            这四层是「初筛」：只比对画像能覆盖的硬性条件，不代替学校或主管部门审核。
+            点了「初筛适合」也别直接交材料 —— 进政策页把「政策特有」条款补齐、核对一遍再准备。
+          </p>
 
           <!-- 先填哪几项 -->
           <div v-if="nextSuggestions.length > 0" class="rounded-2xl border border-sky-200 bg-sky-50 px-4 py-3">
@@ -538,12 +551,14 @@ watch(answers, saveDraft, { deep: true });
                   :to="`/match/${item.policyId}`"
                   class="shrink-0 rounded-lg border border-line px-3 py-1.5 text-xs text-ink-2 transition hover:border-brand-400 hover:text-brand-700"
                 >
-                  {{ item.status === 'eligible' ? '去核对照' : '补充判定' }} →
+                  {{ item.status === 'eligible' ? '去核对材料' : '补充判定' }} →
                 </RouterLink>
               </div>
 
               <div class="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 border-t border-line-sub pt-2 text-[11px] text-faint">
-                <span class="tabular-nums">符合 {{ item.pass }} · 不符 {{ item.fail }} · 待补充 {{ item.unknown }}</span>
+                <span class="tabular-nums">
+                  已核对 {{ item.pass }} 项符合<span v-if="item.fail > 0"> · {{ item.fail }} 项不符</span><span v-if="item.unknown > 0"> · {{ item.unknown }} 项待核对</span>
+                </span>
                 <span v-if="item.radarUnknown > 0">画像可补 {{ item.radarUnknown }} 条</span>
                 <span v-if="item.policyUnknown > 0">政策特有 {{ item.policyUnknown }} 条</span>
               </div>

@@ -14,7 +14,14 @@ import { request } from './http';
 
 // 申报日历的结构定义在后端领域层（server/src/domain/calendar.ts），
 // 前端只复用类型 —— 静态模式下直接消费导出的 JSON，不重复实现解析规则。
-export type { CalendarData, CalendarEvent, CalendarKind, CalendarMonth } from '@domain/calendar';
+export type {
+  CalendarData,
+  CalendarEvent,
+  CalendarKind,
+  CalendarMonth,
+  CalendarResponsibility,
+} from '@domain/calendar';
+export { RESPONSIBILITY_LABEL } from '@domain/calendar';
 
 // 政策雷达的槽位与分层结构同样定义在后端领域层，前端只复用类型
 export type {
@@ -89,6 +96,14 @@ export interface ConditionGroup {
   docRef: string;
 }
 
+/** 并列通道：同一份政策里满足任一条即可（例如国家奖学金的常规成绩通道 / 突出表现通道） */
+export interface PolicyChannel {
+  id: string;
+  name: string;
+  description?: string;
+  groupIds: string[];
+}
+
 export interface MaterialItem {
   name: string;
   required: boolean;
@@ -141,6 +156,8 @@ export interface Policy {
   sections: PolicySection[];
   fields: ProfileField[];
   conditions: ConditionGroup[];
+  /** 并列通道（可选）：不配置时所有条件组按「全部满足」计算 */
+  channels?: PolicyChannel[];
   materials: MaterialItem[];
   deadlines: DeadlineItem[];
   notes: string[];
@@ -172,6 +189,10 @@ export interface GroupResult {
   conditionResults: ConditionResult[];
 }
 
+export interface ChannelResult extends PolicyChannel {
+  verdict: Verdict;
+}
+
 export interface EvaluationSummary {
   pass: number;
   fail: number;
@@ -184,6 +205,8 @@ export interface EvaluationResult {
   policyId: string;
   overall: Verdict;
   groups: GroupResult[];
+  /** 并列通道的逐条判定结果；没有通道的政策是空数组 */
+  channels: ChannelResult[];
   conditions: ConditionResult[];
   summary: EvaluationSummary;
   headline: string;
