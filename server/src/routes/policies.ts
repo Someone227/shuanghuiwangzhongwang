@@ -3,6 +3,7 @@ import { Router } from 'express';
 import { buildCalendar } from '../domain/calendar.js';
 import { evaluate } from '../domain/matcher.js';
 import { getPolicy, listAllPolicies, listPolicies } from '../policies/store.js';
+import { RADAR_SLOTS, scanPolicies, slotCoverage, toRadarBundle } from '../domain/radar.js';
 
 export const policiesRouter = Router();
 
@@ -17,6 +18,28 @@ policiesRouter.get('/policies', (_req, res) => {
  */
 policiesRouter.get('/calendar', (_req, res) => {
   res.json({ ok: true, data: buildCalendar(listAllPolicies()) });
+});
+
+/**
+ * 政策雷达元数据：26 个统一画像槽位 + 每份政策的精简包（不含原文）。
+ * 前端拿到它之后在本地跑 scanBundles()，填表即可实时分层。
+ */
+policiesRouter.get('/radar', (_req, res) => {
+  const policies = listAllPolicies();
+  res.json({
+    ok: true,
+    data: { slots: RADAR_SLOTS, coverage: slotCoverage(policies), policies: policies.map(toRadarBundle) },
+  });
+});
+
+/**
+ * 政策雷达：提交一份统一画像，返回 32 份政策的分层结论。
+ * 纯规则判定，不调用大模型 —— 画像与政策条件的映射关系全部可追溯。
+ */
+policiesRouter.post('/radar/scan', (req, res) => {
+  const slots = (req.body ?? {}) as Record<string, unknown>;
+  const policies = listAllPolicies();
+  res.json({ ok: true, data: { ...scanPolicies(policies, slots), coverage: slotCoverage(policies) } });
 });
 
 /** 单份政策全量（原文、段落、字段、条件树、材料） */

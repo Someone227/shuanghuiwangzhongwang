@@ -7,6 +7,7 @@
 
 import type { CalendarData } from '@domain/calendar';
 import { evaluate } from '@domain/matcher';
+import type { RadarPolicyBundle, RadarSlot } from '@domain/radar';
 import type { Policy as DomainPolicy } from '@domain/types';
 
 import { request } from './http';
@@ -14,6 +15,16 @@ import { request } from './http';
 // 申报日历的结构定义在后端领域层（server/src/domain/calendar.ts），
 // 前端只复用类型 —— 静态模式下直接消费导出的 JSON，不重复实现解析规则。
 export type { CalendarData, CalendarEvent, CalendarKind, CalendarMonth } from '@domain/calendar';
+
+// 政策雷达的槽位与分层结构同样定义在后端领域层，前端只复用类型
+export type {
+  RadarPolicyBundle,
+  RadarResult,
+  RadarScanItem,
+  RadarSlot,
+  RadarStatus,
+  RadarSummary,
+} from '@domain/radar';
 
 export type Verdict = 'pass' | 'fail' | 'unknown' | 'warn';
 export type FieldType = 'text' | 'number' | 'boolean' | 'select' | 'multiselect';
@@ -215,6 +226,19 @@ export async function getPolicy(id: string): Promise<Policy> {
     return policy;
   }
   return request<Policy>(`/api/policies/${encodeURIComponent(id)}`);
+}
+
+/** 政策雷达数据集：统一画像槽位 + 32 份政策的精简包（不含原文，约 215KB） */
+export interface RadarData {
+  slots: RadarSlot[];
+  coverage: Record<string, number>;
+  policies: RadarPolicyBundle[];
+}
+
+/** 政策雷达数据：静态模式读导出好的 radar.json，服务端模式走 /api/radar */
+export function getRadarData(): Promise<RadarData> {
+  if (isStaticMode) return fetchStatic<RadarData>('policies/radar.json');
+  return request<RadarData>('/api/radar');
 }
 
 /** 年度申报日历：把各政策的「时间节点」按月份聚合 */

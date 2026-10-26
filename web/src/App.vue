@@ -103,8 +103,15 @@ onMounted(async () => {
           </div>
 
           <RouterLink
-            to="/calendar"
+            to="/radar"
             class="hidden rounded-full border border-slate-200 bg-white px-4 py-1.5 text-xs font-medium text-slate-600 transition hover:border-brand-300 hover:text-brand-700 sm:inline-flex"
+          >
+            政策雷达
+          </RouterLink>
+
+          <RouterLink
+            to="/calendar"
+            class="hidden rounded-full border border-slate-200 bg-white px-4 py-1.5 text-xs font-medium text-slate-600 transition hover:border-brand-300 hover:text-brand-700 lg:inline-flex"
           >
             申报日历
           </RouterLink>

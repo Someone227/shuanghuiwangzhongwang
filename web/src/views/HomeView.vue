@@ -135,6 +135,24 @@ const statItems = [
     <section class="mt-16 rounded-2xl border border-brand-200 bg-brand-50/60 p-6">
       <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div class="max-w-2xl">
+          <h2 class="text-base font-semibold text-slate-900">不确定从哪份看起？先做一次横向体检</h2>
+          <p class="mt-2 text-sm leading-relaxed text-slate-600">
+            32 份政策里共有 333 个表单字段、285 种写法，一份份填不现实。政策雷达只问 26 项共性信息，
+            把这些字段映射到每份政策自己的写法上，一次给出「能申 / 差一点 / 还缺信息 / 不符合」四层结论。
+          </p>
+        </div>
+        <RouterLink
+          to="/radar"
+          class="shrink-0 rounded-lg bg-brand-600 px-5 py-2.5 text-sm font-medium text-white transition hover:bg-brand-700"
+        >
+          打开政策雷达 →
+        </RouterLink>
+      </div>
+    </section>
+
+    <section class="mt-6 rounded-2xl border border-slate-200 bg-white p-6">
+      <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div class="max-w-2xl">
           <h2 class="text-base font-semibold text-slate-900">判定之外，还差一问：什么时候申？</h2>
           <p class="mt-2 text-sm leading-relaxed text-slate-600">
             奖助学金不是全年都能申请。把 {{ totals?.policies ?? 32 }} 份政策里的时间节点按月份摊开，

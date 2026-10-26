@@ -72,9 +72,22 @@ bytes += fs.statSync(indexOut).size;
 // 年度申报日历：和判定引擎一样是纯函数，前端静态模式直接消费
 // （node 24 能直接 import .ts，type stripping 会擦掉这里的 type-only import）
 const { buildCalendar } = await import('../src/domain/calendar.ts');
+const { toRadarBundle, RADAR_SLOTS, slotCoverage } = await import('../src/domain/radar.ts');
 const calendarOut = path.join(OUT_DIR, 'calendar.json');
 fs.writeFileSync(calendarOut, JSON.stringify(buildCalendar(policies)));
 bytes += fs.statSync(calendarOut).size;
+
+// 政策雷达：只导出「槽位 + 精简政策包」，不拉 32 份全文
+const radarOut = path.join(OUT_DIR, 'radar.json');
+fs.writeFileSync(
+  radarOut,
+  JSON.stringify({
+    slots: RADAR_SLOTS,
+    coverage: slotCoverage(policies),
+    policies: policies.map(toRadarBundle),
+  }),
+);
+bytes += fs.statSync(radarOut).size;
 
 console.log(
   `✓ 导出 ${policies.length} 份政策到 web/public/policies/（index.json + calendar.json + 每份全文，共 ${(bytes / 1024).toFixed(0)} KB）`,

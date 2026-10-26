@@ -7,7 +7,7 @@
  * 同样能部署，而且更快、过程更透明（每次部署就是一次普通提交）。
  *
  * 用法（先构建，再发布）：
- *   node server/scripts/export-static-data.mjs
+ *   pnpm --filter server exec tsx scripts/export-static-data.mjs
  *   pnpm --filter web run build:pages
  *   node tools/deploy-pages.mjs
  */
