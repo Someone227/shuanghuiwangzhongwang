@@ -87,6 +87,12 @@ const statItems = [
           开始匹配 →
         </RouterLink>
         <RouterLink
+          to="/radar"
+          class="rounded-lg border border-brand-300 bg-brand-50 px-6 py-3 text-sm font-medium text-brand-700 transition hover:border-brand-400 hover:bg-brand-100"
+        >
+          政策雷达 · 横评 32 份
+        </RouterLink>
+        <RouterLink
           to="/calendar"
           class="rounded-lg border border-slate-300 bg-white px-6 py-3 text-sm font-medium text-slate-700 transition hover:border-brand-400 hover:text-brand-700"
         >
