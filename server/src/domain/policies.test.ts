@@ -110,7 +110,7 @@ test('前端表单格式（扁平键画像）能驱动真实政策判定', () =>
     'identity.creditStatus': true,
     'education.enrollmentStatus': '高校在读学生',
     'education.schoolType': '全日制普通本科高校',
-    'education.studentLevel': '本科生或专科生（本专科学生）',
+    'education.studentLevel': '本专科学生',
     'household.studentHukouCounty': '江宁区',
     'household.parentHukouCounty': '江宁区',
     'household.applyCounty': '江宁区',

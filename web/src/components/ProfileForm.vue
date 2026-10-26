@@ -156,7 +156,6 @@ function isOptionalField(field: ProfileField): boolean {
             :id="`field-${field.key}`"
             class="mt-2 w-full rounded-lg border border-line-2 bg-surface px-3 py-2 text-sm outline-none transition focus:border-brand-500 focus:ring-2 focus:ring-brand-100"
             :value="(modelValue[field.key] as string) ?? ''"
-            :title="(modelValue[field.key] as string) ?? ''"
             @change="onText(field.key, $event)"
           >
             <option value="">请选择</option>
