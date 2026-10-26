@@ -84,16 +84,16 @@ const statItems = [
 
       <div class="mt-8 flex flex-wrap gap-3">
         <RouterLink
-          to="/radar"
+          to="/policies"
           class="rounded-lg bg-brand-600 px-6 py-3 text-sm font-medium text-on-brand shadow-sm transition hover:bg-brand-700"
         >
-          查我能申请什么 →
+          开始匹配 →
         </RouterLink>
         <RouterLink
-          to="/policies"
+          to="/radar"
           class="rounded-lg border border-brand-300 bg-brand-50 px-6 py-3 text-sm font-medium text-brand-700 transition hover:border-brand-400 hover:bg-brand-100"
         >
-          我已有目标政策
+          政策雷达
         </RouterLink>
         <RouterLink
           to="/calendar"
