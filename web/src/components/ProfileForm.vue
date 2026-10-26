@@ -51,6 +51,14 @@ function toggleMulti(key: string, option: string): void {
 function isFilled(key: string): boolean {
   return !isEmptyValue(props.modelValue[key]);
 }
+
+/**
+ * 「有残疾才需要填」这类字段不是每个人都用得上，在标签后标一个「（选填）」，
+ * 避免用户以为它是必填项而卡在这里。
+ */
+function isOptionalField(field: ProfileField): boolean {
+  return /残疾等级/.test(field.label);
+}
 </script>
 
 <template>
@@ -81,6 +89,7 @@ function isFilled(key: string): boolean {
             <label :for="`field-${field.key}`" class="text-sm font-medium text-ink-2">
               {{ field.label }}
               <span v-if="field.unit" class="ml-1 text-xs font-normal text-faint">（{{ field.unit }}）</span>
+              <span v-else-if="isOptionalField(field)" class="ml-1 text-xs font-normal text-faint">（选填）</span>
             </label>
             <span
               v-if="isFilled(field.key)"

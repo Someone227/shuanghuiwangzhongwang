@@ -2,8 +2,10 @@
 import { computed, onMounted, ref, watch } from 'vue';
 import { RouterLink } from 'vue-router';
 
+import { hitSnippet, matchScore } from '@domain/search';
+
 import type { PolicySummary } from '@/lib/api';
-import { listPolicies } from '@/lib/api';
+import { getPolicy, listPolicies } from '@/lib/api';
 
 /** 分类筛选的固定顺序：先高校资助，再升学就业，最后基础教育与民生兜底 */
 const CATEGORY_ORDER = [
@@ -57,13 +59,67 @@ const categories = computed(() => {
   return ['全部', ...ordered, ...rest];
 });
 
-const filtered = computed(() => {
-  const kw = keyword.value.trim().toLowerCase();
-  return policies.value.filter((p) => {
-    if (activeCategory.value !== '全部' && p.category !== activeCategory.value) return false;
-    if (!kw) return true;
-    return `${p.title} ${p.issuer} ${p.category}`.toLowerCase().includes(kw);
-  });
+/**
+ * 原文语料：用户开始搜关键词后再懒加载 32 份政策全文（约 700KB，只加载一次）。
+ *
+ * 为什么值得加载：搜索框要能搜到原文里的句子，而不只是标题。
+ * 加载失败时静默降级 —— 只按标题、发布单位、类别、年份搜。
+ */
+const corpus = ref<Record<string, string> | null>(null);
+const corpusLoading = ref(false);
+
+async function ensureCorpus(): Promise<void> {
+  if (corpus.value || corpusLoading.value) return;
+  corpusLoading.value = true;
+  try {
+    const loaded = await Promise.all(policies.value.map((p) => getPolicy(p.id).catch(() => null)));
+    const map: Record<string, string> = {};
+    for (const policy of loaded) if (policy) map[policy.id] = policy.originalText;
+    corpus.value = map;
+  } finally {
+    corpusLoading.value = false;
+  }
+}
+
+watch(keyword, (value) => {
+  if (value.trim().length >= 2) void ensureCorpus();
+});
+
+/**
+ * 搜索命中结果：标题、发布单位、类别、级别、年份先匹配；
+ * 都对不上再看原文（宽松匹配，漏一两个字也算）。
+ */
+const hits = computed<{ policy: PolicySummary; snippet: string | null }[]>(() => {
+  const kw = keyword.value.trim();
+  const inCategory = (policy: PolicySummary): boolean =>
+    activeCategory.value === '全部' || policy.category === activeCategory.value;
+  const base = policies.value.filter(inCategory);
+  if (!kw) return base.map((policy) => ({ policy, snippet: null }));
+
+  const scored: { policy: PolicySummary; snippet: string | null; score: number }[] = [];
+  for (const policy of base) {
+    const meta = `${policy.title} ${policy.issuer} ${policy.category} ${policy.level} ${policy.year}`;
+    const metaScore = matchScore(kw, meta, 'field');
+    if (metaScore > 0) {
+      scored.push({ policy, snippet: null, score: metaScore + 5 });
+      continue;
+    }
+    const text = corpus.value?.[policy.id];
+    if (!text) continue;
+    if (matchScore(kw, text, 'document') > 0) {
+      scored.push({ policy, snippet: hitSnippet(kw, text), score: 1 });
+    }
+  }
+  // 有关键词时按相关度排；没有关键词时保持接口里的政策目录顺序
+  scored.sort((a, b) => b.score - a.score);
+  return scored.map(({ policy, snippet }) => ({ policy, snippet }));
+});
+
+const filtered = computed(() => hits.value.map((hit) => hit.policy));
+const snippetById = computed(() => {
+  const map = new Map<string, string>();
+  for (const hit of hits.value) if (hit.snippet) map.set(hit.policy.id, hit.snippet);
+  return map;
 });
 
 /** 每页 8 份，32 份政策正好四页 */
@@ -133,11 +189,11 @@ onMounted(load);
             {{ c }}
           </button>
         </div>
-        <label class="relative block sm:w-64">
+        <label class="relative block sm:w-80">
           <input
             v-model="keyword"
             type="search"
-            placeholder="搜政策名称、发布单位"
+            placeholder="搜名称、发布单位、原文关键词"
             class="w-full rounded-lg border border-line bg-surface py-2 pr-3 pl-9 text-sm text-ink-2 placeholder:text-faint focus:border-brand-400 focus:outline-none"
           />
           <svg class="pointer-events-none absolute top-2.5 left-3 h-4 w-4 text-faint" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -147,12 +203,17 @@ onMounted(load);
         </label>
       </div>
 
-      <p class="mt-3 text-xs text-faint">
-        共 {{ policies.length }} 份政策，当前筛选出 {{ filtered.length }} 份
+      <p class="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-faint">
+        <span>共 {{ policies.length }} 份政策，当前筛选出 {{ filtered.length }} 份</span>
+        <span v-if="snippetById.size > 0" class="text-brand-700">其中 {{ snippetById.size }} 份是原文命中</span>
+        <span v-else-if="corpusLoading" class="text-muted">正在加载原文索引……</span>
+        <span v-else-if="keyword.trim().length >= 2" class="text-muted">关键词可不必一字不差，漏一两个字也能搜到</span>
       </p>
 
       <div v-if="filtered.length === 0" class="mt-8 rounded-2xl border border-dashed border-line-2 bg-surface px-6 py-12 text-center">
-        <p class="text-sm text-muted">没有匹配的政策，换个关键词或分类试试。</p>
+        <p class="text-sm text-muted">
+          {{ corpusLoading ? '正在加载原文索引，稍等一下……' : '没有匹配的政策，换个关键词或分类试试。' }}
+        </p>
         <button
           type="button"
           class="mt-3 rounded-lg border border-line px-4 py-2 text-sm text-ink-2 hover:border-brand-300 hover:text-brand-700"
@@ -192,6 +253,13 @@ onMounted(load);
             </RouterLink>
           </h2>
           <p class="mt-1 text-xs text-faint">{{ policy.issuer }}</p>
+          <p
+            v-if="snippetById.get(policy.id)"
+            class="mt-2 rounded-lg bg-surface-2 px-2.5 py-1.5 text-xs leading-relaxed text-muted"
+            :title="snippetById.get(policy.id)"
+          >
+            <span class="text-faint">原文命中：</span>{{ snippetById.get(policy.id) }}
+          </p>
           <RouterLink
             :to="`/policies/${policy.id}`"
             class="mt-1.5 inline-flex items-center gap-1 text-xs text-muted transition hover:text-brand-600"
@@ -199,7 +267,7 @@ onMounted(load);
             看条件 / 材料 / 原文 →
           </RouterLink>
 
-          <dl class="mt-4 flex flex-wrap gap-x-5 gap-y-1 text-xs text-muted">
+          <dl class="mt-4 mb-5 flex flex-wrap gap-x-5 gap-y-1 text-xs text-muted">
             <div class="flex items-baseline gap-1">
               <dd class="font-semibold tabular-nums text-ink-2">{{ policy.stats.conditions }}</dd>
               <dt>条判定</dt>
@@ -216,7 +284,7 @@ onMounted(load);
 
           <RouterLink
             :to="`/match/${policy.id}`"
-            class="mt-5 inline-flex items-center justify-center rounded-lg border border-brand-300 bg-brand-50 px-4 py-2 text-sm font-medium text-brand-700 transition group-hover:border-brand-600 group-hover:bg-brand-600 group-hover:text-on-brand"
+            class="mt-auto inline-flex items-center justify-center rounded-lg border border-brand-300 bg-brand-50 px-4 py-2 text-sm font-medium text-brand-700 transition group-hover:border-brand-600 group-hover:bg-brand-600 group-hover:text-on-brand"
           >
             开始匹配 →
           </RouterLink>

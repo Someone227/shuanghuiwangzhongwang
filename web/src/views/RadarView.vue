@@ -367,7 +367,10 @@ watch(answers, saveDraft, { deep: true });
             <div v-if="openGroups.has(entry.group)" class="space-y-3 border-t border-line-sub px-3 py-3">
               <div v-for="slot in entry.items" :key="slot.key">
                 <div class="flex items-baseline justify-between gap-2">
-                  <label class="text-xs font-medium text-ink-2">{{ slot.label }}</label>
+                  <label class="text-xs font-medium text-ink-2">
+                    {{ slot.label
+                    }}<span v-if="slot.optional" class="ml-1 font-normal text-faint">（选填）</span>
+                  </label>
                   <span v-if="filledOf(slot)" class="rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] text-emerald-600">已填</span>
                 </div>
 

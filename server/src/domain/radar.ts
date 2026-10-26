@@ -42,6 +42,8 @@ export interface RadarSlot {
   placeholder?: string;
   /** 为什么建议填这一项：填了能判断哪些政策 */
   hint?: string;
+  /** 只有部分人才需要填（如残疾等级）：表单里标「（选填）」，避免被当成必填 */
+  optional?: boolean;
   options?: RadarSlotOption[];
 }
 
@@ -237,12 +239,14 @@ export const RADAR_SLOTS: RadarSlot[] = [
     label: '残疾等级',
     kind: 'select',
     group: '家庭情况',
-    hint: '仅残疾学生填；一级二级为重度残疾',
+    optional: true,
+    hint: '只有持残疾人证的才需要按等级填；没有残疾就选「没有残疾」，不用留空',
     options: [
       { value: '一级', label: '一级' },
       { value: '二级', label: '二级' },
       { value: '三级', label: '三级' },
       { value: '四级', label: '四级' },
+      { value: 'none', label: '没有残疾', aliases: ['没有残疾', '无残疾', '非残疾', '不适用'] },
     ],
   },
   {
@@ -416,6 +420,9 @@ const FIELD_RULES: FieldRule[] = [
   { slot: 'specialGroups', type: 'boolean', flag: '残疾', label: /残疾人证|本人是否残疾|残疾学生/ },
   { slot: 'disabilityLevel', type: 'select', keys: ['disability.level', 'disabilityLevel', 'person.disabilityLevel'] },
   { slot: 'disabilityLevel', type: 'select', label: /残疾等级/ },
+  // 选了「没有残疾」：顺手把「是否持有残疾人证」这类 boolean 判否，不让用户再填一遍
+  { slot: 'disabilityLevel', type: 'boolean', keys: ['disability.hasCertificate'], valueMap: { none: false } },
+  { slot: 'disabilityLevel', type: 'boolean', label: /残疾人证/, valueMap: { none: false } },
 
   // ---------- 户籍 ----------
   { slot: 'ruralHukou', type: 'boolean', keys: ['isRural', 'hukou.isRural', 'identity.isRural'] },
