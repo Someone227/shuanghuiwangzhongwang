@@ -38,7 +38,7 @@ const stats = computed(() => {
 });
 
 const levelTone = computed(() =>
-  policy.value?.level === '国家级' ? 'border-brand-200 bg-brand-50 text-brand-700' : 'border-slate-200 bg-slate-50 text-slate-600',
+  policy.value?.level === '国家级' ? 'border-brand-200 bg-brand-50 text-brand-700' : 'border-line bg-surface-2 text-ink-2',
 );
 
 async function load(): Promise<void> {
@@ -161,41 +161,41 @@ async function locate(docRef: string, quote: string): Promise<void> {
 
 <template>
   <div class="mx-auto max-w-7xl px-6 py-8">
-    <RouterLink to="/policies" class="text-sm text-slate-500 transition hover:text-brand-600">← 返回政策库</RouterLink>
+    <RouterLink to="/policies" class="text-sm text-muted transition hover:text-brand-600">← 返回政策库</RouterLink>
 
     <!-- 加载中 -->
     <div v-if="loading" class="mt-8 space-y-3">
-      <div class="h-8 w-2/3 animate-pulse rounded-lg bg-slate-200" />
-      <div class="h-4 w-1/2 animate-pulse rounded bg-slate-100" />
-      <div class="mt-6 h-64 animate-pulse rounded-2xl bg-slate-100" />
+      <div class="h-8 w-2/3 animate-pulse rounded-lg bg-line" />
+      <div class="h-4 w-1/2 animate-pulse rounded bg-surface-3" />
+      <div class="mt-6 h-64 animate-pulse rounded-2xl bg-surface-3" />
     </div>
 
     <!-- 加载失败 -->
     <div v-else-if="error" class="mt-8 rounded-2xl border border-rose-200 bg-rose-50 p-6">
       <h2 class="text-base font-semibold text-rose-800">政策加载失败</h2>
       <p class="mt-1 text-sm text-rose-700">{{ error }}</p>
-      <button type="button" class="mt-3 rounded-lg bg-rose-600 px-4 py-2 text-sm text-white" @click="load">重试</button>
+      <button type="button" class="mt-3 rounded-lg bg-rose-600 px-4 py-2 text-sm text-on-brand" @click="load">重试</button>
     </div>
 
     <template v-else-if="policy">
       <!-- 政策信息 -->
-      <header class="mt-4 rounded-2xl border border-slate-200 bg-white p-5">
+      <header class="mt-4 rounded-2xl border border-line bg-surface p-5">
         <div class="flex flex-wrap items-center gap-2">
           <span class="rounded-full border px-2.5 py-0.5 text-xs font-medium" :class="levelTone">{{ policy.level }}</span>
-          <span class="rounded-full border border-slate-200 bg-slate-50 px-2.5 py-0.5 text-xs text-slate-600">{{ policy.category }}</span>
-          <span class="rounded-full border border-slate-200 bg-slate-50 px-2.5 py-0.5 text-xs text-slate-600">{{ policy.year }} 年</span>
+          <span class="rounded-full border border-line bg-surface-2 px-2.5 py-0.5 text-xs text-ink-2">{{ policy.category }}</span>
+          <span class="rounded-full border border-line bg-surface-2 px-2.5 py-0.5 text-xs text-ink-2">{{ policy.year }} 年</span>
           <span
             v-if="policy.review?.humanReviewed"
             class="rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-0.5 text-xs text-emerald-700"
             >已人工复核 {{ policy.review.reviewedAt }}</span
           >
-          <span class="rounded-full border border-slate-200 bg-white px-2.5 py-0.5 text-xs text-slate-500">
+          <span class="rounded-full border border-line bg-surface px-2.5 py-0.5 text-xs text-muted">
             AI 建库 · {{ policy.extraction.model ?? policy.extraction.engine }}
           </span>
         </div>
 
-        <h1 class="mt-3 text-2xl font-bold tracking-tight text-slate-900">{{ policy.title }}</h1>
-        <p class="mt-1.5 text-sm text-slate-500">
+        <h1 class="mt-3 text-2xl font-bold tracking-tight text-ink">{{ policy.title }}</h1>
+        <p class="mt-1.5 text-sm text-muted">
           发布单位：{{ policy.issuer }}
           <a
             v-if="policy.sourceUrl"
@@ -209,8 +209,8 @@ async function locate(docRef: string, quote: string): Promise<void> {
 
         <dl class="mt-4 flex flex-wrap gap-x-8 gap-y-2">
           <div v-for="item in stats" :key="item.label" class="flex items-baseline gap-1.5">
-            <dd class="text-lg font-semibold tabular-nums text-slate-800">{{ item.value }}</dd>
-            <dt class="text-xs text-slate-400">{{ item.label }}</dt>
+            <dd class="text-lg font-semibold tabular-nums text-ink">{{ item.value }}</dd>
+            <dt class="text-xs text-faint">{{ item.label }}</dt>
           </div>
         </dl>
 
@@ -236,30 +236,30 @@ async function locate(docRef: string, quote: string): Promise<void> {
           <div class="lg:sticky lg:top-20">
             <ProfileForm v-model="profile" :fields="policy.fields" />
 
-            <div class="mt-4 rounded-xl border border-slate-200 bg-white p-4">
+            <div class="mt-4 rounded-xl border border-line bg-surface p-4">
               <button
                 type="button"
-                class="w-full rounded-lg bg-brand-600 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-brand-700 disabled:cursor-not-allowed disabled:opacity-60"
+                class="w-full rounded-lg bg-brand-600 px-4 py-2.5 text-sm font-medium text-on-brand transition hover:bg-brand-700 disabled:cursor-not-allowed disabled:opacity-60"
                 :disabled="evaluating"
                 @click="runEvaluate"
               >
                 {{ evaluating ? '正在判定…' : result ? '重新判定' : '开始判定' }}
               </button>
-              <p class="mt-1.5 text-center text-xs text-slate-400">填完可以按 Ctrl + Enter 直接判定</p>
+              <p class="mt-1.5 text-center text-xs text-faint">填完可以按 Ctrl + Enter 直接判定</p>
               <p v-if="evaluateError" class="mt-2 text-xs text-rose-600">{{ evaluateError }}</p>
               <p v-if="stale" class="mt-2 text-xs text-amber-600">你改动了表单，建议重新判定以刷新结论。</p>
-              <p class="mt-2 text-center text-xs text-slate-400">填的内容只在这个页面里，离开或刷新就会清空。</p>
+              <p class="mt-2 text-center text-xs text-faint">填的内容只在这个页面里，离开或刷新就会清空。</p>
             </div>
           </div>
         </div>
 
         <!-- 右：结果 / 原文 -->
         <div id="verdict-top" class="scroll-mt-20 lg:col-span-7">
-          <div class="mb-4 flex gap-1 rounded-xl border border-slate-200 bg-white p-1">
+          <div class="mb-4 flex gap-1 rounded-xl border border-line bg-surface p-1">
             <button
               type="button"
               class="flex-1 rounded-lg px-3 py-1.5 text-sm transition"
-              :class="tab === 'report' ? 'bg-brand-600 font-medium text-white' : 'text-slate-600 hover:bg-slate-50'"
+              :class="tab === 'report' ? 'bg-brand-600 font-medium text-on-brand' : 'text-ink-2 hover:bg-surface-2'"
               @click="tab = 'report'"
             >
               判定结果
@@ -267,7 +267,7 @@ async function locate(docRef: string, quote: string): Promise<void> {
             <button
               type="button"
               class="flex-1 rounded-lg px-3 py-1.5 text-sm transition"
-              :class="tab === 'original' ? 'bg-brand-600 font-medium text-white' : 'text-slate-600 hover:bg-slate-50'"
+              :class="tab === 'original' ? 'bg-brand-600 font-medium text-on-brand' : 'text-ink-2 hover:bg-surface-2'"
               @click="tab = 'original'"
             >
               政策原文
@@ -276,12 +276,12 @@ async function locate(docRef: string, quote: string): Promise<void> {
 
           <template v-if="tab === 'report'">
             <VerdictReport v-if="result" :result="result" :policy="policy" @locate="locate" />
-            <div v-else class="rounded-2xl border border-dashed border-slate-300 bg-white p-10 text-center">
-              <p class="text-base font-medium text-slate-700">还没有判定结果</p>
-              <p class="mx-auto mt-2 max-w-sm text-sm text-slate-500">
+            <div v-else class="rounded-2xl border border-dashed border-line-2 bg-surface p-10 text-center">
+              <p class="text-base font-medium text-ink-2">还没有判定结果</p>
+              <p class="mx-auto mt-2 max-w-sm text-sm text-muted">
                 左侧按政策字段填一下自己的情况，点「开始判定」，就能看到逐条结论、差在哪、以及每条对应的原文条款。
               </p>
-              <p class="mt-4 text-xs text-slate-400">判定全部在本地完成，不上传、不调用大模型。</p>
+              <p class="mt-4 text-xs text-faint">判定全部在本地完成，不上传、不调用大模型。</p>
             </div>
           </template>
 

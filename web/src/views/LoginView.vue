@@ -69,12 +69,12 @@ async function submit(): Promise<void> {
 
 <template>
   <div class="mx-auto flex min-h-[70vh] max-w-md items-center px-6 py-12">
-    <div class="w-full rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-      <div class="flex rounded-xl bg-slate-100 p-1">
+    <div class="w-full rounded-2xl border border-line bg-surface p-6 shadow-sm">
+      <div class="flex rounded-xl bg-surface-3 p-1">
         <button
           type="button"
           class="flex-1 rounded-lg px-3 py-1.5 text-sm transition"
-          :class="!isRegister ? 'bg-white font-medium text-slate-900 shadow-sm' : 'text-slate-500'"
+          :class="!isRegister ? 'bg-surface font-medium text-ink shadow-sm dark:bg-brand-50 dark:text-brand-700' : 'text-muted'"
           @click="switchMode('login')"
         >
           登录
@@ -82,7 +82,7 @@ async function submit(): Promise<void> {
         <button
           type="button"
           class="flex-1 rounded-lg px-3 py-1.5 text-sm transition"
-          :class="isRegister ? 'bg-white font-medium text-slate-900 shadow-sm' : 'text-slate-500'"
+          :class="isRegister ? 'bg-surface font-medium text-ink shadow-sm dark:bg-brand-50 dark:text-brand-700' : 'text-muted'"
           @click="switchMode('register')"
         >
           注册
@@ -91,45 +91,45 @@ async function submit(): Promise<void> {
 
       <form class="mt-5 space-y-4" @submit.prevent="submit">
         <label class="block">
-          <span class="text-sm font-medium text-slate-700">账号</span>
+          <span class="text-sm font-medium text-ink-2">账号</span>
           <input
             v-model="username"
             type="text"
             autocomplete="username"
             placeholder="3–20 位字母、数字或下划线"
-            class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none transition focus:border-brand-500 focus:ring-2 focus:ring-brand-100"
+            class="mt-1 w-full rounded-lg border border-line-2 px-3 py-2 text-sm outline-none transition focus:border-brand-500 focus:ring-2 focus:ring-brand-100"
           />
         </label>
 
         <label v-if="isRegister" class="block">
-          <span class="text-sm font-medium text-slate-700">昵称<span class="ml-1 text-xs font-normal text-slate-400">可选</span></span>
+          <span class="text-sm font-medium text-ink-2">昵称<span class="ml-1 text-xs font-normal text-faint">可选</span></span>
           <input
             v-model="displayName"
             type="text"
             placeholder="例如：张同学"
-            class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none transition focus:border-brand-500 focus:ring-2 focus:ring-brand-100"
+            class="mt-1 w-full rounded-lg border border-line-2 px-3 py-2 text-sm outline-none transition focus:border-brand-500 focus:ring-2 focus:ring-brand-100"
           />
         </label>
 
         <label class="block">
-          <span class="text-sm font-medium text-slate-700">密码</span>
+          <span class="text-sm font-medium text-ink-2">密码</span>
           <input
             v-model="password"
             type="password"
             :autocomplete="isRegister ? 'new-password' : 'current-password'"
             placeholder="至少 6 位"
-            class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none transition focus:border-brand-500 focus:ring-2 focus:ring-brand-100"
+            class="mt-1 w-full rounded-lg border border-line-2 px-3 py-2 text-sm outline-none transition focus:border-brand-500 focus:ring-2 focus:ring-brand-100"
           />
         </label>
 
         <label v-if="isRegister" class="block">
-          <span class="text-sm font-medium text-slate-700">确认密码</span>
+          <span class="text-sm font-medium text-ink-2">确认密码</span>
           <input
             v-model="confirmPassword"
             type="password"
             autocomplete="new-password"
             placeholder="再输入一次"
-            class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none transition focus:border-brand-500 focus:ring-2 focus:ring-brand-100"
+            class="mt-1 w-full rounded-lg border border-line-2 px-3 py-2 text-sm outline-none transition focus:border-brand-500 focus:ring-2 focus:ring-brand-100"
           />
         </label>
 
@@ -138,18 +138,18 @@ async function submit(): Promise<void> {
         <button
           type="submit"
           :disabled="submitting"
-          class="w-full rounded-lg bg-brand-600 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-brand-700 disabled:opacity-60"
+          class="w-full rounded-lg bg-brand-600 px-4 py-2.5 text-sm font-medium text-on-brand transition hover:bg-brand-700 disabled:opacity-60"
         >
           {{ submitting ? '处理中…' : submitLabel }}
         </button>
       </form>
 
-      <div class="mt-4 flex items-center justify-center gap-2 text-xs text-slate-400">
-        <span>演示账号 <span class="font-mono text-slate-500">{{ DEMO_ACCOUNT.username }}</span> / <span class="font-mono text-slate-500">{{ DEMO_ACCOUNT.password }}</span></span>
+      <div class="mt-4 flex items-center justify-center gap-2 text-xs text-faint">
+        <span>演示账号 <span class="font-mono text-muted">{{ DEMO_ACCOUNT.username }}</span> / <span class="font-mono text-muted">{{ DEMO_ACCOUNT.password }}</span></span>
         <button type="button" class="text-brand-600 transition hover:underline" @click="fillDemo">一键填入</button>
       </div>
 
-      <p class="mt-3 text-center text-xs text-slate-400">
+      <p class="mt-3 text-center text-xs text-faint">
         <RouterLink to="/policies" class="transition hover:text-brand-600">不登录，先去逛逛政策库 →</RouterLink>
       </p>
     </div>

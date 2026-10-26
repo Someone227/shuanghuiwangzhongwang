@@ -112,7 +112,7 @@ const radarStats = computed(() => {
   return [
     { label: '能申', value: result.summary.eligible, tone: 'text-emerald-600' },
     { label: '差一点', value: result.summary.near, tone: 'text-amber-600' },
-    { label: '还缺信息', value: result.summary.incomplete, tone: 'text-slate-500' },
+    { label: '还缺信息', value: result.summary.incomplete, tone: 'text-muted' },
     { label: '不符合', value: result.summary.ineligible, tone: 'text-rose-600' },
   ];
 });
@@ -222,61 +222,61 @@ onMounted(load);
 
 <template>
   <div class="mx-auto max-w-6xl px-6 py-8">
-    <RouterLink to="/policies" class="text-sm text-slate-500 transition hover:text-brand-600">← 返回政策库</RouterLink>
+    <RouterLink to="/policies" class="text-sm text-muted transition hover:text-brand-600">← 返回政策库</RouterLink>
 
     <!-- 账号信息 -->
-    <section class="mt-4 rounded-2xl border border-slate-200 bg-white p-6">
+    <section class="mt-4 rounded-2xl border border-line bg-surface p-6">
       <div class="flex flex-wrap items-center gap-4">
-        <span class="flex h-14 w-14 items-center justify-center rounded-2xl bg-brand-600 text-xl font-bold text-white">
+        <span class="flex h-14 w-14 items-center justify-center rounded-2xl bg-brand-600 text-xl font-bold text-on-brand">
           {{ initial }}
         </span>
         <div class="min-w-0 flex-1">
           <div class="flex flex-wrap items-center gap-2">
-            <h1 class="text-xl font-semibold text-slate-900">{{ currentUser?.displayName }}</h1>
+            <h1 class="text-xl font-semibold text-ink">{{ currentUser?.displayName }}</h1>
             <span
               class="rounded-full border px-2 py-0.5 text-xs"
-              :class="currentUser?.role === 'demo' ? 'border-amber-200 bg-amber-50 text-amber-700' : 'border-slate-200 bg-slate-50 text-slate-600'"
+              :class="currentUser?.role === 'demo' ? 'border-amber-200 bg-amber-50 text-amber-700' : 'border-line bg-surface-2 text-ink-2'"
               >{{ roleLabel }}</span
             >
           </div>
-          <p class="mt-1 text-sm text-slate-500">
+          <p class="mt-1 text-sm text-muted">
             @{{ currentUser?.username }}
-            <span v-if="currentUser?.createdAt" class="ml-2 text-xs text-slate-400">注册于 {{ formatAt(currentUser.createdAt) }}</span>
+            <span v-if="currentUser?.createdAt" class="ml-2 text-xs text-faint">注册于 {{ formatAt(currentUser.createdAt) }}</span>
           </p>
         </div>
         <button
           type="button"
-          class="rounded-lg border border-slate-300 px-4 py-2 text-sm text-slate-700 transition hover:bg-slate-50"
+          class="rounded-lg border border-line-2 px-4 py-2 text-sm text-ink-2 transition hover:bg-surface-2"
           @click="handleLogout"
         >
           退出登录
         </button>
       </div>
-      <p class="mt-4 rounded-lg bg-slate-50 px-3 py-2 text-xs leading-relaxed text-slate-500">
-        账号与判定记录存在服务端：换一台电脑用同一账号登录，历史判定与填写进度都能接上。<strong class="font-medium text-slate-600">但填写的具体内容不会被保存</strong>——
+      <p class="mt-4 rounded-lg bg-surface-2 px-3 py-2 text-xs leading-relaxed text-muted">
+        账号与判定记录存在服务端：换一台电脑用同一账号登录，历史判定与填写进度都能接上。<strong class="font-medium text-ink-2">但填写的具体内容不会被保存</strong>——
         判定页只上报「填了几项」，离开页面即清空；画像草稿只存在你当前这台电脑的浏览器里。
       </p>
     </section>
 
     <!-- 统计条 -->
-    <section class="mt-6 grid grid-cols-2 gap-px overflow-hidden rounded-2xl border border-slate-200 bg-slate-200 sm:grid-cols-4">
-      <div v-for="item in stats" :key="item.label" class="bg-white px-5 py-4">
+    <section class="mt-6 grid grid-cols-2 gap-px overflow-hidden rounded-2xl border border-line bg-line sm:grid-cols-4">
+      <div v-for="item in stats" :key="item.label" class="bg-surface px-5 py-4">
         <div class="flex items-baseline gap-1">
-          <span class="font-mono text-2xl font-semibold tabular-nums text-slate-900">{{ item.value }}</span>
-          <span v-if="item.unit" class="text-xs text-slate-400">{{ item.unit }}</span>
+          <span class="font-mono text-2xl font-semibold tabular-nums text-ink">{{ item.value }}</span>
+          <span v-if="item.unit" class="text-xs text-faint">{{ item.unit }}</span>
         </div>
-        <div class="mt-1 text-xs font-medium text-slate-600">{{ item.label }}</div>
-        <div class="mt-0.5 truncate text-[11px] text-slate-400" :title="item.hint">{{ item.hint }}</div>
+        <div class="mt-1 text-xs font-medium text-ink-2">{{ item.label }}</div>
+        <div class="mt-0.5 truncate text-[11px] text-faint" :title="item.hint">{{ item.hint }}</div>
       </div>
     </section>
 
     <div class="mt-6 grid gap-6 lg:grid-cols-5">
       <!-- 未完成的填报 -->
-      <section class="rounded-2xl border border-slate-200 bg-white lg:col-span-3">
-        <header class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 px-5 py-4">
+      <section class="rounded-2xl border border-line bg-surface lg:col-span-3">
+        <header class="flex flex-wrap items-center justify-between gap-2 border-b border-line-sub px-5 py-4">
           <div>
-            <h2 class="text-base font-semibold text-slate-900">填到一半的政策</h2>
-            <p class="mt-0.5 text-xs text-slate-400">只记录填了几项，不记录填了什么 · 换设备登录也能接着填</p>
+            <h2 class="text-base font-semibold text-ink">填到一半的政策</h2>
+            <p class="mt-0.5 text-xs text-faint">只记录填了几项，不记录填了什么 · 换设备登录也能接着填</p>
           </div>
           <span v-if="progress.length > 0" class="rounded-full bg-brand-50 px-2 py-0.5 text-xs font-medium text-brand-700">
             {{ progress.length }} 份
@@ -284,35 +284,35 @@ onMounted(load);
         </header>
 
         <div v-if="loading" class="space-y-3 p-5">
-          <div class="h-12 animate-pulse rounded-xl bg-slate-100" />
-          <div class="h-12 animate-pulse rounded-xl bg-slate-100" />
+          <div class="h-12 animate-pulse rounded-xl bg-surface-3" />
+          <div class="h-12 animate-pulse rounded-xl bg-surface-3" />
         </div>
 
         <div v-else-if="progress.length === 0" class="px-5 py-8 text-center">
-          <p class="text-sm text-slate-500">没有填到一半的政策</p>
-          <p class="mt-1 text-xs text-slate-400">去政策库挑一份填起来，进度会自动接上</p>
+          <p class="text-sm text-muted">没有填到一半的政策</p>
+          <p class="mt-1 text-xs text-faint">去政策库挑一份填起来，进度会自动接上</p>
           <RouterLink
             to="/policies"
-            class="mt-4 inline-block rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-brand-400 hover:text-brand-700"
+            class="mt-4 inline-block rounded-lg border border-line-2 px-4 py-2 text-sm font-medium text-ink-2 transition hover:border-brand-400 hover:text-brand-700"
             >去政策库看看</RouterLink
           >
         </div>
 
-        <ul v-else class="divide-y divide-slate-100">
+        <ul v-else class="divide-y divide-line-sub">
           <li v-for="item in progress" :key="item.policyId" class="px-5 py-4">
             <div class="flex flex-wrap items-center justify-between gap-2">
               <RouterLink
                 :to="'/match/' + item.policyId"
                 :title="item.policyTitle"
-                class="min-w-0 flex-1 truncate text-sm font-medium text-slate-800 transition hover:text-brand-600"
+                class="min-w-0 flex-1 truncate text-sm font-medium text-ink transition hover:text-brand-600"
               >
                 {{ item.policyTitle }}
               </RouterLink>
               <div class="flex items-center gap-2">
-                <span class="font-mono text-xs tabular-nums text-slate-500">{{ item.filled }} / {{ item.total }}</span>
+                <span class="font-mono text-xs tabular-nums text-muted">{{ item.filled }} / {{ item.total }}</span>
                 <button
                   type="button"
-                  class="rounded-md border border-slate-200 px-2 py-1 text-[11px] text-slate-500 transition hover:border-rose-300 hover:text-rose-600"
+                  class="rounded-md border border-line px-2 py-1 text-[11px] text-muted transition hover:border-rose-300 hover:text-rose-600"
                   @click="handleRemoveProgress(item.policyId)"
                 >
                   移除
@@ -320,70 +320,70 @@ onMounted(load);
               </div>
             </div>
             <div class="mt-2 flex items-center gap-3">
-              <div class="h-1.5 flex-1 overflow-hidden rounded-full bg-slate-100">
+              <div class="h-1.5 flex-1 overflow-hidden rounded-full bg-surface-3">
                 <div class="h-full rounded-full bg-brand-500" :style="{ width: Math.round((item.filled / item.total) * 100) + '%' }" />
               </div>
               <RouterLink :to="'/match/' + item.policyId" class="shrink-0 text-xs font-medium text-brand-600 transition hover:text-brand-700">
                 继续填 →
               </RouterLink>
             </div>
-            <p class="mt-1.5 text-[11px] text-slate-400">最后更新 {{ formatAt(item.updatedAt) }}</p>
+            <p class="mt-1.5 text-[11px] text-faint">最后更新 {{ formatAt(item.updatedAt) }}</p>
           </li>
         </ul>
       </section>
 
       <!-- 我的画像 -->
-      <section class="rounded-2xl border border-slate-200 bg-white lg:col-span-2">
-        <header class="flex items-center justify-between border-b border-slate-100 px-5 py-4">
+      <section class="rounded-2xl border border-line bg-surface lg:col-span-2">
+        <header class="flex items-center justify-between border-b border-line-sub px-5 py-4">
           <div>
-            <h2 class="text-base font-semibold text-slate-900">我的画像</h2>
-            <p class="mt-0.5 text-xs text-slate-400">存在本机浏览器，不上传</p>
+            <h2 class="text-base font-semibold text-ink">我的画像</h2>
+            <p class="mt-0.5 text-xs text-faint">存在本机浏览器，不上传</p>
           </div>
           <RouterLink to="/radar" class="text-xs font-medium text-brand-600 transition hover:text-brand-700">去更新 →</RouterLink>
         </header>
 
         <div v-if="answeredCount === 0" class="px-5 py-8 text-center">
-          <p class="text-sm text-slate-500">还没填过画像</p>
-          <p class="mt-1 text-xs text-slate-400">填一次 26 项共性信息，就能一次看到 32 份政策的分层结论</p>
+          <p class="text-sm text-muted">还没填过画像</p>
+          <p class="mt-1 text-xs text-faint">填一次 26 项共性信息，就能一次看到 32 份政策的分层结论</p>
           <RouterLink
             to="/radar"
-            class="mt-4 inline-block rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-brand-700"
+            class="mt-4 inline-block rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-on-brand transition hover:bg-brand-700"
             >开始做体检</RouterLink
           >
         </div>
 
         <div v-else class="px-5 py-4">
-          <p class="text-xs text-slate-400">
-            已填 <span class="font-mono font-medium text-slate-600">{{ answeredCount }}</span> 项
-            <span class="mx-1 text-slate-300">/</span>
+          <p class="text-xs text-faint">
+            已填 <span class="font-mono font-medium text-ink-2">{{ answeredCount }}</span> 项
+            <span class="mx-1 text-faint">/</span>
             {{ RADAR_SLOTS.length }} 项
           </p>
           <ul class="mt-3 grid grid-cols-2 gap-x-4 gap-y-2.5">
             <li v-for="chip in profileChips.slice(0, 8)" :key="chip.key" class="min-w-0">
-              <div class="truncate text-[11px] text-slate-400" :title="chip.label">{{ chip.label }}</div>
-              <div class="mt-0.5 truncate text-xs font-medium text-slate-700" :title="chip.value">{{ chip.value }}</div>
+              <div class="truncate text-[11px] text-faint" :title="chip.label">{{ chip.label }}</div>
+              <div class="mt-0.5 truncate text-xs font-medium text-ink-2" :title="chip.value">{{ chip.value }}</div>
             </li>
           </ul>
-          <p v-if="answeredCount > 8" class="mt-1.5 text-[11px] text-slate-400">还有 {{ answeredCount - 8 }} 项已填</p>
+          <p v-if="answeredCount > 8" class="mt-1.5 text-[11px] text-faint">还有 {{ answeredCount - 8 }} 项已填</p>
 
           <!-- 资格概览 -->
-          <div class="mt-4 rounded-xl bg-slate-50 p-4">
+          <div class="mt-4 rounded-xl bg-surface-2 p-4">
             <div class="flex items-center justify-between">
-              <h3 class="text-xs font-semibold text-slate-700">当前画像下的资格概览</h3>
-              <span class="text-[11px] text-slate-400">本地规则现算</span>
+              <h3 class="text-xs font-semibold text-ink-2">当前画像下的资格概览</h3>
+              <span class="text-[11px] text-faint">本地规则现算</span>
             </div>
             <p v-if="radarError" class="mt-2 text-xs text-rose-600">{{ radarError }}</p>
             <div v-else-if="radar" class="mt-3 grid grid-cols-4 gap-2 text-center">
               <div v-for="cell in radarStats" :key="cell.label">
                 <div class="font-mono text-lg font-semibold tabular-nums" :class="cell.tone">{{ cell.value }}</div>
-                <div class="mt-0.5 text-[11px] text-slate-500">{{ cell.label }}</div>
+                <div class="mt-0.5 text-[11px] text-muted">{{ cell.label }}</div>
               </div>
             </div>
-            <p v-else class="mt-2 text-xs text-slate-400">正在计算…</p>
+            <p v-else class="mt-2 text-xs text-faint">正在计算…</p>
             <RouterLink
               v-if="radar"
               to="/radar"
-              class="mt-3 block rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-center text-xs font-medium text-slate-700 transition hover:border-brand-400 hover:text-brand-700"
+              class="mt-3 block rounded-lg border border-line bg-surface px-3 py-1.5 text-center text-xs font-medium text-ink-2 transition hover:border-brand-400 hover:text-brand-700"
               >看 32 份政策的完整分层 →</RouterLink
             >
           </div>
@@ -392,18 +392,18 @@ onMounted(load);
     </div>
 
     <!-- 判定记录 -->
-    <section class="mt-6 rounded-2xl border border-slate-200 bg-white">
-      <header class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 px-5 py-4">
+    <section class="mt-6 rounded-2xl border border-line bg-surface">
+      <header class="flex flex-wrap items-center justify-between gap-3 border-b border-line-sub px-5 py-4">
         <div>
-          <h2 class="text-base font-semibold text-slate-900">我的判定记录</h2>
-          <p class="mt-0.5 text-xs text-slate-400">最多保留最近 20 条，按时间倒序 · 点一条可展开明细</p>
+          <h2 class="text-base font-semibold text-ink">我的判定记录</h2>
+          <p class="mt-0.5 text-xs text-faint">最多保留最近 20 条，按时间倒序 · 点一条可展开明细</p>
         </div>
         <div class="flex items-center gap-2">
           <button
             v-if="records.length > 0"
             type="button"
             :disabled="clearing"
-            class="rounded-lg border border-slate-300 px-3 py-1.5 text-xs text-slate-600 transition hover:bg-slate-50 disabled:opacity-60"
+            class="rounded-lg border border-line-2 px-3 py-1.5 text-xs text-ink-2 transition hover:bg-surface-2 disabled:opacity-60"
             @click="handleClearRecords"
           >
             清空记录
@@ -422,38 +422,38 @@ onMounted(load);
       <p v-if="error" class="px-5 py-4 text-sm text-rose-600">{{ error }}</p>
 
       <div v-if="loading" class="space-y-3 p-5">
-        <div class="h-16 animate-pulse rounded-xl bg-slate-100" />
-        <div class="h-16 animate-pulse rounded-xl bg-slate-100" />
+        <div class="h-16 animate-pulse rounded-xl bg-surface-3" />
+        <div class="h-16 animate-pulse rounded-xl bg-surface-3" />
       </div>
 
       <div v-else-if="records.length === 0" class="px-5 py-10 text-center">
-        <p class="text-sm text-slate-500">还没有判定记录</p>
-        <p class="mt-1 text-xs text-slate-400">去政策库填一份自己的情况，判定后会自动记在这里</p>
+        <p class="text-sm text-muted">还没有判定记录</p>
+        <p class="mt-1 text-xs text-faint">去政策库填一份自己的情况，判定后会自动记在这里</p>
         <RouterLink
           to="/policies"
-          class="mt-4 inline-block rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-brand-700"
+          class="mt-4 inline-block rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-on-brand transition hover:bg-brand-700"
           >去选一份政策</RouterLink
         >
       </div>
 
-      <ul v-else class="divide-y divide-slate-100">
+      <ul v-else class="divide-y divide-line-sub">
         <li v-for="record in records" :key="record.id">
-          <button type="button" class="flex w-full items-center gap-3 px-5 py-4 text-left transition hover:bg-slate-50" @click="toggleRecord(record.id)">
+          <button type="button" class="flex w-full items-center gap-3 px-5 py-4 text-left transition hover:bg-surface-2" @click="toggleRecord(record.id)">
             <span class="h-2 w-2 shrink-0 rounded-full" :class="VERDICT_META[record.overall].dot" />
             <div class="min-w-0 flex-1">
-              <p class="truncate text-sm font-medium text-slate-800" :title="record.policyTitle">{{ record.policyTitle }}</p>
-              <p class="mt-0.5 text-xs text-slate-400">
+              <p class="truncate text-sm font-medium text-ink" :title="record.policyTitle">{{ record.policyTitle }}</p>
+              <p class="mt-0.5 text-xs text-faint">
                 {{ formatAt(record.at) }} · 符合 {{ record.summary.pass }} · 不符合 {{ record.summary.fail }} · 待补充 {{ record.summary.unknown }}
               </p>
             </div>
             <span class="shrink-0 rounded-full border px-2 py-0.5 text-xs" :class="VERDICT_META[record.overall].badge">
               {{ overallTitle(record.overall) }}
             </span>
-            <span class="shrink-0 text-xs text-slate-400" :class="expandedId === record.id ? 'rotate-180' : ''" style="transition: transform 0.15s">⌄</span>
+            <span class="shrink-0 text-xs text-faint" :class="expandedId === record.id ? 'rotate-180' : ''" style="transition: transform 0.15s">⌄</span>
           </button>
 
-          <div v-if="expandedId === record.id" class="border-t border-slate-100 bg-slate-50/60 px-5 py-4">
-            <div class="flex h-1.5 overflow-hidden rounded-full bg-slate-200">
+          <div v-if="expandedId === record.id" class="border-t border-line-sub bg-surface-2/60 px-5 py-4">
+            <div class="flex h-1.5 overflow-hidden rounded-full bg-line">
               <div
                 v-for="segment in verdictSegments(record)"
                 :key="segment.label"
@@ -462,27 +462,27 @@ onMounted(load);
                 :style="{ width: segmentWidth(record, segment.count) }"
               />
             </div>
-            <div class="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-slate-500">
+            <div class="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted">
               <span v-for="segment in verdictSegments(record)" :key="segment.label" class="inline-flex items-center gap-1">
                 <span class="h-1.5 w-1.5 rounded-full" :class="segment.cls" />
-                {{ segment.label }} <span class="font-mono tabular-nums text-slate-700">{{ segment.count }}</span>
+                {{ segment.label }} <span class="font-mono tabular-nums text-ink-2">{{ segment.count }}</span>
               </span>
-              <span class="text-slate-400">共 {{ record.summary.pass + record.summary.fail + record.summary.unknown }} 条参与判定</span>
+              <span class="text-faint">共 {{ record.summary.pass + record.summary.fail + record.summary.unknown }} 条参与判定</span>
             </div>
             <div class="mt-3 flex flex-wrap items-center gap-2">
               <RouterLink
                 :to="'/match/' + record.policyId"
-                class="rounded-lg bg-brand-600 px-3 py-1.5 text-xs font-medium text-white transition hover:bg-brand-700"
+                class="rounded-lg bg-brand-600 px-3 py-1.5 text-xs font-medium text-on-brand transition hover:bg-brand-700"
                 >重新填写判定 →</RouterLink
               >
-              <span class="text-[11px] text-slate-400">填写内容不留存，重新打开是空白表单</span>
+              <span class="text-[11px] text-faint">填写内容不留存，重新打开是空白表单</span>
             </div>
           </div>
         </li>
       </ul>
     </section>
 
-    <p class="mt-6 text-center text-xs text-slate-400">
+    <p class="mt-6 text-center text-xs text-faint">
       数据自查：判定记录与填报进度都可在本页清空；画像草稿只在你本机浏览器，清空后不可恢复。
     </p>
   </div>

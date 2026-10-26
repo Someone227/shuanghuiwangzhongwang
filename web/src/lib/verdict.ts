@@ -34,9 +34,9 @@ export const VERDICT_META: Record<Verdict, VerdictMeta> = {
   warn: {
     label: '建议项未满足',
     short: '建议',
-    badge: 'bg-slate-100 text-slate-600 border-slate-200',
-    card: 'border-slate-200 bg-slate-50',
-    dot: 'bg-slate-400',
+    badge: 'bg-surface-3 text-ink-2 border-line',
+    card: 'border-line bg-surface-2',
+    dot: 'bg-line-2',
   },
 };
 
@@ -50,6 +50,6 @@ export function overallTitle(verdict: Verdict): string {
 export function overallTone(verdict: Verdict): string {
   if (verdict === 'pass') return 'border-emerald-300 bg-emerald-50 text-emerald-900';
   if (verdict === 'fail') return 'border-rose-300 bg-rose-50 text-rose-900';
-  if (verdict === 'warn') return 'border-slate-300 bg-slate-50 text-slate-800';
+  if (verdict === 'warn') return 'border-line-2 bg-surface-2 text-ink';
   return 'border-amber-300 bg-amber-50 text-amber-900';
 }

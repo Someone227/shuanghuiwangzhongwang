@@ -82,11 +82,11 @@ function isActive(sectionId?: string): boolean {
 </script>
 
 <template>
-  <div class="rounded-xl border border-slate-200 bg-white">
-    <header class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 px-4 py-3">
+  <div class="rounded-xl border border-line bg-surface">
+    <header class="flex flex-wrap items-center justify-between gap-2 border-b border-line-sub px-4 py-3">
       <div>
-        <h3 class="text-sm font-semibold text-slate-800">政策原文</h3>
-        <p class="mt-0.5 text-xs text-slate-400">
+        <h3 class="text-sm font-semibold text-ink">政策原文</h3>
+        <p class="mt-0.5 text-xs text-faint">
           共 {{ policy.sections.length }} 段 · 判定命中的段落会高亮，原句标黄
         </p>
       </div>
@@ -102,7 +102,7 @@ function isActive(sectionId?: string): boolean {
 
     <div ref="scroller" class="max-h-[80vh] overflow-y-auto px-4 py-3">
       <template v-for="(segment, index) in segments" :key="index">
-        <p v-if="segment.kind === 'gap'" class="whitespace-pre-wrap text-xs leading-relaxed text-slate-400">
+        <p v-if="segment.kind === 'gap'" class="whitespace-pre-wrap text-xs leading-relaxed text-faint">
           {{ segment.text }}
         </p>
 
@@ -112,10 +112,10 @@ function isActive(sectionId?: string): boolean {
           class="my-2 scroll-mt-24 rounded-lg border p-3 transition"
           :class="isActive(segment.id) ? 'border-brand-300 bg-brand-50/60' : 'border-transparent'"
         >
-          <h4 class="text-xs font-semibold text-slate-500">{{ segment.heading }}</h4>
-          <p class="mt-1 text-sm leading-relaxed whitespace-pre-wrap text-slate-700">
+          <h4 class="text-xs font-semibold text-muted">{{ segment.heading }}</h4>
+          <p class="mt-1 text-sm leading-relaxed whitespace-pre-wrap text-ink-2">
             <template v-for="(part, partIndex) in partsOf(segment.text)" :key="partIndex">
-              <mark v-if="part.hit" class="rounded bg-amber-200/80 px-0.5 text-slate-900">{{ part.text }}</mark>
+              <mark v-if="part.hit" class="rounded bg-amber-200/80 px-0.5 text-ink">{{ part.text }}</mark>
               <span v-else>{{ part.text }}</span>
             </template>
           </p>

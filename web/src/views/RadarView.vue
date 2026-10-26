@@ -40,8 +40,8 @@ const STATUS_META: Record<RadarStatus, { label: string; badge: string; dot: stri
   },
   ineligible: {
     label: '不符合',
-    badge: 'bg-slate-100 text-slate-500 border-slate-200',
-    dot: 'bg-slate-400',
+    badge: 'bg-surface-3 text-muted border-line',
+    dot: 'bg-line-2',
     hint: '有硬性条件明确不符',
   },
 };
@@ -299,73 +299,73 @@ watch(answers, saveDraft, { deep: true });
 
 <template>
   <div class="mx-auto w-full max-w-6xl px-4 pb-16 pt-10 sm:px-6">
-    <div class="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1 text-xs text-slate-500">
+    <div class="inline-flex items-center gap-2 rounded-full border border-line bg-surface px-3 py-1 text-xs text-muted">
       <span class="h-1.5 w-1.5 rounded-full bg-brand-600" />
       政策雷达 · 一次画像，32 份政策分层
     </div>
 
-    <h1 class="mt-4 text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">
+    <h1 class="mt-4 text-3xl font-bold tracking-tight text-ink sm:text-4xl">
       先说说你自己，<span class="text-brand-600">再看你能申哪些</span>
     </h1>
-    <p class="mt-3 max-w-3xl text-sm leading-relaxed text-slate-600">
+    <p class="mt-3 max-w-3xl text-sm leading-relaxed text-ink-2">
       32 份政策里一共有 333 个表单字段、285 种不同写法，一份份填是不现实的 ——
       这里只问 26 项共性信息，用规则表把它们映射到每份政策自己的字段上，得出「能申 / 差一点 / 还缺信息 / 不符合」。
       没填的信息不会算成「不符合」，只会标「待补充」。
     </p>
 
     <div v-if="loading" class="mt-8 grid gap-4 lg:grid-cols-[380px_1fr]">
-      <div class="h-96 animate-pulse rounded-2xl border border-slate-200 bg-white" />
-      <div class="h-96 animate-pulse rounded-2xl border border-slate-200 bg-white" />
+      <div class="h-96 animate-pulse rounded-2xl border border-line bg-surface" />
+      <div class="h-96 animate-pulse rounded-2xl border border-line bg-surface" />
     </div>
 
     <div v-else-if="error" class="mt-8 rounded-2xl border border-rose-200 bg-rose-50 p-6">
       <h2 class="text-base font-semibold text-rose-800">雷达数据加载失败</h2>
       <p class="mt-1 text-sm text-rose-700">{{ error }}</p>
-      <button type="button" class="mt-3 rounded-lg bg-rose-600 px-4 py-2 text-sm text-white" @click="load">重试</button>
+      <button type="button" class="mt-3 rounded-lg bg-rose-600 px-4 py-2 text-sm text-on-brand" @click="load">重试</button>
     </div>
 
     <div v-else class="mt-8 grid gap-6 lg:grid-cols-[380px_1fr] lg:items-start">
       <!-- 左：画像表单 -->
-      <section class="rounded-2xl border border-slate-200 bg-white p-5 lg:sticky lg:top-20">
+      <section class="rounded-2xl border border-line bg-surface p-5 lg:sticky lg:top-20">
         <div class="flex items-center justify-between">
-          <h2 class="text-sm font-semibold text-slate-900">你的画像</h2>
-          <span class="text-xs tabular-nums text-slate-400">{{ filledCount }} / {{ slots.length }} 项</span>
+          <h2 class="text-sm font-semibold text-ink">你的画像</h2>
+          <span class="text-xs tabular-nums text-faint">{{ filledCount }} / {{ slots.length }} 项</span>
         </div>
-        <div class="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-slate-100">
+        <div class="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-surface-3">
           <div
             class="h-full rounded-full bg-brand-600 transition-all"
             :style="{ width: `${slots.length ? (filledCount / slots.length) * 100 : 0}%` }"
           />
         </div>
-        <p class="mt-2 text-xs leading-relaxed text-slate-500">
+        <p class="mt-2 text-xs leading-relaxed text-muted">
           填多少算多少；不知道的留空，只会变成「待补充」。草稿自动存在这台电脑的浏览器里。
         </p>
 
         <div class="mt-4 max-h-[calc(100vh-13rem)] space-y-2 overflow-y-auto pr-1">
-          <div v-for="entry in groupedSlots" :key="entry.group" class="rounded-xl border border-slate-200">
+          <div v-for="entry in groupedSlots" :key="entry.group" class="rounded-xl border border-line">
             <button
               type="button"
               class="flex w-full items-center justify-between px-3 py-2.5 text-left"
               @click="toggleGroup(entry.group)"
             >
-              <span class="text-sm font-medium text-slate-800">{{ entry.group }}</span>
-              <span class="flex items-center gap-2 text-xs text-slate-400">
+              <span class="text-sm font-medium text-ink">{{ entry.group }}</span>
+              <span class="flex items-center gap-2 text-xs text-faint">
                 <span class="tabular-nums">{{ groupFilled(entry.group) }}/{{ entry.items.length }}</span>
                 <span class="transition" :class="openGroups.has(entry.group) ? 'rotate-180' : ''">⌄</span>
               </span>
             </button>
 
-            <div v-if="openGroups.has(entry.group)" class="space-y-3 border-t border-slate-100 px-3 py-3">
+            <div v-if="openGroups.has(entry.group)" class="space-y-3 border-t border-line-sub px-3 py-3">
               <div v-for="slot in entry.items" :key="slot.key">
                 <div class="flex items-baseline justify-between gap-2">
-                  <label class="text-xs font-medium text-slate-700">{{ slot.label }}</label>
+                  <label class="text-xs font-medium text-ink-2">{{ slot.label }}</label>
                   <span v-if="filledOf(slot)" class="rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] text-emerald-600">已填</span>
                 </div>
 
                 <!-- 单选 -->
                 <select
                   v-if="slot.kind === 'select'"
-                  class="mt-1.5 w-full rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs text-slate-700 focus:border-brand-500 focus:outline-none"
+                  class="mt-1.5 w-full rounded-lg border border-line bg-surface px-2.5 py-1.5 text-xs text-ink-2 focus:border-brand-500 focus:outline-none"
                   :value="selectValue(slot)"
                   @change="onSelect(slot, $event)"
                 >
@@ -377,12 +377,12 @@ watch(answers, saveDraft, { deep: true });
                 <div v-else-if="slot.kind === 'number'" class="mt-1.5 flex items-center gap-2">
                   <input
                     type="number"
-                    class="w-full rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs text-slate-700 focus:border-brand-500 focus:outline-none"
+                    class="w-full rounded-lg border border-line bg-surface px-2.5 py-1.5 text-xs text-ink-2 focus:border-brand-500 focus:outline-none"
                     :placeholder="slot.placeholder ?? '请填写数字'"
                     :value="numberValue(slot)"
                     @input="onNumber(slot, $event)"
                   />
-                  <span v-if="slot.unit" class="shrink-0 text-xs text-slate-400">{{ slot.unit }}</span>
+                  <span v-if="slot.unit" class="shrink-0 text-xs text-faint">{{ slot.unit }}</span>
                 </div>
 
                 <!-- 是 / 否 -->
@@ -393,7 +393,7 @@ watch(answers, saveDraft, { deep: true });
                     :class="
                       boolValue(slot) === true
                         ? 'border-brand-600 bg-brand-50 text-brand-700'
-                        : 'border-slate-200 bg-white text-slate-600 hover:border-brand-300'
+                        : 'border-line bg-surface text-ink-2 hover:border-brand-300'
                     "
                     @click="toggleBool(slot, true)"
                   >
@@ -405,13 +405,13 @@ watch(answers, saveDraft, { deep: true });
                     :class="
                       boolValue(slot) === false
                         ? 'border-brand-600 bg-brand-50 text-brand-700'
-                        : 'border-slate-200 bg-white text-slate-600 hover:border-brand-300'
+                        : 'border-line bg-surface text-ink-2 hover:border-brand-300'
                     "
                     @click="toggleBool(slot, false)"
                   >
                     否
                   </button>
-                  <button v-if="filledOf(slot)" type="button" class="text-xs text-slate-400 hover:text-slate-600" @click="toggleBool(slot, boolValue(slot) === true)">
+                  <button v-if="filledOf(slot)" type="button" class="text-xs text-faint hover:text-ink-2" @click="toggleBool(slot, boolValue(slot) === true)">
                     清除
                   </button>
                 </div>
@@ -426,7 +426,7 @@ watch(answers, saveDraft, { deep: true });
                     :class="
                       multiValue(slot).includes(option.value)
                         ? 'border-brand-600 bg-brand-50 text-brand-700'
-                        : 'border-slate-200 bg-white text-slate-600 hover:border-brand-300'
+                        : 'border-line bg-surface text-ink-2 hover:border-brand-300'
                     "
                     @click="toggleMulti(slot, option.value)"
                   >
@@ -434,29 +434,29 @@ watch(answers, saveDraft, { deep: true });
                   </button>
                 </div>
 
-                <p v-if="slot.hint" class="mt-1 text-[11px] leading-snug text-slate-400">{{ slot.hint }}</p>
+                <p v-if="slot.hint" class="mt-1 text-[11px] leading-snug text-faint">{{ slot.hint }}</p>
               </div>
             </div>
           </div>
         </div>
 
-        <div class="mt-4 flex items-center justify-between border-t border-slate-100 pt-3">
-          <button type="button" class="text-xs text-slate-400 hover:text-rose-600" @click="resetAll">清空重填</button>
+        <div class="mt-4 flex items-center justify-between border-t border-line-sub pt-3">
+          <button type="button" class="text-xs text-faint hover:text-rose-600" @click="resetAll">清空重填</button>
           <RouterLink to="/policies" class="text-xs text-brand-600 hover:text-brand-700">直接看政策库 →</RouterLink>
         </div>
       </section>
 
       <!-- 右：分层结果 -->
       <section class="space-y-4">
-        <div v-if="!hasAnyAnswer" class="rounded-2xl border border-dashed border-slate-300 bg-white p-10 text-center">
-          <h2 class="text-base font-semibold text-slate-800">还没有填任何信息</h2>
-          <p class="mx-auto mt-2 max-w-sm text-sm leading-relaxed text-slate-500">
+        <div v-if="!hasAnyAnswer" class="rounded-2xl border border-dashed border-line-2 bg-surface p-10 text-center">
+          <h2 class="text-base font-semibold text-ink">还没有填任何信息</h2>
+          <p class="mx-auto mt-2 max-w-sm text-sm leading-relaxed text-muted">
             左边随便填几项，这里就会实时分成四层：能申、差一点、还缺信息、不符合。
             只填「学历层次」也能看到哪些政策因为学段不符被排除。
           </p>
           <button
             type="button"
-            class="mt-4 rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-brand-700"
+            class="mt-4 rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-on-brand transition hover:bg-brand-700"
             @click="fillDemo"
           >
             用示例画像看效果
@@ -469,13 +469,13 @@ watch(answers, saveDraft, { deep: true });
             <div
               v-for="status in (['eligible', 'near', 'incomplete', 'ineligible'] as RadarStatus[])"
               :key="status"
-              class="rounded-2xl border bg-white px-4 py-3"
-              :class="activeTab === status ? 'border-brand-500 ring-1 ring-brand-200' : 'border-slate-200'"
+              class="rounded-2xl border bg-surface px-4 py-3"
+              :class="activeTab === status ? 'border-brand-500 ring-1 ring-brand-200' : 'border-line'"
             >
-              <dd class="text-2xl font-bold tabular-nums" :class="status === 'ineligible' ? 'text-slate-400' : 'text-slate-900'">
+              <dd class="text-2xl font-bold tabular-nums" :class="status === 'ineligible' ? 'text-faint' : 'text-ink'">
                 {{ tabCounts[status] ?? 0 }}
               </dd>
-              <dt class="mt-0.5 flex items-center gap-1.5 text-xs text-slate-500">
+              <dt class="mt-0.5 flex items-center gap-1.5 text-xs text-muted">
                 <span class="h-1.5 w-1.5 rounded-full" :class="STATUS_META[status].dot" />
                 {{ STATUS_META[status].label }}
               </dt>
@@ -489,7 +489,7 @@ watch(answers, saveDraft, { deep: true });
               <span
                 v-for="entry in nextSuggestions"
                 :key="entry.slot.key"
-                class="rounded-full border border-sky-300 bg-white px-2.5 py-1 text-[11px] text-sky-800"
+                class="rounded-full border border-sky-300 bg-surface px-2.5 py-1 text-[11px] text-sky-800"
               >
                 {{ entry.slot.label }} · 影响 {{ entry.unlockedPolicies }} 份
               </span>
@@ -505,8 +505,8 @@ watch(answers, saveDraft, { deep: true });
               class="rounded-full border px-3 py-1.5 text-xs font-medium transition"
               :class="
                 activeTab === tab.key
-                  ? 'border-brand-600 bg-brand-600 text-white'
-                  : 'border-slate-200 bg-white text-slate-600 hover:border-brand-300 hover:text-brand-700'
+                  ? 'border-brand-600 bg-brand-600 text-on-brand'
+                  : 'border-line bg-surface text-ink-2 hover:border-brand-300 hover:text-brand-700'
               "
               @click="activeTab = tab.key"
             >
@@ -519,7 +519,7 @@ watch(answers, saveDraft, { deep: true });
             <article
               v-for="item in filteredItems"
               :key="item.policyId"
-              class="rounded-2xl border border-slate-200 bg-white p-4 transition hover:border-slate-300"
+              class="rounded-2xl border border-line bg-surface p-4 transition hover:border-line-2"
             >
               <div class="flex flex-wrap items-start justify-between gap-3">
                 <div class="min-w-0">
@@ -527,34 +527,34 @@ watch(answers, saveDraft, { deep: true });
                     <span class="rounded-full border px-2 py-0.5 text-[11px] font-medium" :class="STATUS_META[item.status].badge">
                       {{ STATUS_META[item.status].label }}
                     </span>
-                    <span v-for="tag in itemTags(item)" :key="tag" class="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] text-slate-500">
+                    <span v-for="tag in itemTags(item)" :key="tag" class="rounded-full bg-surface-3 px-2 py-0.5 text-[11px] text-muted">
                       {{ tag }}
                     </span>
                   </div>
-                  <h3 class="mt-2 text-sm font-semibold leading-snug text-slate-900">{{ item.title }}</h3>
-                  <p class="mt-1 text-xs leading-relaxed text-slate-500">{{ itemReason(item) }}</p>
+                  <h3 class="mt-2 text-sm font-semibold leading-snug text-ink">{{ item.title }}</h3>
+                  <p class="mt-1 text-xs leading-relaxed text-muted">{{ itemReason(item) }}</p>
                 </div>
                 <RouterLink
                   :to="`/match/${item.policyId}`"
-                  class="shrink-0 rounded-lg border border-slate-200 px-3 py-1.5 text-xs text-slate-700 transition hover:border-brand-400 hover:text-brand-700"
+                  class="shrink-0 rounded-lg border border-line px-3 py-1.5 text-xs text-ink-2 transition hover:border-brand-400 hover:text-brand-700"
                 >
                   {{ item.status === 'eligible' ? '去核对照' : '补充判定' }} →
                 </RouterLink>
               </div>
 
-              <div class="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 border-t border-slate-100 pt-2 text-[11px] text-slate-400">
+              <div class="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 border-t border-line-sub pt-2 text-[11px] text-faint">
                 <span class="tabular-nums">符合 {{ item.pass }} · 不符 {{ item.fail }} · 待补充 {{ item.unknown }}</span>
                 <span v-if="item.radarUnknown > 0">画像可补 {{ item.radarUnknown }} 条</span>
                 <span v-if="item.policyUnknown > 0">政策特有 {{ item.policyUnknown }} 条</span>
               </div>
             </article>
 
-            <p v-if="filteredItems.length === 0" class="rounded-2xl border border-dashed border-slate-300 bg-white p-8 text-center text-sm text-slate-500">
+            <p v-if="filteredItems.length === 0" class="rounded-2xl border border-dashed border-line-2 bg-surface p-8 text-center text-sm text-muted">
               这一层暂时没有政策。
             </p>
           </div>
 
-          <p class="text-xs leading-relaxed text-slate-400">
+          <p class="text-xs leading-relaxed text-faint">
             雷达只做「初筛」：结论来自你填的画像与政策条款的机械比对，不代表学校或主管部门的审核结果。
             真正提交前，请点进每份政策，把「政策特有」的那几条补齐再判定一次。
           </p>

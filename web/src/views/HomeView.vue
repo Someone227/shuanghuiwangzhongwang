@@ -61,28 +61,30 @@ const statItems = [
 
 <template>
   <div class="mx-auto max-w-6xl px-6 py-16">
-    <div class="max-w-3xl">
+    <div class="max-w-4xl">
       <span
         class="inline-flex items-center gap-1.5 rounded-full border border-brand-200 bg-brand-50 px-3 py-1 text-xs font-medium text-brand-700"
       >
         已收录 {{ totals?.policies ?? 32 }} 份国家级政策 · 逐条判定 + 原文回溯
       </span>
 
-      <h1 class="mt-5 text-3xl leading-snug font-semibold tracking-tight text-balance text-slate-800 sm:text-4xl">
+      <h1
+        class="mt-6 border-l-[3px] border-accent pl-5 text-4xl leading-[1.24] font-bold tracking-tight text-ink sm:text-[2.6rem]"
+      >
         贴一份政策原文，
-        <span class="text-brand-500">30 秒</span>
+        <span class="whitespace-nowrap text-brand-500">30 秒</span>
         知道自己够不够格。
       </h1>
 
-      <p class="mt-5 text-base leading-relaxed text-slate-600">
+      <p class="mt-5 text-base leading-relaxed text-ink-2">
         奖助学金、专项补贴、保研推免、人才落户 —— 政策文件动辄上万字，条件散落在正文、附件和脚注里。
-        学生和普通市民最常问的其实只有一句话：<strong class="font-semibold text-slate-900">「我能申吗？」</strong>
+        学生和普通市民最常问的其实只有一句话：<strong class="font-semibold text-ink">「我能申吗？」</strong>
       </p>
 
       <div class="mt-8 flex flex-wrap gap-3">
         <RouterLink
           to="/policies"
-          class="rounded-lg bg-brand-600 px-6 py-3 text-sm font-medium text-white shadow-sm transition hover:bg-brand-700"
+          class="rounded-lg bg-brand-600 px-6 py-3 text-sm font-medium text-on-brand shadow-sm transition hover:bg-brand-700"
         >
           开始匹配 →
         </RouterLink>
@@ -94,46 +96,46 @@ const statItems = [
         </RouterLink>
         <RouterLink
           to="/calendar"
-          class="rounded-lg border border-slate-300 bg-white px-6 py-3 text-sm font-medium text-slate-700 transition hover:border-brand-400 hover:text-brand-700"
+          class="rounded-lg border border-line-2 bg-surface px-6 py-3 text-sm font-medium text-ink-2 transition hover:border-brand-400 hover:text-brand-700"
         >
           看全年申报日历
         </RouterLink>
       </div>
 
-      <p class="mt-3 text-xs text-slate-400">无需注册、无需 API Key，打开就能用。</p>
+      <p class="mt-3 text-xs text-faint">无需注册、无需 API Key，打开就能用。</p>
     </div>
 
-    <section v-if="totals" class="mt-12 grid grid-cols-2 gap-px overflow-hidden rounded-2xl border border-slate-200 bg-slate-200 sm:grid-cols-4">
-      <div v-for="item in statItems" :key="item.key" class="bg-white px-5 py-6">
-        <div class="font-mono text-2xl font-semibold tabular-nums text-slate-900">{{ totals[item.key] }}</div>
-        <div class="mt-1 text-xs text-slate-500">{{ item.label }}</div>
+    <section v-if="totals" class="mt-12 grid grid-cols-2 gap-px overflow-hidden rounded-2xl border border-line bg-line sm:grid-cols-4">
+      <div v-for="item in statItems" :key="item.key" class="bg-surface px-5 py-6">
+        <div class="font-mono text-3xl font-semibold tabular-nums text-ink">{{ totals[item.key] }}</div>
+        <div class="mt-1 text-xs text-muted">{{ item.label }}</div>
       </div>
     </section>
 
     <section class="mt-6 flex flex-wrap items-center gap-2">
-      <span class="mr-1 text-xs text-slate-400">覆盖场景</span>
+      <span class="mr-1 text-xs text-faint">覆盖场景</span>
       <span
         v-for="tag in sceneTags"
         :key="tag"
-        class="rounded-full border border-slate-200 bg-white px-3 py-1 text-xs text-slate-600"
+        class="rounded-full border border-line bg-surface px-3 py-1 text-xs text-ink-2"
       >
         {{ tag }}
       </span>
     </section>
 
     <section class="mt-16">
-      <h2 class="text-sm font-semibold tracking-wider text-slate-400 uppercase">六步走完一条链路</h2>
+      <h2 class="text-sm font-semibold tracking-wider text-faint uppercase">六步走完一条链路</h2>
       <div class="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         <article
           v-for="step in steps"
           :key="step.no"
-          class="rounded-2xl border border-slate-200 bg-white p-5 transition hover:border-brand-300 hover:shadow-sm"
+          class="rounded-2xl border border-line bg-surface p-5 transition hover:border-brand-300 hover:shadow-sm"
         >
           <div class="flex items-baseline gap-3">
             <span class="font-mono text-xs font-semibold text-brand-500">{{ step.no }}</span>
-            <h3 class="text-base font-semibold text-slate-900">{{ step.title }}</h3>
+            <h3 class="text-base font-semibold text-ink">{{ step.title }}</h3>
           </div>
-          <p class="mt-2 text-sm leading-relaxed text-slate-600">{{ step.desc }}</p>
+          <p class="mt-2 text-sm leading-relaxed text-ink-2">{{ step.desc }}</p>
         </article>
       </div>
     </section>
@@ -141,51 +143,51 @@ const statItems = [
     <section class="mt-16 rounded-2xl border border-brand-200 bg-brand-50/60 p-6">
       <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div class="max-w-2xl">
-          <h2 class="text-base font-semibold text-slate-900">不确定从哪份看起？先做一次横向体检</h2>
-          <p class="mt-2 text-sm leading-relaxed text-slate-600">
+          <h2 class="text-base font-semibold text-ink">不确定从哪份看起？先做一次横向体检</h2>
+          <p class="mt-2 text-sm leading-relaxed text-ink-2">
             32 份政策里共有 333 个表单字段、285 种写法，一份份填不现实。政策雷达只问 26 项共性信息，
             把这些字段映射到每份政策自己的写法上，一次给出「能申 / 差一点 / 还缺信息 / 不符合」四层结论。
           </p>
         </div>
         <RouterLink
           to="/radar"
-          class="shrink-0 rounded-lg bg-brand-600 px-5 py-2.5 text-sm font-medium text-white transition hover:bg-brand-700"
+          class="shrink-0 rounded-lg bg-brand-600 px-5 py-2.5 text-sm font-medium text-on-brand transition hover:bg-brand-700"
         >
           打开政策雷达 →
         </RouterLink>
       </div>
     </section>
 
-    <section class="mt-6 rounded-2xl border border-slate-200 bg-white p-6">
+    <section class="mt-6 rounded-2xl border border-line bg-surface p-6">
       <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div class="max-w-2xl">
-          <h2 class="text-base font-semibold text-slate-900">判定之外，还差一问：什么时候申？</h2>
-          <p class="mt-2 text-sm leading-relaxed text-slate-600">
+          <h2 class="text-base font-semibold text-ink">判定之外，还差一问：什么时候申？</h2>
+          <p class="mt-2 text-sm leading-relaxed text-ink-2">
             奖助学金不是全年都能申请。把 {{ totals?.policies ?? 32 }} 份政策里的时间节点按月份摊开，
             一眼看到哪几个月该准备材料、哪几个月只剩等结果 —— 全部规则解析，可回到原文核对。
           </p>
         </div>
         <RouterLink
           to="/calendar"
-          class="shrink-0 rounded-lg bg-slate-900 px-5 py-2.5 text-sm font-medium text-white transition hover:bg-brand-600"
+          class="shrink-0 rounded-lg bg-invert dark:bg-surface-3 px-5 py-2.5 text-sm font-medium text-on-brand dark:text-ink transition hover:bg-brand-600"
         >
           打开申报日历 →
         </RouterLink>
       </div>
     </section>
 
-    <section class="mt-6 rounded-2xl border border-slate-200 bg-white p-6">
+    <section class="mt-6 rounded-2xl border border-line bg-surface p-6">
       <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div class="max-w-2xl">
-          <h2 class="text-base font-semibold text-slate-900">大模型只用在「建库」这一步</h2>
-          <p class="mt-2 text-sm leading-relaxed text-slate-600">
+          <h2 class="text-base font-semibold text-ink">大模型只用在「建库」这一步</h2>
+          <p class="mt-2 text-sm leading-relaxed text-ink-2">
             政策解析是最难的一步，交给 DeepSeek：一次调用把原文抽成条件树，抽取请求与响应全部留档在
-            <code class="rounded bg-slate-100 px-1 py-0.5 text-xs">docs/ai-log</code>，可审计、可复现。
+            <code class="rounded bg-surface-3 px-1 py-0.5 text-xs">docs/ai-log</code>，可审计、可复现。
             而每一个用户打开网页做判定时，调用的都是本地规则引擎 —— 不联网、不消耗 token、结果稳定可复现。
           </p>
         </div>
-        <div class="flex shrink-0 flex-wrap gap-2 text-xs text-slate-500">
-          <span v-for="stack in stacks" :key="stack" class="rounded-md bg-slate-100 px-2.5 py-1">{{ stack }}</span>
+        <div class="flex shrink-0 flex-wrap gap-2 text-xs text-muted">
+          <span v-for="stack in stacks" :key="stack" class="rounded-md bg-surface-3 px-2.5 py-1">{{ stack }}</span>
         </div>
       </div>
     </section>

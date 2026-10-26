@@ -20,7 +20,7 @@ const stats = computed(() => [
   { key: 'pass', label: '符合', value: summary.value.pass, tone: 'text-emerald-600' },
   { key: 'fail', label: '不符合', value: summary.value.fail, tone: 'text-rose-600' },
   { key: 'unknown', label: '待补充', value: summary.value.unknown, tone: 'text-amber-600' },
-  { key: 'warn', label: '建议项', value: summary.value.warn, tone: 'text-slate-500' },
+  { key: 'warn', label: '建议项', value: summary.value.warn, tone: 'text-muted' },
 ]);
 
 /** 引擎返回的是原始值（布尔/数字/数组），展示成用户能读懂的中文 */
@@ -47,15 +47,15 @@ function scrollTo(conditionId: string, docRef: string, quote: string): void {
           <p class="text-xs font-medium tracking-wider opacity-70">判定结论</p>
           <h2 class="mt-1 text-2xl font-bold">{{ overallTitle(result.overall) }}</h2>
         </div>
-        <span class="shrink-0 rounded-full border bg-white/70 px-3 py-1 text-xs font-medium" :class="meta.badge">
+        <span class="shrink-0 rounded-full border bg-surface/70 px-3 py-1 text-xs font-medium" :class="meta.badge">
           {{ meta.label }}
         </span>
       </div>
       <p class="mt-3 text-sm leading-relaxed opacity-90">{{ result.headline }}</p>
 
       <dl class="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-4">
-        <div v-for="item in stats" :key="item.key" class="rounded-lg bg-white/70 px-3 py-2">
-          <dt class="text-xs text-slate-500">{{ item.label }}</dt>
+        <div v-for="item in stats" :key="item.key" class="rounded-lg bg-surface/70 px-3 py-2">
+          <dt class="text-xs text-muted">{{ item.label }}</dt>
           <dd class="text-xl font-semibold tabular-nums" :class="item.tone">{{ item.value }}</dd>
         </div>
       </dl>
@@ -66,17 +66,17 @@ function scrollTo(conditionId: string, docRef: string, quote: string): void {
 
     <!-- 逐条判定 -->
     <section class="space-y-3">
-      <h3 class="text-sm font-semibold tracking-wider text-slate-400 uppercase">逐条判定</h3>
+      <h3 class="text-sm font-semibold tracking-wider text-faint uppercase">逐条判定</h3>
 
       <article
         v-for="group in result.groups"
         :key="group.groupId"
-        class="overflow-hidden rounded-xl border border-slate-200 bg-white"
+        class="overflow-hidden rounded-xl border border-line bg-surface"
       >
-        <header class="flex items-center justify-between gap-3 border-b border-slate-100 bg-slate-50/60 px-4 py-2.5">
+        <header class="flex items-center justify-between gap-3 border-b border-line-sub bg-surface-2/60 px-4 py-2.5">
           <div class="min-w-0">
-            <h4 class="truncate text-sm font-semibold text-slate-800">{{ group.name }}</h4>
-            <p class="mt-0.5 text-xs text-slate-400">
+            <h4 class="truncate text-sm font-semibold text-ink">{{ group.name }}</h4>
+            <p class="mt-0.5 text-xs text-faint">
               {{ group.logic === 'any' ? '满足其中任意一条即可' : '需同时满足组内全部条件' }}
             </p>
           </div>
@@ -85,7 +85,7 @@ function scrollTo(conditionId: string, docRef: string, quote: string): void {
           </span>
         </header>
 
-        <ul class="divide-y divide-slate-50">
+        <ul class="divide-y divide-line-sub">
           <li v-for="item in group.conditionResults" :key="item.conditionId" class="px-4 py-3">
             <div class="flex items-start gap-2.5">
               <span
@@ -95,21 +95,21 @@ function scrollTo(conditionId: string, docRef: string, quote: string): void {
               />
               <div class="min-w-0 flex-1">
                 <div class="flex flex-wrap items-center gap-2">
-                  <p class="text-sm font-medium text-slate-800">{{ item.label }}</p>
+                  <p class="text-sm font-medium text-ink">{{ item.label }}</p>
                   <span class="rounded-full border px-1.5 py-0.5 text-[11px]" :class="VERDICT_META[item.verdict].badge">
                     {{ VERDICT_META[item.verdict].label }}
                   </span>
                 </div>
 
-                <p class="mt-1 text-sm text-slate-600">{{ item.reason }}</p>
-                <p class="mt-0.5 text-xs text-slate-400">
+                <p class="mt-1 text-sm text-ink-2">{{ item.reason }}</p>
+                <p class="mt-0.5 text-xs text-faint">
                   政策要求：{{ item.expected }}<span v-if="formatActual(item.actual)"> · 你的情况：{{ formatActual(item.actual) }}</span>
                 </p>
 
                 <p v-if="item.gap" class="mt-1 rounded-md bg-rose-50 px-2 py-1 text-xs text-rose-700">{{ item.gap }}</p>
                 <p v-if="item.hint" class="mt-1 text-xs text-brand-600">建议：{{ item.hint }}</p>
 
-                <blockquote class="mt-2 border-l-2 border-slate-200 pl-2 text-xs leading-relaxed text-slate-500">
+                <blockquote class="mt-2 border-l-2 border-line pl-2 text-xs leading-relaxed text-muted">
                   {{ item.quote }}
                 </blockquote>
 
@@ -128,8 +128,8 @@ function scrollTo(conditionId: string, docRef: string, quote: string): void {
     </section>
 
     <!-- 材料清单 -->
-    <section v-if="policy.materials.length" class="rounded-xl border border-slate-200 bg-white p-4">
-      <h3 class="text-sm font-semibold text-slate-800">材料清单</h3>
+    <section v-if="policy.materials.length" class="rounded-xl border border-line bg-surface p-4">
+      <h3 class="text-sm font-semibold text-ink">材料清单</h3>
       <p v-if="result.missingMaterials.length" class="mt-1 text-xs text-rose-600">
         以下材料与未满足的条件相关，先确认这些：{{ result.missingMaterials.join('、') }}
       </p>
@@ -137,24 +137,24 @@ function scrollTo(conditionId: string, docRef: string, quote: string): void {
         <li v-for="material in policy.materials" :key="material.name" class="flex items-start gap-2 text-sm">
           <span class="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-brand-400" aria-hidden="true" />
           <div>
-            <span class="text-slate-700">{{ material.name }}</span>
+            <span class="text-ink-2">{{ material.name }}</span>
             <span v-if="material.required" class="ml-1 rounded bg-rose-50 px-1 text-[11px] text-rose-600">必交</span>
-            <p v-if="material.note" class="mt-0.5 text-xs text-slate-400">{{ material.note }}</p>
+            <p v-if="material.note" class="mt-0.5 text-xs text-faint">{{ material.note }}</p>
           </div>
         </li>
       </ul>
     </section>
 
     <!-- 时间节点 -->
-    <section v-if="policy.deadlines.length" class="rounded-xl border border-slate-200 bg-white p-4">
-      <h3 class="text-sm font-semibold text-slate-800">时间节点</h3>
+    <section v-if="policy.deadlines.length" class="rounded-xl border border-line bg-surface p-4">
+      <h3 class="text-sm font-semibold text-ink">时间节点</h3>
       <ol class="mt-3 space-y-2">
         <li v-for="deadline in policy.deadlines" :key="deadline.label" class="flex items-start gap-2 text-sm">
           <span class="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-amber-400" aria-hidden="true" />
           <div>
-            <span class="text-slate-700">{{ deadline.label }}</span>
-            <span v-if="deadline.date" class="ml-1 text-xs text-slate-400">{{ deadline.date }}</span>
-            <p v-if="deadline.note" class="mt-0.5 text-xs text-slate-400">{{ deadline.note }}</p>
+            <span class="text-ink-2">{{ deadline.label }}</span>
+            <span v-if="deadline.date" class="ml-1 text-xs text-faint">{{ deadline.date }}</span>
+            <p v-if="deadline.note" class="mt-0.5 text-xs text-faint">{{ deadline.note }}</p>
           </div>
         </li>
       </ol>

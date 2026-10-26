@@ -190,8 +190,8 @@ onMounted(load);
       <span class="inline-flex items-center rounded-full border border-brand-200 bg-brand-50 px-3 py-1 text-xs font-medium text-brand-700">
         申报日历 · 把 {{ data?.stats.totalEvents || 60 }} 个时间节点排进一年
       </span>
-      <h1 class="mt-4 text-3xl font-bold tracking-tight text-slate-900">一年里，哪几个月该动手准备</h1>
-      <p class="mt-3 text-sm leading-relaxed text-slate-600">
+      <h1 class="mt-4 text-3xl font-bold tracking-tight text-ink">一年里，哪几个月该动手准备</h1>
+      <p class="mt-3 text-sm leading-relaxed text-ink-2">
         奖助学金不是全年都能申。把每份政策原文里的时间约定（「每年 10 月 31 日前报送」「9 月 30 日前提出申请」）
         按月份摊开，就能提前知道几月该准备材料、几月只剩等结果。
         节点全部由规则解析得出，不调用大模型，可对照原文逐条核对。
@@ -199,51 +199,51 @@ onMounted(load);
     </header>
 
     <div v-if="loading" class="mt-10 space-y-4">
-      <div class="h-24 animate-pulse rounded-2xl border border-slate-200 bg-white" />
-      <div class="h-16 animate-pulse rounded-2xl border border-slate-200 bg-white" />
-      <div class="h-64 animate-pulse rounded-2xl border border-slate-200 bg-white" />
+      <div class="h-24 animate-pulse rounded-2xl border border-line bg-surface" />
+      <div class="h-16 animate-pulse rounded-2xl border border-line bg-surface" />
+      <div class="h-64 animate-pulse rounded-2xl border border-line bg-surface" />
     </div>
 
     <div v-else-if="error" class="mt-10 rounded-2xl border border-rose-200 bg-rose-50 p-6">
       <h2 class="text-base font-semibold text-rose-800">申报日历加载失败</h2>
       <p class="mt-1 text-sm text-rose-700">{{ error }}</p>
-      <button type="button" class="mt-3 rounded-lg bg-rose-600 px-4 py-2 text-sm text-white" @click="load">重试</button>
+      <button type="button" class="mt-3 rounded-lg bg-rose-600 px-4 py-2 text-sm text-on-brand" @click="load">重试</button>
     </div>
 
     <template v-else-if="data">
       <!-- 统计条 -->
       <dl class="mt-8 grid grid-cols-2 gap-3 sm:grid-cols-4">
-        <div class="rounded-2xl border border-slate-200 bg-white px-5 py-4">
-          <dd class="text-2xl font-bold tabular-nums text-slate-900">{{ data.stats.monthsCovered }}</dd>
-          <dt class="mt-1 text-xs text-slate-500">个集中申报月</dt>
+        <div class="rounded-2xl border border-line bg-surface px-5 py-4">
+          <dd class="text-2xl font-bold tabular-nums text-ink">{{ data.stats.monthsCovered }}</dd>
+          <dt class="mt-1 text-xs text-muted">个集中申报月</dt>
         </div>
-        <div class="rounded-2xl border border-slate-200 bg-white px-5 py-4">
-          <dd class="text-2xl font-bold tabular-nums text-slate-900">{{ data.stats.totalEvents }}</dd>
-          <dt class="mt-1 text-xs text-slate-500">个时间节点</dt>
+        <div class="rounded-2xl border border-line bg-surface px-5 py-4">
+          <dd class="text-2xl font-bold tabular-nums text-ink">{{ data.stats.totalEvents }}</dd>
+          <dt class="mt-1 text-xs text-muted">个时间节点</dt>
         </div>
-        <div class="rounded-2xl border border-slate-200 bg-white px-5 py-4">
-          <dd class="text-2xl font-bold tabular-nums text-slate-900">{{ data.stats.policies }}</dd>
-          <dt class="mt-1 text-xs text-slate-500">份政策参与排期</dt>
+        <div class="rounded-2xl border border-line bg-surface px-5 py-4">
+          <dd class="text-2xl font-bold tabular-nums text-ink">{{ data.stats.policies }}</dd>
+          <dt class="mt-1 text-xs text-muted">份政策参与排期</dt>
         </div>
-        <div class="rounded-2xl border border-slate-200 bg-white px-5 py-4">
-          <dd class="text-2xl font-bold tabular-nums text-slate-900">{{ data.process.length }}</dd>
-          <dt class="mt-1 text-xs text-slate-500">条按受理进度计算的时限</dt>
+        <div class="rounded-2xl border border-line bg-surface px-5 py-4">
+          <dd class="text-2xl font-bold tabular-nums text-ink">{{ data.process.length }}</dd>
+          <dt class="mt-1 text-xs text-muted">条按受理进度计算的时限</dt>
         </div>
       </dl>
 
       <!-- 本月提醒 -->
       <div v-if="monthHint" class="mt-4 flex flex-wrap items-center gap-x-3 gap-y-1 rounded-2xl border border-amber-200 bg-amber-50 px-5 py-3">
-        <span class="rounded-full bg-amber-500 px-2.5 py-0.5 text-xs font-semibold text-white">本月</span>
+        <span class="rounded-full bg-amber-500 px-2.5 py-0.5 text-xs font-semibold text-on-brand">本月</span>
         <span class="text-sm text-amber-900">
           {{ currentMonth }} 月有 {{ monthHint.count }} 个节点：{{ monthHint.names }}{{ monthHint.count > 3 ? '等' : '' }}
         </span>
       </div>
-      <div v-else class="mt-4 rounded-2xl border border-slate-200 bg-white px-5 py-3 text-sm text-slate-500">
+      <div v-else class="mt-4 rounded-2xl border border-line bg-surface px-5 py-3 text-sm text-muted">
         本月（{{ currentMonth }} 月）没有集中申报窗口，适合整理材料、核对学籍信息；下一个申报月在下方的日历里。
       </div>
 
       <!-- 筛选 -->
-      <div class="mt-6 flex flex-col gap-3 rounded-2xl border border-slate-200 bg-white p-4 sm:flex-row sm:items-center sm:justify-between">
+      <div class="mt-6 flex flex-col gap-3 rounded-2xl border border-line bg-surface p-4 sm:flex-row sm:items-center sm:justify-between">
         <div class="flex flex-wrap gap-2">
           <button
             v-for="c in categories"
@@ -252,15 +252,15 @@ onMounted(load);
             class="rounded-full border px-3 py-1.5 text-xs font-medium transition"
             :class="
               activeCategory === c
-                ? 'border-brand-600 bg-brand-600 text-white'
-                : 'border-slate-200 bg-white text-slate-600 hover:border-brand-300 hover:text-brand-700'
+                ? 'border-brand-600 bg-brand-600 text-on-brand'
+                : 'border-line bg-surface text-ink-2 hover:border-brand-300 hover:text-brand-700'
             "
             @click="activeCategory = c"
           >
             {{ c }}
           </button>
         </div>
-        <p class="text-xs text-slate-400">当前筛选出 {{ filteredTotal }} 个节点</p>
+        <p class="text-xs text-faint">当前筛选出 {{ filteredTotal }} 个节点</p>
       </div>
 
       <!-- 12 个月 -->
@@ -273,10 +273,10 @@ onMounted(load);
             class="group relative flex flex-col items-center gap-1 rounded-xl border py-3 transition"
             :class="[
               n === activeMonth
-                ? 'border-brand-600 bg-brand-600 text-white'
+                ? 'border-brand-600 bg-brand-600 text-on-brand'
                 : monthCounts[n - 1] > 0
-                  ? 'border-slate-200 bg-white text-slate-700 hover:border-brand-300'
-                  : 'border-slate-100 bg-slate-50 text-slate-400 hover:border-slate-200',
+                  ? 'border-line bg-surface text-ink-2 hover:border-brand-300'
+                  : 'border-line-sub bg-surface-2 text-faint hover:border-line',
               n === currentMonth && n !== activeMonth ? 'ring-2 ring-brand-200' : '',
             ]"
             @click="activeMonth = n"
@@ -286,17 +286,17 @@ onMounted(load);
               class="rounded-full px-2 py-0.5 text-[11px] tabular-nums"
               :class="
                 n === activeMonth
-                  ? 'bg-white/20 text-white'
+                  ? 'bg-on-brand/20 text-on-brand'
                   : monthCounts[n - 1] > 0
                     ? 'bg-brand-50 text-brand-700'
-                    : 'bg-slate-100 text-slate-400'
+                    : 'bg-surface-3 text-faint'
               "
             >
               {{ monthCounts[n - 1] || '—' }}
             </span>
             <span
               v-if="n === currentMonth"
-              class="absolute -top-1.5 left-1/2 -translate-x-1/2 rounded-full bg-amber-500 px-1.5 text-[10px] text-white"
+              class="absolute -top-1.5 left-1/2 -translate-x-1/2 rounded-full bg-amber-500 px-1.5 text-[10px] text-on-brand"
               >今</span
             >
           </button>
@@ -304,31 +304,31 @@ onMounted(load);
       </section>
 
       <!-- 选中月份详情 -->
-      <section class="mt-6 rounded-2xl border border-slate-200 bg-white">
-        <header class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 px-5 py-4">
-          <h2 class="text-base font-semibold text-slate-900">
+      <section class="mt-6 rounded-2xl border border-line bg-surface">
+        <header class="flex flex-wrap items-center justify-between gap-2 border-b border-line-sub px-5 py-4">
+          <h2 class="text-base font-semibold text-ink">
             {{ activeMonth }} 月的申报节点
-            <span class="ml-1 text-sm font-normal text-slate-400">共 {{ currentEvents.length }} 条</span>
+            <span class="ml-1 text-sm font-normal text-faint">共 {{ currentEvents.length }} 条</span>
           </h2>
-          <p class="text-xs text-slate-400">点政策名可进入逐条判定</p>
+          <p class="text-xs text-faint">点政策名可进入逐条判定</p>
         </header>
 
-        <ul v-if="currentEvents.length > 0" class="divide-y divide-slate-100">
+        <ul v-if="currentEvents.length > 0" class="divide-y divide-line-sub">
           <li v-for="event in currentEvents" :key="event.id" class="flex gap-4 px-5 py-4">
             <div class="w-16 shrink-0 pt-0.5 text-center">
-              <div class="text-xs text-slate-400">{{ activeMonth }} 月</div>
-              <div class="text-base font-semibold tabular-nums text-slate-900">{{ event.day ? event.day + ' 日' : '整月' }}</div>
+              <div class="text-xs text-faint">{{ activeMonth }} 月</div>
+              <div class="text-base font-semibold tabular-nums text-ink">{{ event.day ? event.day + ' 日' : '整月' }}</div>
             </div>
             <div class="min-w-0 flex-1">
               <div class="flex flex-wrap items-center gap-2">
                 <span class="rounded-full border border-brand-200 bg-brand-50 px-2 py-0.5 text-[11px] font-medium text-brand-700">{{ event.category }}</span>
-                <span class="rounded-full border border-slate-200 bg-slate-50 px-2 py-0.5 text-[11px] text-slate-500">{{ event.level }}</span>
-                <span class="text-xs text-slate-400">{{ deadlineLabel(event) }}</span>
+                <span class="rounded-full border border-line bg-surface-2 px-2 py-0.5 text-[11px] text-muted">{{ event.level }}</span>
+                <span class="text-xs text-faint">{{ deadlineLabel(event) }}</span>
               </div>
-              <h3 class="mt-1.5 text-sm font-semibold leading-snug text-slate-900">{{ event.label }}</h3>
-              <p class="mt-0.5 text-xs leading-relaxed text-slate-500">{{ event.policyTitle }}</p>
-              <p v-if="event.dateText" class="mt-1 text-xs text-slate-600">原文写法：{{ event.dateText }}</p>
-              <p v-if="event.note" class="mt-0.5 text-xs text-slate-400">{{ event.note }}</p>
+              <h3 class="mt-1.5 text-sm font-semibold leading-snug text-ink">{{ event.label }}</h3>
+              <p class="mt-0.5 text-xs leading-relaxed text-muted">{{ event.policyTitle }}</p>
+              <p v-if="event.dateText" class="mt-1 text-xs text-ink-2">原文写法：{{ event.dateText }}</p>
+              <p v-if="event.note" class="mt-0.5 text-xs text-faint">{{ event.note }}</p>
               <RouterLink
                 :to="`/match/${event.policyId}`"
                 class="mt-2 inline-flex items-center gap-1 text-xs font-medium text-brand-700 hover:text-brand-800"
@@ -340,32 +340,32 @@ onMounted(load);
         </ul>
 
         <div v-else class="px-5 py-12 text-center">
-          <p class="text-sm text-slate-500">
+          <p class="text-sm text-muted">
             {{ activeCategory === '全部' ? `${activeMonth} 月没有集中申报窗口。` : `${activeMonth} 月没有「${activeCategory}」类别的节点。` }}
           </p>
-          <p class="mt-1 text-xs text-slate-400">可以先看看其他月份，或把筛选切回「全部」。</p>
+          <p class="mt-1 text-xs text-faint">可以先看看其他月份，或把筛选切回「全部」。</p>
         </div>
       </section>
 
       <!-- 非年度节点 -->
       <section v-if="nonAnnualGroups.length > 0" class="mt-8">
-        <h2 class="text-base font-semibold text-slate-900">不进日历的节点</h2>
-        <p class="mt-1 text-sm text-slate-500">这几类时间不落在固定月份，但同样影响你什么时候能拿到钱。</p>
+        <h2 class="text-base font-semibold text-ink">不进日历的节点</h2>
+        <p class="mt-1 text-sm text-muted">这几类时间不落在固定月份，但同样影响你什么时候能拿到钱。</p>
 
         <div class="mt-4 space-y-3">
-          <div v-for="group in nonAnnualGroups" :key="group.key" class="overflow-hidden rounded-2xl border border-slate-200 bg-white">
+          <div v-for="group in nonAnnualGroups" :key="group.key" class="overflow-hidden rounded-2xl border border-line bg-surface">
             <button
               type="button"
-              class="flex w-full items-center justify-between gap-3 px-5 py-4 text-left transition hover:bg-slate-50"
+              class="flex w-full items-center justify-between gap-3 px-5 py-4 text-left transition hover:bg-surface-2"
               @click="toggleGroup(group.key)"
             >
               <div>
-                <span class="text-sm font-semibold text-slate-900">{{ group.title }}</span>
-                <span class="ml-2 rounded-full bg-slate-100 px-2 py-0.5 text-[11px] tabular-nums text-slate-600">{{ group.events.length }}</span>
-                <p class="mt-1 text-xs text-slate-500">{{ group.hint }}</p>
+                <span class="text-sm font-semibold text-ink">{{ group.title }}</span>
+                <span class="ml-2 rounded-full bg-surface-3 px-2 py-0.5 text-[11px] tabular-nums text-ink-2">{{ group.events.length }}</span>
+                <p class="mt-1 text-xs text-muted">{{ group.hint }}</p>
               </div>
               <svg
-                class="h-4 w-4 shrink-0 text-slate-400 transition"
+                class="h-4 w-4 shrink-0 text-faint transition"
                 :class="openGroups.has(group.key) ? 'rotate-180' : ''"
                 viewBox="0 0 20 20"
                 fill="currentColor"
@@ -375,11 +375,11 @@ onMounted(load);
               </svg>
             </button>
 
-            <ul v-if="openGroups.has(group.key)" class="divide-y divide-slate-100 border-t border-slate-100">
+            <ul v-if="openGroups.has(group.key)" class="divide-y divide-line-sub border-t border-line-sub">
               <li v-for="event in group.events" :key="event.id" class="flex flex-wrap items-baseline gap-x-3 gap-y-1 px-5 py-3">
-                <span class="text-sm font-medium text-slate-800">{{ event.label }}</span>
-                <span v-if="event.dateText" class="rounded bg-slate-100 px-1.5 py-0.5 text-[11px] text-slate-600">{{ event.dateText }}</span>
-                <span class="text-xs text-slate-400">{{ event.policyTitle }}</span>
+                <span class="text-sm font-medium text-ink">{{ event.label }}</span>
+                <span v-if="event.dateText" class="rounded bg-surface-3 px-1.5 py-0.5 text-[11px] text-ink-2">{{ event.dateText }}</span>
+                <span class="text-xs text-faint">{{ event.policyTitle }}</span>
                 <RouterLink :to="`/match/${event.policyId}`" class="ml-auto text-xs font-medium text-brand-700 hover:text-brand-800">
                   判定 →
                 </RouterLink>
@@ -389,7 +389,7 @@ onMounted(load);
         </div>
       </section>
 
-      <p class="mt-8 text-xs leading-relaxed text-slate-400">
+      <p class="mt-8 text-xs leading-relaxed text-faint">
         日历只做「时间聚合」，不代表具体某校某年的实际安排 —— 最终时间节点以学校资助中心、省级教育行政部门的当年通知为准。
         每一条都能在对应政策原文里找到出处，点击政策名即可核对。
       </p>
