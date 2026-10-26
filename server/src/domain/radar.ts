@@ -98,7 +98,7 @@ export const RADAR_SLOTS: RadarSlot[] = [
     options: [
       { value: '中央部门所属高校', label: '中央部门所属高校', aliases: ['中央部门所属', '中央部属'] },
       { value: '地方所属高校', label: '地方所属高校', aliases: ['地方所属', '地方高校'] },
-      { value: '公办普通本科', label: '公办普通本科', aliases: ['公办普通本科', '全日制公办普通高等学校', '公办普通高等学校'] },
+      { value: '公办普通本科', label: '公办普通本科', aliases: ['公办普通本科', '全日制公办普通高等学校', '全日制公办普通高校', '公办本科'] },
       { value: '公办高职高专', label: '公办高职/高专', aliases: ['公办高等职业', '公办高等专科', '高等职业学校', '高等专科学校'] },
       { value: '民办高校', label: '民办高校（含独立学院）', aliases: ['民办', '独立学院'] },
       { value: '中等职业学校', label: '中等职业学校', aliases: ['中等职业', '中职', '技工学校'] },
@@ -399,7 +399,7 @@ const FIELD_RULES: FieldRule[] = [
     slot: 'economicDifficulty',
     type: 'select',
     label: /家庭经济困难认定情况/,
-    valueMap: { true: '已认定为家庭经济困难', false: '未认定' },
+    valueMap: { true: '已被学校认定为家庭经济困难（已认定）', false: '还没做过困难认定（未认定）' },
   },
 
   // ---------- 学籍状态（boolean 写法）----------

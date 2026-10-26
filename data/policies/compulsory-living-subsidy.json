@@ -51,7 +51,7 @@
       "label": "学籍状态",
       "type": "select",
       "options": [
-        "在籍在校",
+        "在读、有正式学籍（在籍在校）",
         "其他"
       ]
     },
@@ -109,7 +109,7 @@
           "field": "education.enrollmentStatus",
           "label": "在籍在校",
           "operator": "eq",
-          "value": "在籍在校",
+          "value": "在读、有正式学籍（在籍在校）",
           "docRef": "s4",
           "quote": "各级各类学校要加强学生学籍、学生资助信息系统应用",
           "required": true,

@@ -85,7 +85,7 @@
       "label": "学籍状态",
       "type": "select",
       "options": [
-        "在籍在校",
+        "在读、有正式学籍（在籍在校）",
         "休学",
         "退学",
         "其他"
@@ -162,7 +162,7 @@
           "field": "student.enrollment_status",
           "label": "学籍状态为在籍在校",
           "operator": "eq",
-          "value": "在籍在校",
+          "value": "在读、有正式学籍（在籍在校）",
           "docRef": "s1",
           "quote": "组织符合申请条件的学生在开学后5个工作日内向所在学校提交助困性资助申请",
           "required": true,
