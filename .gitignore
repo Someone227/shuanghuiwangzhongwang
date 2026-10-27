@@ -45,3 +45,5 @@ data/*.tmp
 # 日志
 *.log
 logs/
+# 技术文档构建产物（由 docs/tech-report/build.mjs 生成，源文件是 part*.html）
+docs/tech-report/report.html

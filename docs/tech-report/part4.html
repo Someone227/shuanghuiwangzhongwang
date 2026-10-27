@@ -1,0 +1,166 @@
+<!-- ==================== 第七章 ==================== -->
+<section class="chapter">
+  <h1 class="ch"><span class="cn">07</span>产品页面与视觉体系<span class="en">Product & UI</span></h1>
+
+  <p class="lead">这个项目要回答的问题是「我能不能申、还差什么、什么时候申」，所以界面结构不是按技术模块切，而是按<b>用户的一次完整决策过程</b>切：
+  先横向摸底，再纵向核对，最后落到材料与时间。</p>
+
+  <h2 class="sec"><span class="n">7.1</span>信息架构：8 个路由</h2>
+  <table class="compact">
+    <thead><tr><th style="width:19%">路由</th><th style="width:16%">页面</th><th style="width:11%">代码行</th><th>核心职责</th></tr></thead>
+    <tbody>
+      <tr><td><code>/</code></td><td>首页</td><td class="num">197</td><td>一句话说清产品、4 个数据统计、六步链路、三个入口（开始匹配 / 政策雷达 / 申报日历）</td></tr>
+      <tr><td><code>/policies</code></td><td>政策库</td><td class="num">344</td><td>32 份政策卡片，14 个分类筛选 + 模糊搜索（含原文命中），每页 8 条分页</td></tr>
+      <tr><td><code>/policies/:id</code></td><td>政策详情</td><td class="num">479</td><td>条件树、材料、时间节点、原文分段、同类推荐，一页读完不做判定</td></tr>
+      <tr><td><code>/match/:id</code></td><td>判定页</td><td class="num">345</td><td>动态表单 + 逐条判定 + 结论卡 + 材料清单 + 时间节点 + 原文高亮</td></tr>
+      <tr><td><code>/radar</code></td><td>政策雷达</td><td class="num">583</td><td>26 项共性画像 → 32 份政策四层分层（初筛适合 / 差几项 / 信息不够 / 不符）</td></tr>
+      <tr><td><code>/calendar</code></td><td>申报日历</td><td class="num">438</td><td>60 个时间节点按月聚合，标责任方，区分「个人要办」与「学校流程」</td></tr>
+      <tr><td><code>/login</code></td><td>登录注册</td><td class="num">156</td><td>单栏表单，演示账号一键填入</td></tr>
+      <tr><td><code>/account</code></td><td>个人中心</td><td class="num">489</td><td>判定记录、填报进度、画像概览、本地数据清除（需登录）</td></tr>
+    </tbody>
+  </table>
+  <p class="tbl-cap"><b>表 7-1</b>　8 个路由。前 6 个无需登录即可完整使用——这是刻意设计：<b>把注册门槛放在用户已经获得价值之后</b>。</p>
+
+  <h2 class="sec"><span class="n">7.2</span>三条主线的页面配合</h2>
+  <div class="three">
+    <div class="mini"><h4>横向：先看我适合什么</h4><p>首页 → 政策雷达。用户只填 26 项共性信息，一次拿到 32 份政策的粗分类，
+    再点进「去核对材料」进入具体政策。解决「不知道从哪份看起」。</p></div>
+    <div class="mini"><h4>纵向：我到底够不够格</h4><p>政策库 → 判定页。表单字段由政策动态生成，只问这份政策真正用得到的；
+    提交后左侧表单/右侧结论双栏对照，每条结论可回链原文段落。</p></div>
+    <div class="mini"><h4>时间：什么时候动手</h4><p>申报日历。把 32 份政策里的 60 个节点摊进一年 12 个月，
+    标出责任方与「往年一次性节点」，避免用户把学校流程当成自己要办的事。</p></div>
+  </div>
+  <p>三个入口共享同一份政策数据与同一套判定引擎，但页面职责严格分开：<b>雷达不做精细判定，判定页不做时间规划，日历不做资格判断</b>。
+  这样每个页面都只有一个主角，不会互相稀释。</p>
+
+  <h2 class="sec"><span class="n">7.3</span>组件设计：三个复用组件</h2>
+  <table class="compact">
+    <thead><tr><th style="width:20%">组件</th><th style="width:11%">行数</th><th>设计要点</th></tr></thead>
+    <tbody>
+      <tr><td><code>ProfileForm.vue</code></td><td class="num">189</td><td>按 <code>fields[].group</code> 分组渲染 text/number/boolean/select/multiselect 五种控件；
+        number 带单位后缀（年、%、人），select 支持「请选择」空态；受控组件 + 统一的 <code>v-model:profile</code></td></tr>
+      <tr><td><code>VerdictReport.vue</code></td><td class="num">223</td><td>结论卡（三档配色）+ 四状态计数 + 通道卡片 + 逐条判定（默认展开不通过的）+ 材料清单 + 时间节点 + 接下来做什么</td></tr>
+      <tr><td><code>PolicyText.vue</code></td><td class="num">126</td><td>渲染 <code>originalText</code> 分段，把判定命中的 <code>quote</code> 用 <code>mark</code> 高亮；
+        段落按 <code>sections[]</code> 折叠，点击「在原文中查看」跳转到对应段落</td></tr>
+    </tbody>
+  </table>
+  <p class="tbl-cap"><b>表 7-2</b>　三个组件被 4 个页面复用。表单、结论、原文三块逻辑各自收敛在一处。</p>
+
+  <h2 class="sec"><span class="n">7.4</span>双主题：一套语义 token，两个色板</h2>
+  <p>早期版本把颜色写死在组件里，改深色主题时要逐个页面改 <code>bg-white</code>/<code>text-slate-900</code>，漏改就会出现「深色页面里一块白卡」。
+  后来统一改成<b>只用语义类名</b>：组件写 <code>bg-surface</code>/<code>text-ink</code>/<code>border-line</code>/<code>text-on-brand</code>，
+  颜色值集中在 CSS 变量里，切换主题只换变量。</p>
+  <table class="compact">
+    <thead><tr><th style="width:16%">语义 token</th><th style="width:30%">青绿浅色（默认）</th><th>午夜 AI 深色</th></tr></thead>
+    <tbody>
+      <tr><td><code>--brand</code></td><td>#0f6f5c（墨绿，政务可信感）</td><td>#38bdf8（天蓝，科技感）</td></tr>
+      <tr><td><code>--accent</code></td><td>#c2410c（朱红，用于「注意事项」）</td><td>#818cf8（靛紫，用于强调）</td></tr>
+      <tr><td><code>--bg</code></td><td>#f7f8f3（米白）</td><td>#080c16（深空）</td></tr>
+      <tr><td><code>--surface</code></td><td>#ffffff（卡片）</td><td>#0f1522（卡片）</td></tr>
+      <tr><td><code>--ink</code></td><td>#14201c（正文）</td><td>#e6edf7（正文）</td></tr>
+      <tr><td><code>--line</code></td><td>#dfe5da（描边）</td><td>#1f2b3d（描边）</td></tr>
+      <tr><td>状态色</td><td>pass 绿 / fail 红 / unknown 琥珀 / warn 橙</td><td>同语义，降低饱和度并提高亮度以适配深底</td></tr>
+    </tbody>
+  </table>
+  <p class="tbl-cap"><b>表 7-3</b>　两套色板共享同一套语义 token。主题偏好存在 <code>localStorage</code>，首屏由 <code>theme.ts</code>（52 行）在挂载前同步 <code>&lt;html class="dark"&gt;</code>，避免闪烁。</p>
+  <div class="box info">
+    <div class="h"><span class="tag">设计取舍</span>为什么保留两套主题，而不是只做一套</div>
+    <p>深色不是「好看」，而是这个产品的场景需要：这类用户常常在晚上、在手机上翻政策。深色主题同时是一次<b>工程约束的检验</b>——
+    只有当所有颜色都收敛到语义 token 时，才可能一键切换且不漏底色。事实上第一次做深色主题时，登录页的 tab 高亮用的还是裸颜色，
+    切到深色后立刻露白，这个缺陷记录在 10.2。</p>
+  </div>
+
+  <h2 class="sec"><span class="n">7.5</span>响应式、可达性与打印</h2>
+  <ul>
+    <li><b>布局</b>：判定页在 ≥1024px 为「表单 380px + 结论自适应」双栏，&lt;1024px 折叠为单栏并允许在「表单/结论」间切换，避免手机上表单过长。</li>
+    <li><b>表格与卡片</b>：政策卡片用 <code>grid</code> 自适应列数（1/2/3），徽章行允许换行——窄屏下曾出现徽章被挤断行，已改为 <code>flex-wrap</code> 修正。</li>
+    <li><b>键盘</b>：判定页支持 <code>Ctrl + Enter</code> 直接判定；表单控件均为原生 <code>input/select</code>，默认支持 Tab 与屏幕阅读器。</li>
+    <li><b>空态与提示</b>：任何空列表（无判定记录、无筛选结果、月份无节点）都有明确文案与下一步按钮，不留空白页。</li>
+    <li><b>打印</b>：结论区使用 <code>@media print</code> 去掉导航与按钮，A4 单栏输出，方便学生打印带去资助中心。</li>
+  </ul>
+</section>
+
+<!-- ==================== 第八章 ==================== -->
+<section class="chapter">
+  <h1 class="ch"><span class="cn">08</span>质量保障与工程实践<span class="en">Quality & Engineering</span></h1>
+
+  <p class="lead">这个项目最怕的不是页面难看，而是<b>结论错了但看起来很对</b>。所以质量保障的重心不在 UI 测试，而在两个地方：
+  判定引擎的单元测试，以及「数据与原文是否对得上」的契约测试。</p>
+
+  <h2 class="sec"><span class="n">8.1</span>测试分层：9 个文件 / 79 个用例</h2>
+  <p>测试用 Node 原生 test runner（<code>tsx --test</code>）运行，不引入 Jest/Vitest，启动快、无额外配置。9 个文件的分布刻意按「一个失败模式一个文件」组织：</p>
+  <table class="compact">
+    <thead><tr><th style="width:22%">测试文件</th><th class="num" style="width:8%">用例</th><th>它守的是什么</th></tr></thead>
+    <tbody>
+      <tr><td><code>matcher.test.ts</code></td><td class="num">12</td><td>10 种操作符语义、空值 = unknown、建议项不满足只 warning、模板比较、归一化比较</td></tr>
+      <tr><td><code>channel.test.ts</code></td><td class="num">6</td><td>并列通道：任一通道满足即算通过；通道外条件仍需全部满足；全 unknown 时的兜底</td></tr>
+      <tr><td><code>policies.test.ts</code></td><td class="num">8</td><td>数据契约：32 份政策结构合法、条件引用存在、字段/材料/节点引用不断链、通道引用的组真实存在</td></tr>
+      <tr><td><code>detail.test.ts</code></td><td class="num">8</td><td>政策详情聚合：条件树、原文分段、段落偏移、引文在原文中可定位</td></tr>
+      <tr><td><code>radar.test.ts</code></td><td class="num">8</td><td>26 项画像与规则表映射：四层分类、缺信息归入「信息不够」、布尔与 select 语义</td></tr>
+      <tr><td><code>calendar.test.ts</code></td><td class="num">8</td><td>日期解析（「每年 10 月 31 日前」「6 月底」）、月份归属、责任方判定、过期节点不进日历</td></tr>
+      <tr><td><code>search.test.ts</code></td><td class="num">9</td><td>模糊匹配（名称/发文单位）、原文命中、大小写与空格、空查询</td></tr>
+      <tr><td><code>auth.test.ts</code></td><td class="num">12</td><td>注册校验、scrypt 加盐、令牌签发与过期、无效令牌、重复注册</td></tr>
+      <tr><td><code>store.test.ts</code></td><td class="num">8</td><td>用户数据读写：判定记录上限 20 条、进度按政策覆盖、并发写入不丢数据</td></tr>
+    </tbody>
+  </table>
+  <p class="tbl-cap"><b>表 8-1</b>　9 个测试文件共 79 个用例。断言以「行为」为主，例如「留空的硬性条件返回 unknown 而不是 fail」。</p>
+  <p>运行方式与耗时：<code>pnpm --filter server test</code>，全部 79 个用例在 1 秒内跑完，因此可以在每次提交前无负担执行。</p>
+
+  <h2 class="sec"><span class="n">8.2</span>契约测试：把「AI 可能错」变成「结构必须对」</h2>
+  <p><code>policies.test.ts</code> 是整套测试里最特别的一个：它不测函数，只测<b>数据本身</b>。断言项包括：</p>
+  <div class="two">
+    <div class="mini"><h4>结构与引用完整性</h4><ul>
+      <li>每份政策 9 个必填字段齐全，<code>level</code>/<code>category</code> 在枚举内</li>
+      <li>每条条件的 <code>docRef</code> 必须能在 <code>sections[]</code> 中找到</li>
+      <li>公式里的字段路径必须在 <code>fields[]</code> 中声明</li>
+      <li><code>channels[].groupIds</code> 引用的条件组必须真实存在</li>
+      <li>材料、时间节点、条件三者之间不允许出现悬空引用</li>
+    </ul></div>
+    <div class="mini"><h4>原文可回溯</h4><ul>
+      <li>每条条件的 <code>quote</code> 必须是 <code>originalText</code> 的<b>连续子串</b>（逐字，非模糊匹配）</li>
+      <li>段落偏移 <code>start/end</code> 必须与原文切片一致</li>
+      <li>清洗后的原文不得为空，且长度在合理区间</li>
+      <li>每份政策必须有 <code>review.humanReviewed = true</code></li>
+    </ul></div>
+  </div>
+  <p>第二条是关键：<b>一旦模型「改了原话」或人工复核手抖改了引文，测试立刻失败</b>。这把「AI 不编造」从提示词层面的期望，变成了构建时必须通过的硬校验。</p>
+
+  <h2 class="sec"><span class="n">8.3</span>构建与发布流水线</h2>
+  <table class="compact">
+    <thead><tr><th style="width:6%">#</th><th style="width:30%">步骤</th><th>命令 / 产物</th></tr></thead>
+    <tbody>
+      <tr><td>1</td><td>类型检查</td><td><code>pnpm --filter server typecheck</code>、<code>pnpm --filter web typecheck</code>（均需 0 错误）</td></tr>
+      <tr><td>2</td><td>单元与契约测试</td><td><code>pnpm --filter server test</code> → 79 passed</td></tr>
+      <tr><td>3</td><td>导出静态数据</td><td><code>pnpm --filter server exec tsx scripts/export-static-data.mjs</code> → <code>web/public/static-data/*.json</code></td></tr>
+      <tr><td>4</td><td>前端构建</td><td><code>pnpm --filter web run build:pages</code>（<code>base=/shuanghuiwangzhongwang/</code>，<code>VITE_STATIC_DATA=true</code>）</td></tr>
+      <tr><td>5</td><td>发布到 gh-pages</td><td><code>node tools/deploy-pages.mjs</code>：用 GitHub Git Data API 建 tree → commit → 快进 gh-pages 分支</td></tr>
+      <tr><td>6</td><td>同步 main</td><td><code>node tools/git-sync.mjs</code>：同上机制推 main，含网络抖动与 422 瞬态重试</td></tr>
+    </tbody>
+  </table>
+  <p class="tbl-cap"><b>表 8-2</b>　一次完整发布的 6 个步骤。任一步失败即中止，不会发布半成品。</p>
+  <p>两个 <code>tools/*.mjs</code> 的存在有特殊背景：本机 <code>git push</code> 与 <code>git fetch</code> 走网络经常被中断（详见第九章 9.6），
+  最终改用 GitHub Git Data API 直接创建 commit 与 tree，再由本地精确重建 commit 对象对齐 SHA。这是被工程约束逼出来的方案，
+  但也带来一个额外好处：<b>发布脚本可以精确控制「哪些文件进 gh-pages」</b>，不需要维护额外分支的工作区。</p>
+
+  <h2 class="sec"><span class="n">8.4</span>验收方式：每个里程碑都在浏览器里点过</h2>
+  <p>本项目没有引入 E2E 测试框架（成本与收益不匹配：页面逻辑大多由纯函数驱动，E2E 覆盖不住判定正确性），
+  但每个功能里程碑都执行同一套人工验收清单：</p>
+  <ul>
+    <li><b>走通主链路</b>：从首页 → 选政策 → 填表 → 判定 → 看原文 → 回列表，全程无报错、无空白。</li>
+    <li><b>边界场景</b>：全空表单提交、只填一项、全部填「否」、数值填 0 与极大值、中文与符号混输。</li>
+    <li><b>静态版与在线版分别验</b>：静态模式 <code>VITE_STATIC_DATA=true</code> 走浏览器内判定；在线模式走 <code>/api/policies/:id/evaluate</code>。两者结论必须一致。</li>
+    <li><b>部署后回访</b>：gh-pages 发布后验证深链（直接打开 <code>/match/national-scholarship</code>）与资源 200。</li>
+  </ul>
+
+  <h2 class="sec"><span class="n">8.5</span>版本管理与协作约定</h2>
+  <p>仓库根目录的 <code>AGENTS.md</code> 写死了三条铁律，整个开发过程按它执行：</p>
+  <div class="three">
+    <div class="mini"><h4>① 重大更改必提交</h4><p>新功能跑通、依赖/架构/数据模型变更、主流程 bug 修复、视觉或部署大改 → 必须 commit 并同步 GitHub。
+    文案与样式微调不算重大，可合并提交。</p></div>
+    <div class="mini"><h4>② main 永远可运行</h4><p>任何提交后 main 都必须能起服务、能通过测试；大改走 <code>feat/xxx</code> 分支，验证通过再合并。</p></div>
+    <div class="mini"><h4>③ 细粒度历史</h4><p>一次提交只做一件事，提交信息用 <code>feat/fix/docs/style/refactor/test/chore</code> 前缀 + 一句中文说明。
+    比赛的评审会看提交历史，一次性提交全部功能会被判为开发过程不可信。</p></div>
+  </div>
+  <p>实际执行结果：<b>64 个提交</b>，覆盖 2026-10-24 到 10-27 四天，平均每天 16 个提交，最大单次改动是「政策库扩充到 31 份」（新增 19 份政策数据）。
+  每个里程碑打一个 tag，回档时 <code>git reset --hard &lt;tag&gt;</code> 即可恢复可用状态——这也是用户明确要求的能力：「不要让网页因为乱改崩溃还没有办法回档」。</p>
+</section>

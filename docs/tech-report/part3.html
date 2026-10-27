@@ -1,0 +1,274 @@
+<!-- ==================== 第四章 ==================== -->
+<section class="chapter">
+  <h1 class="ch"><span class="cn">04</span>AI 调用链路<span class="en">AI Pipeline</span></h1>
+
+  <p class="lead">这个项目对「AI 用在哪」有一条硬边界：<b>大模型只在开发期把政策原文编译成结构化条件树，运行期一次也不调用。</b>
+  好处不是省 token，而是把「不确定的生成」隔离在可人工复核的建库阶段，让用户每次看到的结论都是确定、可复现、可解释的。</p>
+
+  <h2 class="sec"><span class="n">4.1</span>调用边界：一道运行期防火墙</h2>
+  <!--FIG:AI-->
+  <p>完整链路只有 4 个节点、7 类产物，全部落在开发期：</p>
+  <table class="compact">
+    <thead><tr><th style="width:7%">#</th><th style="width:20%">节点</th><th style="width:30%">输入</th><th>输出 / 去向</th></tr></thead>
+    <tbody>
+      <tr><td>1</td><td>原文抓取与存档</td><td>官网页面</td><td><code>data/policies/raw/*.txt</code>（逐字存档，不加工）</td></tr>
+      <tr><td>2</td><td>噪声清洗</td><td>原始网页文本</td><td>去除导航/页脚，重算段落偏移；<code>cleaning</code> 字段记录移除量</td></tr>
+      <tr><td>3</td><td>DeepSeek 抽取</td><td>system prompt + 政策原文</td><td>条件树 JSON（结构校验通过才落盘）</td></tr>
+      <tr><td>4</td><td>人工复核</td><td>条件树 + 原文</td><td><code>review.changes[]</code>（57 条复核记录）+ 修正后的 JSON</td></tr>
+    </tbody>
+  </table>
+  <p class="tbl-cap"><b>表 4-1</b>　建库期调用链。所有节点都是一次性脚本，运行期代码不 import 任何 AI SDK。</p>
+
+  <h2 class="sec"><span class="n">4.2</span>提示词设计：把「解释政策」改成「编译政策」</h2>
+  <p>系统提示词只有 9 条要求，但每一条都对应一个具体的失败模式。核心思路是<b>先约束输出形态，再约束内容质量</b>：</p>
+  <table class="compact">
+    <thead><tr><th style="width:5%">#</th><th style="width:52%">提示词要求（原文摘要）</th><th>它防的是什么</th></tr></thead>
+    <tbody>
+      <tr><td>1</td><td>只输出 JSON，不要 markdown 代码块、不要解释文字</td><td>模型「先解释再输出」，导致解析失败</td></tr>
+      <tr><td>2</td><td>每条条件必须回链原文：<code>docRef</code> 指向 section.id，<code>quote</code> 必须是原文句子（可截取不可改写）</td><td>幻觉条款：凭空编一条原文里没有的条件</td></tr>
+      <tr><td>3</td><td>条件必须可判定：<code>field</code> 点路径、<code>operator</code> 枚举、<code>value</code> 阈值/枚举</td><td>输出「视情况而定」这类无法执行的软结论</td></tr>
+      <tr><td>4</td><td>主观条件也抽成可判定条件，由用户自填是/否，<b>不设 autoUncertain、不编造规则</b></td><td>模型自作主张替用户判断「家庭经济困难」</td></tr>
+      <tr><td>5</td><td>非硬性条件设 <code>required:false</code>，硬性门槛设 <code>required:true</code></td><td>把「择优参考」当成硬门槛，误伤用户</td></tr>
+      <tr><td>6</td><td>组内 <code>logic</code> 取 all/any，多组默认顺序全部满足</td><td>把「任一满足」写成「同时满足」，导致全员不符合</td></tr>
+      <tr><td>7</td><td>忽略网页导航、页脚、联系方式</td><td>把「扫一扫分享本页」抽成政策条款</td></tr>
+      <tr><td>8</td><td>字段值用原文中文表述（全日制/本科/硕士），不擅自翻译成英文或数字</td><td>枚举值与表单选项对不上，判定永远 unknown</td></tr>
+      <tr><td>9</td><td><code>hints</code> 面向用户：不满足时给一条可操作建议</td><td>给出结论但不告诉用户下一步做什么</td></tr>
+    </tbody>
+  </table>
+  <p class="tbl-cap"><b>表 4-2</b>　九条提示词要求与对应风险。提示词全文见 <code>server/scripts/extract-policies.mjs</code> 的 <code>SYSTEM_PROMPT</code>。</p>
+
+  <h3 class="sub">一次请求的完整形态</h3>
+<pre><span class="c">// server/scripts/extract-policies.mjs  callDeepseek()</span>
+POST {BASE_URL}/chat/completions
+{
+  <span class="k">model</span>: "deepseek-chat",          <span class="c">// 可用 DEEPSEEK_MODEL_CHAT 覆盖</span>
+  <span class="k">messages</span>: [system, user],        <span class="c">// system = 九条要求；user = 元信息 + 原文</span>
+  <span class="k">temperature</span>: 0,                  <span class="c">// 抽取任务不需要创造性</span>
+  <span class="k">max_tokens</span>: 8000,
+  <span class="k">response_format</span>: { type: "json_object" }   <span class="c">// 强制 JSON Output</span>
+}
+<span class="c">// 超时 240s（AbortController）；请求体与响应体原文写入 docs/ai-log/policies/&lt;id&gt;.json</span></pre>
+
+  <h2 class="sec"><span class="n">4.3</span>结构化输出的三道闸门</h2>
+  <p>模型输出不可能「一次就对」，所以建库脚本设计了三层防御，任何一层不通过都不会污染数据集：</p>
+  <div class="three">
+    <div class="mini"><h4>① 协议层</h4><p><code>response_format: json_object</code> 强制 JSON；解析器额外兼容 <code>```json</code> 围栏，
+    避免模型习惯性包裹代码块。</p></div>
+    <div class="mini"><h4>② 结构层</h4><p><code>validatePolicy()</code> 校验 9 类必填结构：id 一致、sections/conditions 非空、
+    field.type 与 operator 在枚举内、<b>docRef 必须真实存在于 sections</b>、logic 只能是 all/any。</p></div>
+    <div class="mini"><h4>③ 修正层</h4><p>校验失败时，把「上一次模型输出」作为 assistant 消息、把错误清单作为下一条 user 消息，
+    要求模型<b>修正后重新输出</b>；最多 2 次尝试，仍失败则该政策不入库。</p></div>
+  </div>
+  <p>三层闸门的效果可以从日志里直接验证：<b>37 次调用中，5 份政策在第 1 次未通过校验，带错误修正后全部通过，没有一份被丢弃</b>。
+  换句话说，最终入库的 32 份政策，每一份都通过了完整的结构校验。</p>
+
+  <h2 class="sec"><span class="n">4.4</span>实测统计：一次建库的完整成本</h2>
+  <div class="kpis">
+    <div class="kpi"><div class="n">37<small> 次</small></div><div class="t">DeepSeek 调用<br>32 份政策 / 5 份重试</div></div>
+    <div class="kpi"><div class="n">219,952</div><div class="t">总 token<br>prompt 113,422 + completion 106,530</div></div>
+    <div class="kpi"><div class="n">12.8<small> 秒</small></div><div class="t">平均单份耗时<br>首请求 → 产物落盘</div></div>
+    <div class="kpi"><div class="n">0<small> 次</small></div><div class="t">运行期调用<br>用户判定不消耗 token</div></div>
+  </div>
+  <table class="compact">
+    <thead><tr><th style="width:34%">指标</th><th class="num" style="width:18%">数值</th><th>说明</th></tr></thead>
+    <tbody>
+      <tr><td>政策份数 / 调用次数</td><td class="num">32 / 37</td><td>5 份政策首次输出未通过结构校验，追加一轮修正</td></tr>
+      <tr><td>prompt / completion token</td><td class="num">113,422 / 106,530</td><td>prompt 主要为政策原文（单份 2,000–6,000 字）</td></tr>
+      <tr><td>请求 / 响应体字符数</td><td class="num">282,035 / 399,491</td><td>全部存档，可逐字回放</td></tr>
+      <tr><td>平均单份耗时</td><td class="num">约 12.8 s</td><td>含网络往返与 JSON 生成；最长的是多轮修正的政策</td></tr>
+      <tr><td>缓存命中 token</td><td class="num">0</td><td>每次请求都带完整原文，无缓存复用</td></tr>
+      <tr><td>运行期 AI 成本</td><td class="num">0</td><td>用户无论判定多少次，都不产生模型调用</td></tr>
+    </tbody>
+  </table>
+  <p class="tbl-cap"><b>表 4-3</b>　建库成本（<code>docs/ai-log/policies/*.json</code> 全量统计）。按 DeepSeek 官方定价，
+  一次完整建库的成本在<b>人民币 1 元以内</b>——这意味着新增一份政策、重跑一次抽取，几乎没有成本顾虑。</p>
+
+  <h2 class="sec"><span class="n">4.5</span>留痕与人工复核：AI 只是「初稿」</h2>
+  <p>每份政策的 AI 调用都完整留痕，字段结构固定：</p>
+<pre><span class="c">// docs/ai-log/policies/&lt;id&gt;.json</span>
+{
+  <span class="k">"id"</span>: "national-scholarship",
+  <span class="k">"title"</span>: "本专科生国家奖学金评审办法（教财函〔2019〕105号）",
+  <span class="k">"source"</span>: "http://www.moe.gov.cn/...",
+  <span class="k">"generatedAt"</span>: "2026-10-25T09:33:18.613Z",
+  <span class="k">"logs"</span>: [{
+    <span class="k">"attempt"</span>: 1,
+    <span class="k">"request"</span>: [{role:"system",...},{role:"user",...}],   <span class="c">// 完整 messages</span>
+    <span class="k">"responseRaw"</span>: "{...}",                                <span class="c">// 原始响应，含 usage</span>
+    <span class="k">"usage"</span>: {prompt_tokens:2476, completion_tokens:3506, total_tokens:5982},
+    <span class="k">"model"</span>: "deepseek-flash"                                <span class="c">// 服务端回显的模型快照名</span>
+  }]
+}</pre>
+  <p><b>抽取只是初稿。</b>32 份政策共产出 57 条人工复核记录，全部写进 <code>review.changes[]</code>，按性质大致分为：</p>
+  <table class="compact">
+    <thead><tr><th style="width:26%">复核类型</th><th class="num" style="width:12%">约数</th><th>典型记录（原文引用）</th></tr></thead>
+    <tbody>
+      <tr><td>新增收录逐条核对</td><td class="num">20</td><td>「逐条核对原文条款、引用与字段，确认条件可判定、引文可回溯」</td></tr>
+      <tr><td>判定口径调整</td><td class="num">约 14</td><td>「退役后复学」与「在校入伍补偿」是并列情形，退役复学一项改为建议项，避免在校生被误判</td></tr>
+      <tr><td>时效性处理</td><td class="num">约 9</td><td>notes 追加【现行标准】：2024 年起本专科国奖由 8000 元提高到 10000 元（财教〔2024〕181号）</td></tr>
+      <tr><td>判定逻辑修正</td><td class="num">3</td><td>「年龄条件」组同时写了硕士（≤40）与博士（≤45），all 逻辑下要求学历同时为硕士和博士 → 拆成两条并列通道</td></tr>
+      <tr><td>分类与引文修正</td><td class="num">约 7</td><td>category 由模型输出的「其他」改为「困难认定」；c4 的原文引用补全括号说明，确保整句可逐字回溯</td></tr>
+      <tr><td>逐条核对条件与引用</td><td class="num">4</td><td>「身份（全日制硕士/博士）、政治品行、学业科研三项为硬性条件」</td></tr>
+    </tbody>
+  </table>
+  <p class="tbl-cap"><b>表 4-4</b>　57 条人工复核记录的分类。它们既修正了模型错误，也把「判定口径」写成了可追溯的书面依据。</p>
+  <div class="box warn">
+    <div class="h"><span class="tag">关键教训</span>模型最危险的不是编造条款，而是「看起来对」的逻辑组合</div>
+    <p>三条「判定逻辑修正」有一个共同点：<b>每一条单独看都忠实于原文，但组合起来就错了</b>。例如少数民族骨干计划原先把「报考硕士（年龄 ≤ 40）」
+    与「报考博士（年龄 ≤ 45）」写进同一个 all 组——对任何一个人，都不可能同时是硕士和博士，于是这份政策对所有人判为不符合。
+    这类错误不会被 JSON 结构校验发现，只能靠人读原文、对照判定结果才会暴露。这也是为什么项目坚持「AI 抽完必须人工复核」的原因。</p>
+  </div>
+</section>
+
+<!-- ==================== 第五章 ==================== -->
+<section class="chapter">
+  <h1 class="ch"><span class="cn">05</span>数据来源与风险控制<span class="en">Data & Risk</span></h1>
+
+  <p class="lead">政策判定系统的风险，八成不来自代码，而来自<b>数据是否真实、是否时效、是否被误读</b>。
+  这一章把「数据从哪来、怎么处理、可能错在哪、错了怎么办」全部摊开。</p>
+
+  <h2 class="sec"><span class="n">5.1</span>来源：只取官方原文</h2>
+  <p>32 份政策全部来自官方渠道，每份 JSON 都保留 <code>sourceUrl</code>，页面详情页可一键跳转原文：</p>
+  <table class="compact">
+    <thead><tr><th style="width:30%">来源机构</th><th style="width:14%">政策数</th><th>覆盖范围（部分）</th></tr></thead>
+    <tbody>
+      <tr><td>教育部（moe.gov.cn）</td><td class="num">约 20</td><td>国家奖学金、励志奖学金、助学金、推免、公费师范、免费学前、义务教育补助、营养改善、中职资助等</td></tr>
+      <tr><td>全国学生资助管理中心（xszz.edu.cn）</td><td class="num">约 8</td><td>国家助学贷款、勤工助学、基层就业代偿、入伍资助、困难认定等</td></tr>
+      <tr><td>财政部 / 民政部 / 人社部 / 国务院</td><td class="num">约 4</td><td>低保、特困人员供养、残疾人两项补贴、临时救助、就业见习岗位募集</td></tr>
+    </tbody>
+  </table>
+  <p class="tbl-cap"><b>表 5-1</b>　来源分布。所有原文逐字存档于 <code>data/policies/raw/</code>，与条件树同仓库、同版本、可 diff。</p>
+  <p>强调一点：<b>不抓第三方转载、不抓公众号、不用模型「凭记忆」补全条款</b>。原文是唯一事实来源，
+  条件树里每一条 <code>quote</code> 都能在 <code>raw/</code> 的对应文本中逐字定位——这一条由测试断言（见 8.2）。</p>
+
+  <h2 class="sec"><span class="n">5.2</span>清洗：只删网页噪声，不动条款</h2>
+  <p>直接抓下来的网页文本会带上一大堆与政策无关的内容。以国家奖学金通知为例，抓取文本的开头是「登录 / Languages / English / 日本語 / 无障碍浏览」，
+  结尾是「扫一扫分享本页 / 责任编辑 / 网站声明 / 京ICP备…」。这些内容如果混进原文，会被模型误抽成条款。</p>
+  <table class="compact">
+    <thead><tr><th style="width:34%">指标</th><th class="num" style="width:16%">数值</th><th>说明</th></tr></thead>
+    <tbody>
+      <tr><td>有清洗记录的政策</td><td class="num">7 份</td><td>其余 25 份原文本身干净，无需截断</td></tr>
+      <tr><td>累计移除字符</td><td class="num">2,623 字</td><td>全部为导航、页脚、分享按钮、版权信息</td></tr>
+      <tr><td>单份最大移除</td><td class="num">507 字</td><td>推免办法（网页结构最复杂）</td></tr>
+      <tr><td>正文改动</td><td class="num">0</td><td>清洗只截头尾，条款一字未改；段落偏移已重算</td></tr>
+    </tbody>
+  </table>
+  <p class="tbl-cap"><b>表 5-2</b>　原文清洗统计。每份政策都记录 <code>cleaning.removedChars</code> 与 <code>removedFrom</code>，可复核。</p>
+
+  <h2 class="sec"><span class="n">5.3</span>时效性：过时条款不参与判定</h2>
+  <p>政策库里有相当一部分文件是「老办法」——奖励金额、贷款额度、试点范围早已被新文件替代。直接按原文判定会给出错误建议，
+  因此系统采用统一策略：<b>过时的数值/范围不进条件树，改写成 <code>notes</code> 里的【现行标准】提示，并在判定页显式展示。</b></p>
+  <table class="compact">
+    <thead><tr><th style="width:22%">条款</th><th style="width:30%">原文（过时）</th><th>现行标准（notes 提示）</th></tr></thead>
+    <tbody>
+      <tr><td>国家奖学金金额</td><td>每生每年 8000 元、名额 6 万名</td><td>2024 年起 <b>10000 元/年</b>、名额 12 万名（财教〔2024〕181号）</td></tr>
+      <tr><td>国家励志奖学金</td><td>每生每年 5000 元</td><td>2024 年起 <b>6000 元/年</b>（财教〔2024〕181号）</td></tr>
+      <tr><td>国家助学金</td><td>平均 3300 元/年</td><td>2024 年秋季起平均 <b>3700 元/年</b>，区间 2500–5000 元（财教〔2024〕181号）</td></tr>
+      <tr><td>助学贷款额度</td><td>每生每年 6000 元</td><td>现行本专科 <b>20000 元</b>、研究生 <b>25000 元</b></td></tr>
+      <tr><td>基层就业代偿上限</td><td>每生每年 6000 元</td><td>2009 年标准，现行额度以当年通知为准</td></tr>
+      <tr><td>研究生国奖金额</td><td>硕士 2 万元 / 博士 3 万元（2012 年办法）</td><td>以当年通知为准</td></tr>
+      <tr><td>贷款试点省份</td><td>2008 年试点省份名单</td><td>已全国推开，试点条款不再作为条件</td></tr>
+    </tbody>
+  </table>
+  <p class="tbl-cap"><b>表 5-3</b>　过时条款处理。原则：<b>不当有效条件用，但要告诉用户「为什么你看到的原文金额和现在不一样」。</b></p>
+
+  <h2 class="sec"><span class="n">5.4</span>风险清单与对策</h2>
+  <table class="compact">
+    <thead><tr><th style="width:24%">风险</th><th style="width:12%">等级</th><th style="width:30%">表现形式</th><th>已有对策</th></tr></thead>
+    <tbody>
+      <tr><td>政策更新导致结论过期</td><td><span class="chip o">高</span></td><td>库里的政策被新文件替代，页面仍按旧条件判定</td><td>每份带 <code>year</code> 与 <code>sourceUrl</code>；notes 标【现行标准】；判定页提示「以学校/主管部门当年通知为准」</td></tr>
+      <tr><td>模型幻觉条款</td><td><span class="chip o">高</span></td><td>抽出原文没有的条件</td><td><code>docRef + quote</code> 强制回链；结构校验；测试断言 100% 引文可定位；人工复核 57 条</td></tr>
+      <tr><td>逻辑组合错误</td><td><span class="chip o">高</span></td><td>单条正确、组合后把人判错（见 4.5）</td><td>并列通道模型；多轮人工核对；针对这类错误补了专门测试</td></tr>
+      <tr><td>字段语义漂移</td><td><span class="chip u">中</span></td><td>同一字段在不同政策里含义不同（入学年份 vs 年级）</td><td>字段 key 用点路径语义化；触发过真实 bug（见 10.1）并加了回归测试</td></tr>
+      <tr><td>覆盖不全 / 非全国</td><td><span class="chip u">中</span></td><td>只有 32 份国家级政策，地方细则差异大</td><td>页面与文档明示「国家级政策库」；地方差异写入 notes</td></tr>
+      <tr><td>隐私泄露</td><td><span class="chip o">高</span></td><td>填报内容含成绩排名、家庭经济状况</td><td>填报内容不落盘（仅页面内存）；账号只存判定记录；画像草稿只在本机 localStorage</td></tr>
+      <tr><td>静态版数据陈旧</td><td><span class="chip u">中</span></td><td>gh-pages 是构建期快照</td><td>发布脚本每次重新导出数据；页面标注构建信息</td></tr>
+      <tr><td>用户误读为官方结论</td><td><span class="chip u">中</span></td><td>把「大概率可以申」当审核通过</td><td>结论措辞克制（「初筛」「大概率」）；报告页固定免责声明；hints 写明线下核验环节</td></tr>
+    </tbody>
+  </table>
+  <p class="tbl-cap"><b>表 5-4</b>　风险清单。高等级风险全部有对应工程手段，而不是只写在免责声明里。</p>
+
+  <h2 class="sec"><span class="n">5.5</span>合规、隐私与免责</h2>
+  <ul>
+    <li><b>个人信息最小化</b>：表单只问这份政策真正用得到的字段；不收集手机号、身份证号等无关信息。</li>
+    <li><b>填报内容不保存</b>：判定页的表单只存在页面内存里，离开或刷新即清空；服务端只记录「判定过哪份政策、填了几项」。</li>
+    <li><b>密钥不入库</b>：<code>DEEPSEEK_API_KEY</code> 只放 <code>.env</code>（已 gitignore），运行期代码不引用；AI 日志不含请求头与 Key。</li>
+    <li><b>不构成承诺</b>：判定结果只是基于用户自填信息与政策原文的初筛，最终是否通过以学校与主管部门审核为准；页面与文档均显式声明。</li>
+    <li><b>来源可溯</b>：每份政策保留发布单位、发文字号、原文链接、年份与原文存档，用户可自行核对。</li>
+  </ul>
+</section>
+
+<!-- ==================== 第六章 ==================== -->
+<section class="chapter">
+  <h1 class="ch"><span class="cn">06</span>判定引擎与横向能力<span class="en">Rule Engine</span></h1>
+
+  <p class="lead">判定引擎是这套系统真正「不可替代」的部分：375 行纯函数，10 种操作符，4 种状态，2 种合并规则，
+  支撑起 32 份政策 339 条条件的逐条求值。它不联网、不读时钟、不依赖随机数——同样的输入永远得到同样的输出。</p>
+
+  <h2 class="sec"><span class="n">6.1</span>条件数据模型</h2>
+  <table class="compact">
+    <thead><tr><th style="width:20%">字段</th><th style="width:20%">类型</th><th>作用</th></tr></thead>
+    <tbody>
+      <tr><td><code>id</code></td><td>string</td><td>条件组 / 条件唯一标识，用于通道引用与结果回传</td></tr>
+      <tr><td><code>name</code></td><td>string</td><td>组名（如「基本条件」「成绩要求」），页面按组折叠展示</td></tr>
+      <tr><td><code>logic</code></td><td>'all' | 'any'</td><td>组内合并规则：全部满足 / 满足任一</td></tr>
+      <tr><td><code>field</code></td><td>string（点路径）</td><td>用户画像的取值路径，如 <code>education.grade</code></td></tr>
+      <tr><td><code>operator</code></td><td>枚举（10 种）</td><td>比较方式，见 6.2</td></tr>
+      <tr><td><code>value</code></td><td>string | number | boolean | string[]</td><td>阈值或枚举值；支持 <code>{{field}}</code> 模板引用其他字段</td></tr>
+      <tr><td><code>required</code></td><td>boolean</td><td>硬性门槛 / 建议项。建议项不满足只提示，不影响结论</td></tr>
+      <tr><td><code>docRef</code> + <code>quote</code></td><td>string</td><td>原文出处与原文句子，构成证据链</td></tr>
+      <tr><td><code>hint</code></td><td>string?</td><td>不满足时的可操作建议</td></tr>
+    </tbody>
+  </table>
+  <p class="tbl-cap"><b>表 6-1</b>　条件结构。所有字段都由 AI 初稿 + 人工复核产出，不允许运行期修改。</p>
+
+  <h2 class="sec"><span class="n">6.2</span>十种操作符</h2>
+  <table class="compact">
+    <thead><tr><th style="width:14%">操作符</th><th style="width:34%">语义</th><th>典型用法（来自真实政策）</th></tr></thead>
+    <tbody>
+      <tr><td><code>eq</code> / <code>ne</code></td><td>等于 / 不等于（字符串归一化后比较，数字可跨类型比较）</td><td>国籍 = 「中华人民共和国」；是否在职 ≠ 「是」</td></tr>
+      <tr><td><code>in</code> / <code>notIn</code></td><td>属于 / 不属于某个集合</td><td>学历层次 in [「本科」「专科」]</td></tr>
+      <tr><td><code>gte</code> / <code>lte</code> / <code>gt</code> / <code>lt</code></td><td>数值比较（含边界）</td><td>年级 ≥ 2；成绩排名 ≤ 10（%）</td></tr>
+      <tr><td><code>contains</code></td><td>文本包含 / 多选包含</td><td>特殊群体包含「最低生活保障家庭学生」</td></tr>
+      <tr><td><code>exists</code></td><td>是否提供了该项信息</td><td>是否持有有效《残疾人证》</td></tr>
+    </tbody>
+  </table>
+  <p class="tbl-cap"><b>表 6-2</b>　操作符一律是白名单枚举，模型输出不在枚举内会被结构校验打回。</p>
+
+  <h2 class="sec"><span class="n">6.3</span>三个容易被忽略的实现细节</h2>
+  <div class="three">
+    <div class="mini"><h4>① 模板比较</h4><p>条件值可以写成 <code>{{education.grade}}</code>，求值时替换为另一个字段的值 —— 用于「毕业年份不早于入学年份 + 学制」这类字段间约束。
+    模板引用的字段没填时，该条件返回 <code>unknown</code> 而不是 fail。</p></div>
+    <div class="mini"><h4>② 空值语义</h4><p><code>isEmpty()</code> 把空串、空数组、null、undefined 统一视为「没填」；
+    未填条件一律 <code>unknown</code>。这条规则是整个产品体验的底线：<b>留空不会被算成不符合</b>。</p></div>
+    <div class="mini"><h4>③ 归一化比较</h4><p><code>normalize()</code> 去空格、统一大小写、全半角，<code>toNumber()</code> 兼容「10%」「10 名」这类带单位的写法 ——
+    避免「本科」与「本科 」被当成两个值。</p></div>
+  </div>
+
+  <h2 class="sec"><span class="n">6.4</span>并列通道：一份政策里的「或者」</h2>
+  <p>真实政策里大量存在「满足 A 或 B 即可」的结构。如果全部压成 all，就会把符合条件的人判成不符合。
+  系统用 <code>channels</code> 显式表达这种并列关系：<b>通道内条件仍需满足，通道之间满足任一即可，通道之外的条件组照常全部满足。</b></p>
+  <table class="compact">
+    <thead><tr><th style="width:26%">政策</th><th style="width:30%">通道</th><th>来源条款</th></tr></thead>
+    <tbody>
+      <tr><td>本专科生国家奖学金</td><td>常规成绩通道 / 突出表现通道</td><td>第七条（二）：排名前 10% 直接申请；前 30% 且其他方面特别突出亦可</td></tr>
+      <tr><td>中职国家奖学金</td><td>前 5% 直接认定 / 前 30% + 突出表现</td><td>评审办法中的两档成绩要求</td></tr>
+      <tr><td>少数民族骨干计划</td><td>报考硕士研究生 / 报考博士研究生</td><td>年龄限制按报考层次分别为 ≤40 与 ≤45</td></tr>
+    </tbody>
+  </table>
+  <p class="tbl-cap"><b>表 6-3</b>　3 份政策、6 条并列通道。这套模型是为了修一个真实缺陷而引入的（见 10.1 缺陷 D-02）。</p>
+
+  <h2 class="sec"><span class="n">6.5</span>结论生成与横向能力</h2>
+  <p>引擎除了逐条状态，还负责生成三类「人话结论」，全部由确定性规则拼装，模板化输出：</p>
+  <table class="compact">
+    <thead><tr><th style="width:22%">产物</th><th style="width:34%">生成方式</th><th>示例</th></tr></thead>
+    <tbody>
+      <tr><td>汇总结论 headline</td><td>三档：硬性全 pass → 大概率可以申；存在 fail → 暂不符合；存在 unknown → 还不能下结论</td><td>「还不能下结论：有 13 项条件需要你补充信息或人工确认」</td></tr>
+      <tr><td>材料清单</td><td>按条件命中情况筛选 <code>materials[]</code>（只列申请人当前路径需要交的）</td><td>「其他方面表现非常突出的详细证明材料（须经学校审核盖章确认）」</td></tr>
+      <tr><td>接下来做什么</td><td>待补充条件 → 「确认 XXX」；时间节点 → 「留意 XXX（截止日期）」</td><td>「确认『二年级及以上年级本专科学生』：你的情况里缺少这一项」</td></tr>
+    </tbody>
+  </table>
+  <p>横向能力则把同一套引擎复用到更大范围：<b>政策雷达</b>（26 项画像 → 规则表映射 → 逐份判定 → 四层分层）、
+  <b>年度申报日历</b>（60 个节点 → 解析月份/责任方 → 月度聚合）、<b>政策检索</b>（模糊匹配名称/发布单位 + 原文命中）。
+  三者都不调用模型，全部是确定性逻辑，因此可以像普通函数一样被测试覆盖（测试文件见 8.1）。</p>
+</section>

@@ -1,0 +1,202 @@
+<!-- ==================== 第二章 ==================== -->
+<section class="chapter">
+  <h1 class="ch"><span class="cn">02</span>系统架构<span class="en">Architecture</span></h1>
+
+  <p class="lead">一句话概括架构：<b>大模型只在开发期出现一次，把「自然语言政策」编译成「结构化条件树」；
+  运行期是一套纯函数规则引擎，同一份代码既跑在 Node 服务端，也直接打包进浏览器。</b>
+  这个选择决定了整个系统的成本结构、可测试性与可解释性。</p>
+
+  <h2 class="sec"><span class="n">2.1</span>总体架构</h2>
+  <!--FIG:ARCH-->
+  <p>架构可以分成三条独立的链路，它们之间只通过文件与 HTTP JSON 耦合：</p>
+  <div class="three">
+    <div class="mini"><h4>① 建库链路（开发期）</h4><p>抓取原文 → 清洗噪声 → DeepSeek 抽取 → 结构校验/重试 → 人工复核 → 提交入库。
+    产物是 <code>data/policies/*.json</code>，随仓库走版本控制。</p></div>
+    <div class="mini"><h4>② 判定链路（运行期）</h4><p>页面拉取政策 JSON，动态生成表单；用户填表后调用 <code>evaluate()</code>，
+    纯函数返回逐条结论。全程无网络、无模型、无密钥。</p></div>
+    <div class="mini"><h4>③ 账号链路（可选）</h4><p>只用于跨设备保存「判定记录」与「填到第几项」，不保存填报内容本身。
+    静态部署模式下整条链路不启用。</p></div>
+  </div>
+
+  <p>三条链路里，只有 ① 需要 <code>DEEPSEEK_API_KEY</code>，而它<b>永远不在运行期被调用</b>。
+  这一点在代码里有硬约束：前端不携带、也不请求任何模型密钥；服务端除抽取脚本外没有任何 AI SDK 依赖。</p>
+
+  <h2 class="sec"><span class="n">2.2</span>技术选型与理由</h2>
+  <table class="compact">
+    <thead><tr><th style="width:15%">层</th><th style="width:30%">选型</th><th style="width:22%">版本 / 位置</th><th>为什么是它</th></tr></thead>
+    <tbody>
+      <tr><td>前端</td><td>Vue 3 + Vite + TypeScript + Tailwind CSS v4</td><td><code>web/</code></td>
+          <td>SPA 路由与组合式 API 适合「多页面共享同一画像」；Tailwind v4 的 <code>@theme</code> 让双主题只靠 CSS 变量切换</td></tr>
+      <tr><td>后端</td><td>Node.js + Express 4 + TypeScript（tsx 直跑）</td><td><code>server/src/</code></td>
+          <td>与前端共用 TypeScript 类型；无需构建步骤即可本地起服务，评委拿到仓库 <code>pnpm dev</code> 就能跑</td></tr>
+      <tr><td>数据</td><td>JSON 条件树（随仓库提交），无数据库</td><td><code>data/policies/*.json</code></td>
+          <td>32 份政策是只读数据集，JSON 可直接 diff、直接 review；静态部署时原样导出成静态文件</td></tr>
+      <tr><td>判定引擎</td><td>手写纯函数（无依赖）</td><td><code>server/src/domain/matcher.ts</code>（375 行）</td>
+          <td>纯函数才能同时跑在 Node 与浏览器，也才能被 79 项测试逐条钉住行为</td></tr>
+      <tr><td>大模型</td><td>DeepSeek <code>deepseek-chat</code>（JSON Output，temperature 0）</td><td><code>server/scripts/</code></td>
+          <td>只在建库期调用；JSON Output + 严格校验，把「不可控的生成」压成「可校验的结构」</td></tr>
+      <tr><td>账号</td><td>scrypt 加盐口令 + 无状态 HMAC-SHA256 令牌</td><td><code>server/src/auth/</code></td>
+          <td>不引入数据库与会话表，单机 JSON 足够；令牌无状态，重启不掉线</td></tr>
+      <tr><td>测试</td><td><code>tsx --test</code>（Node 内置 test runner）</td><td><code>**/*.test.ts</code> 共 9 个文件</td>
+          <td>零额外依赖，<code>pnpm test</code> 一条命令复跑；测试即判定口径的书面规范</td></tr>
+      <tr><td>部署</td><td>Express 服务端模式 + GitHub Pages 纯静态模式</td><td><code>tools/deploy-pages.mjs</code></td>
+          <td>机房电脑装不了环境时，评审点开链接就能用；静态模式与后端模式共用同一套判定引擎</td></tr>
+    </tbody>
+  </table>
+  <p class="tbl-cap"><b>表 2-1</b>　技术选型。每一项都服务于同一个约束：<b>评委不装环境、不配 Key 也能完整验收</b>。</p>
+
+  <h2 class="sec"><span class="n">2.3</span>代码地图</h2>
+  <table class="compact center">
+    <thead><tr><th style="width:26%">目录</th><th class="num" style="width:10%">文件数</th><th class="num" style="width:10%">行数</th><th>职责</th></tr></thead>
+    <tbody>
+      <tr><td><code>server/src</code></td><td class="num">28</td><td class="num">4958</td><td>领域层（判定引擎、雷达、日历、检索）、存储层、鉴权、路由</td></tr>
+      <tr><td><code>web/src</code></td><td class="num">22</td><td class="num">4846</td><td>8 个页面视图、3 个通用组件、API 封装、登录态、主题</td></tr>
+      <tr><td><code>server/scripts</code></td><td class="num">6</td><td class="num">868</td><td>抽取、清洗、偏移修复、复核落地、静态数据导出</td></tr>
+      <tr><td><code>tools</code></td><td class="num">2</td><td class="num">389</td><td>GitHub 同步工具、gh-pages 发布脚本</td></tr>
+      <tr><td><code>data/policies</code></td><td class="num">64</td><td class="num">—</td><td>32 份条件树 + 32 份原文（<code>raw/</code>），共 10.2 万字原文</td></tr>
+      <tr><td><code>docs/ai-log/policies</code></td><td class="num">32</td><td class="num">—</td><td>每份政策一次抽取的完整请求 / 响应 / token 用量</td></tr>
+    </tbody>
+  </table>
+  <p class="tbl-cap"><b>表 2-2</b>　代码规模（<code>2026-10-27</code> 统计）。核心判定逻辑只有 375 行，但被 12 个测试用例单独覆盖。</p>
+
+  <h2 class="sec"><span class="n">2.4</span>两种部署形态：同一套引擎，两个宿主</h2>
+  <p>纯函数引擎带来一个直接好处：<b>它不需要服务端也能跑</b>。前端在 <code>vite.config.ts</code> 里把 <code>@domain</code>
+  别名指向 <code>server/src/domain</code>，静态构建时这套领域代码被打进浏览器 bundle；服务端模式则通过 HTTP 调用。
+  两条路径的判定结果<b>逐字段一致</b>——因为执行的是同一份源码。</p>
+  <table>
+    <thead><tr><th style="width:20%">能力</th><th style="width:40%">服务端模式（<code>pnpm dev</code> / 自建服务器）</th><th>静态模式（GitHub Pages）</th></tr></thead>
+    <tbody>
+      <tr><td>政策数据</td><td>Express 读 <code>data/policies/*.json</code>，<code>GET /api/policies</code></td><td>构建期导出成静态 JSON，浏览器 <code>fetch</code></td></tr>
+      <tr><td>判定执行</td><td>服务端 <code>POST /api/policies/:id/evaluate</code></td><td>浏览器内直接调用 <code>evaluate()</code></td></tr>
+      <tr><td>政策雷达 / 日历</td><td><code>GET /api/radar</code>、<code>GET /api/calendar</code>（服务端现算）</td><td>预先导出的 <code>radar.json</code>、<code>calendar.json</code></td></tr>
+      <tr><td>账号与判定记录</td><td>✅ 注册登录、跨设备记录、填报进度</td><td>❌ 无账号体系（其余功能完全一致）</td></tr>
+      <tr><td>密钥</td><td>仅建库脚本需要</td><td>完全不需要</td></tr>
+    </tbody>
+  </table>
+  <div class="box ok">
+    <div class="h"><span class="tag">设计取舍</span>为什么用「导出静态数据」而不是在浏览器里重新实现一遍逻辑</div>
+    <p>重写一遍意味着两份实现、两套 bug。这里的做法是把<b>同一份领域代码</b>搬进浏览器：<code>matcher.ts</code>、
+    <code>radar.ts</code>、<code>calendar.ts</code> 都是无 Node 依赖的纯 TS，<code>@domain</code> 别名一行配置即可复用。
+    代价是静态构建要显式导出数据（<code>export-static-data.mjs</code>），换来的是「判定行为只有一份定义」。</p>
+  </div>
+
+  <h2 class="sec"><span class="n">2.5</span>数据边界：什么数据存在哪里</h2>
+  <table class="compact">
+    <thead><tr><th style="width:20%">数据</th><th style="width:24%">存放位置</th><th style="width:14%">是否入库</th><th>说明</th></tr></thead>
+    <tbody>
+      <tr><td>政策原文 / 条件树</td><td><code>data/policies/</code></td><td>✅</td><td>只读数据集，可 diff、可 review、可回滚</td></tr>
+      <tr><td>AI 调用日志</td><td><code>docs/ai-log/policies/</code></td><td>✅</td><td>含 messages / response / usage，<b>不含请求头与 Key</b></td></tr>
+      <tr><td>账号与口令哈希</td><td><code>data/users.json</code></td><td>❌（gitignore）</td><td>scrypt 加盐，首次启动幂等创建演示账号</td></tr>
+      <tr><td>判定记录 / 填报进度</td><td><code>data/user-data.json</code></td><td>❌（gitignore）</td><td>只记「判定过哪份、填了几项」，<b>不记填了什么</b></td></tr>
+      <tr><td>表单填报内容</td><td>页面内存</td><td>❌</td><td>离开或刷新即清空，浏览器与服务端都不落盘</td></tr>
+      <tr><td>画像草稿</td><td>浏览器 localStorage</td><td>❌</td><td>只存在用户本机，不上传</td></tr>
+      <tr><td>模型密钥</td><td><code>.env</code></td><td>❌（gitignore）</td><td>仅建库脚本读取，运行期代码不引用</td></tr>
+    </tbody>
+  </table>
+  <p class="tbl-cap"><b>表 2-3</b>　数据边界。判定涉及成绩排名、家庭经济状况等敏感信息，因此「填报内容不落盘」是硬约束，
+  由提交 <code>11f3a55</code> 显式实现并在 README 中向用户明示。</p>
+</section>
+
+<!-- ==================== 第三章 ==================== -->
+<section class="chapter">
+  <h1 class="ch"><span class="cn">03</span>核心流程与时序<span class="en">Flow & Sequence</span></h1>
+
+  <p class="lead">这一章回答三个问题：<b>一份政策是怎么变成可判定的 JSON 的</b>（建库时序）、
+  <b>一个用户点「开始判定」之后发生了什么</b>（判定时序）、<b>单条条件和一个条件组是怎么得出结论的</b>（状态机）。</p>
+
+  <h2 class="sec"><span class="n">3.1</span>建库链路：一份政策的完整生命周期</h2>
+  <!--FIG:PIPELINE-->
+  <p>建库链路由 6 个脚本串成，每一步都留下可复核的产物：</p>
+  <table class="compact">
+    <thead><tr><th style="width:22%">脚本</th><th class="num" style="width:8%">行数</th><th>职责与关键约束</th></tr></thead>
+    <tbody>
+      <tr><td><code>clean-policies.mjs</code></td><td class="num">162</td><td>截掉网页导航与页脚噪声，按固定正文起点重算段落偏移；正文条款一字不改</td></tr>
+      <tr><td><code>extract-policies.mjs</code></td><td class="num">314</td><td>调用 DeepSeek 抽取条件树；<b>结构校验不通过则带错误重试一次</b>；请求/响应写入 ai-log</td></tr>
+      <tr><td><code>repair-sections.mjs</code></td><td class="num">92</td><td>修复段落切分与偏移（模型摘出的引文必须能在原文中定位）</td></tr>
+      <tr><td><code>fix-offsets.mjs</code></td><td class="num">57</td><td>归一化定位：把 <code>start/end</code> 偏移重算成可稳定复现的位置</td></tr>
+      <tr><td><code>apply-review.mjs</code></td><td class="num">149</td><td>把人工复核结论（改分类、调硬性、补 notes、删过时条款）批量落到 JSON，并写回 <code>review.changes</code></td></tr>
+      <tr><td><code>export-static-data.mjs</code></td><td class="num">94</td><td>导出 <code>index.json</code> / <code>radar.json</code> / <code>calendar.json</code> 供静态部署使用</td></tr>
+    </tbody>
+  </table>
+  <p class="tbl-cap"><b>表 3-1</b>　建库脚本。6 个脚本共 868 行，全部是一次性工具，不进入运行期依赖。</p>
+
+  <h2 class="sec"><span class="n">3.2</span>判定时序：从点下按钮到看见结论</h2>
+  <!--FIG:EVAL-->
+  <p>一次判定在服务端模式下涉及 4 个参与者、6 次交互。注意两点：<b>判定请求体只带画像、不带政策</b>
+  （政策由服务端从已入库 JSON 读取，避免前端篡改数据）；<b>返回值包含全部证据链</b>（每条条件的 <code>quote</code>、<code>docRef</code>、
+  <code>gap</code>、<code>hint</code>），前端只负责渲染，不做任何判定逻辑。</p>
+  <table class="compact">
+    <thead><tr><th style="width:8%">步</th><th style="width:20%">交互</th><th>数据形态</th></tr></thead>
+    <tbody>
+      <tr><td>1</td><td>进入 <code>/match/:id</code></td><td>路由参数 <code>id</code>；页面并发拉取政策全量 JSON 与当前画像草稿</td></tr>
+      <tr><td>2</td><td>动态渲染表单</td><td>按 <code>policy.fields[]</code> 生成字段，按 <code>lib/field-groups.ts</code> 的语义分组折叠</td></tr>
+      <tr><td>3</td><td>用户填表</td><td>画像为扁平的 <code>Record&lt;string, unknown&gt;</code>，键是 <code>education.grade</code> 这类点路径</td></tr>
+      <tr><td>4</td><td>点击「开始判定」</td><td><code>POST /api/policies/:id/evaluate</code>，body = <code>{ profile }</code></td></tr>
+      <tr><td>5</td><td>引擎求值</td><td><code>evaluate(policy, profile)</code>：逐组求值 → 通道裁决 → 汇总 → 生成 headline / 材料清单 / 下一步</td></tr>
+      <tr><td>6</td><td>渲染报告</td><td>状态色块 + 逐条卡片 + 原文标签页；每条卡片可跳原文并高亮 <code>quote</code></td></tr>
+    </tbody>
+  </table>
+
+  <h2 class="sec"><span class="n">3.3</span>单条条件与条件组：四种状态与两种合并规则</h2>
+  <p>判定引擎只产出四种状态，含义被严格定义——<b>用户最容易被误伤的，就是「没填」被当成「不符合」</b>：</p>
+  <table class="compact center">
+    <thead><tr><th style="width:12%">状态</th><th style="width:10%">标记</th><th style="width:30%">含义</th><th>参与汇总结论</th></tr></thead>
+    <tbody>
+      <tr><td><b>pass</b></td><td>符合</td><td>用户填的值满足该条件</td><td>✅</td></tr>
+      <tr><td><b>fail</b></td><td>不符合</td><td>用户填的值明确不满足（且该条件是硬性）</td><td>✅</td></tr>
+      <tr><td><b>unknown</b></td><td>待补充</td><td>字段没填 / 值无法与政策选项对齐 —— <b>不知道，不等于不符合</b></td><td>✅（作为「还不能下结论」的依据）</td></tr>
+      <tr><td><b>warn</b></td><td>建议项</td><td>非硬性条件不满足，只提示不影响结论</td><td>❌</td></tr>
+    </tbody>
+  </table>
+  <p>合并规则按条件组的 <code>logic</code> 分两种，另有两条兜底：</p>
+  <div class="box info">
+    <div class="h"><span class="tag">规则</span>合并逻辑</div>
+    <p><b>all（全部满足）</b>：出现 fail → 组 fail；否则出现 unknown → 组 unknown；否则 pass。<br>
+    <b>any（满足任一）</b>：出现 pass → 组 pass；否则全为 fail → 组 fail；否则 unknown。<br>
+    <b>兜底 1</b>：any 组内条件全是建议项（<code>required:false</code>）时，不把整组判为 fail —— 否则「择优参考」会把用户误判成不符合（提交 <code>5c4a0a6</code>）。<br>
+    <b>兜底 2</b>：配置了并列通道的政策，先按通道分组裁决，<b>任一通道 pass 即整体 pass</b>；通道之外的条件组仍需全部满足。</p>
+  </div>
+  <p>最终 <code>headline</code> 由 <code>buildHeadline()</code> 生成，只有三种口吻，且都带前提说明：<b>「大概率可以申」</b>（硬性条件全 pass）、
+  <b>「暂不符合」</b>（存在硬性条件 fail）、<b>「还不能下结论」</b>（存在待补充）。判定报告页尾部固定一行提示：
+  结论只反映你填写的信息，最终是否通过仍以学校、主管部门审核为准。</p>
+
+  <h2 class="sec"><span class="n">3.4</span>横向能力：政策雷达与申报日历</h2>
+  <div class="two">
+    <div>
+      <h3 class="sub">政策雷达：一次画像，32 份分层</h3>
+      <p>32 份政策共 333 个表单字段、285 种写法，逐份填不现实。雷达只问 26 项<b>跨政策复用</b>的信息，
+      用规则表把它们映射到每份政策自己的字段 key 上，再逐份调用同一个 <code>evaluate()</code>：</p>
+      <ol class="small" style="margin-bottom:0">
+        <li><b>槽位定义</b>：26 项 <code>RADAR_SLOTS</code>，带 <code>aliases</code>（同一件事的不同叫法）</li>
+        <li><b>字段映射</b>：<code>FIELD_RULES</code> 把槽位值翻译成政策字段 key；映射不上<b>宁可不写</b></li>
+        <li><b>逐份判定</b>：调用 <code>matcher.evaluate</code>，与单政策页完全同源</li>
+        <li><b>四层分层</b>：初筛适合 / 差几项 / 信息不够 / 不符</li>
+      </ol>
+    </div>
+    <div>
+      <h3 class="sub">申报日历：60 个节点按月份摊开</h3>
+      <p>原文里的时间表述是自然语言（「每年 10 月 31 日前」「6 月底」「入学后两周内」），
+      <code>parseDeadlineText()</code> 把它们解析成可排序的结构：</p>
+      <ol class="small" style="margin-bottom:0">
+        <li><b>解析</b>：年度周期 / 具体日期 / 学期节点 / 办理时限 / 政策沿革 / 其他</li>
+        <li><b>归月</b>：能落月的进 12 个月份格，落不进的单独归类</li>
+        <li><b>责任方</b>：按主语 + 动作判断「个人要办 / 学校院系 / 主管部门」</li>
+        <li><b>时效</b>：往年一次性节点不混进今年待办，单独折叠为「政策沿革」</li>
+      </ol>
+    </div>
+  </div>
+
+  <h2 class="sec"><span class="n">3.5</span>失败路径与降级</h2>
+  <table class="compact">
+    <thead><tr><th style="width:26%">失败场景</th><th style="width:34%">系统行为</th><th>设计理由</th></tr></thead>
+    <tbody>
+      <tr><td>政策数据加载失败</td><td>页面显示可读错误，不阻塞其他路由</td><td>静态部署下单个 JSON 404 不应让整站白屏</td></tr>
+      <tr><td>画像字段未填</td><td>判为 <code>unknown</code>（待补充），不算不符合</td><td>漏填被当成不符合，会让用户放弃本来能申的项目</td></tr>
+      <tr><td>画像值与政策选项对不上</td><td>字段标「请选择」并为空 → <code>unknown</code>；雷达映射不上则跳过该项</td><td>写错比留空伤害更大</td></tr>
+      <tr><td>模型输出结构不合法</td><td>建库期校验失败 → 带错误重试一次；仍失败则该政策不入库</td><td>宁缺毋滥：坏数据入库比少一份政策更糟</td></tr>
+      <tr><td>服务端不可用</td><td>账号相关功能降级；判定可切静态模式继续用</td><td>答辩/评审现场网络不可控</td></tr>
+      <tr><td>深链直接访问</td><td>静态部署用 <code>404.html</code> 回退 + <code>BASE_URL</code> 子路径</td><td>解决历史模式路由在 GitHub Pages 刷新 404（提交 <code>5299987</code>）</td></tr>
+    </tbody>
+  </table>
+  <p class="tbl-cap"><b>表 3-2</b>　失败路径。核心原则：<b>宁可说「不知道」，也不要把不确定说成「不符合」。</b></p>
+</section>

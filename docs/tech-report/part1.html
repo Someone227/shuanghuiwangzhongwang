@@ -1,0 +1,148 @@
+<!-- ==================== 封面 ==================== -->
+<section class="cover">
+  <div class="cover-top">
+    <div class="cover-brand">
+      <div class="cover-logo">申</div>
+      <div>
+        <div class="cover-brand-name">能申吗 · 政策资格匹配器</div>
+        <div class="cover-brand-sub">NENG SHEN MA · POLICY ELIGIBILITY MATCHER</div>
+      </div>
+    </div>
+    <div class="cover-rule"></div>
+    <h1 class="cover-title">贴一份政策原文，<br><em>30 秒</em>知道自己够不够格。</h1>
+    <p class="cover-sub">把动辄上万字的资助政策原文，抽取成机器可逐条判定的条件树：<br>
+    用户只回答一次「我是谁」，剩下交给确定性规则引擎 —— 每条结论都能点回原文那一句。</p>
+    <div class="cover-kpis">
+      <div class="cover-kpi"><div class="n">32</div><div class="t">份国家级政策<br>原文逐字入库</div></div>
+      <div class="cover-kpi"><div class="n">339</div><div class="t">条可判定条件<br>146 个条件组</div></div>
+      <div class="cover-kpi"><div class="n">26</div><div class="t">项统一画像槽位<br>横向覆盖 32 份政策</div></div>
+      <div class="cover-kpi"><div class="n">79</div><div class="t">项自动化测试<br>全部本地可复跑</div></div>
+    </div>
+  </div>
+  <div>
+    <div class="cover-meta">
+      <b>参赛赛事</b>　第九届「传智杯」全国大学生计算机大赛 · AI-WEB 赛道（团队赛 · B 组）<br>
+      <b>作品形态</b>　Web 应用（Vue 3 + Express + DeepSeek），服务端部署与纯静态演示双模式<br>
+      <b>在线演示</b>　https://someone227.github.io/shuanghuiwangzhongwang/<br>
+      <b>代码仓库</b>　https://github.com/Someone227/shuanghuiwangzhongwang
+    </div>
+    <div class="cover-foot">
+      文档版本 v1.0　·　编写日期 2026-10-27　·　对应代码提交 <code>6b13d6c</code>（main 分支）<br>
+      本文档覆盖：系统架构、核心流程与时序、AI 调用链路、数据来源与风险控制、判定引擎设计、
+      质量保障，以及开发全过程的重大版本更新与缺陷修复记录。
+    </div>
+  </div>
+</section>
+
+<!-- ==================== 目录 ==================== -->
+<section class="toc">
+  <h2>目　录</h2>
+  <ol>
+    <li><span class="num">01</span><span>项目概述：一个被上万字原文挡住的问题</span><span class="dots"></span><span class="pg">3</span></li>
+    <li class="sub"><span class="num">1.1–1.5</span><span>问题、定位、功能全景、使用场景、文档结构</span></li>
+    <li><span class="num">02</span><span>系统架构：一次抽取，处处零 token 判定</span><span class="dots"></span><span class="pg">5</span></li>
+    <li class="sub"><span class="num">2.1–2.5</span><span>总体架构、技术选型、代码地图、双部署形态、数据流边界</span></li>
+    <li><span class="num">03</span><span>核心流程与时序：从原文到判定的六步链路</span><span class="dots"></span><span class="pg">8</span></li>
+    <li class="sub"><span class="num">3.1–3.5</span><span>建库时序、判定时序、单条判定状态机、雷达与日历流程、失败与降级</span></li>
+    <li><span class="num">04</span><span>AI 调用链路：把大模型关进「建库」这一步</span><span class="dots"></span><span class="pg">11</span></li>
+    <li class="sub"><span class="num">4.1–4.5</span><span>调用架构、提示词设计、结构化输出与校验、调用实测统计、留痕与人工复核</span></li>
+    <li><span class="num">05</span><span>数据来源与风险控制：政策数据的可信边界</span><span class="dots"></span><span class="pg">14</span></li>
+    <li class="sub"><span class="num">5.1–5.5</span><span>来源清单、原文清洗、时效性处理、风险清单与对策、合规与隐私</span></li>
+    <li><span class="num">06</span><span>判定引擎与横向能力：规则如何做到可解释</span><span class="dots"></span><span class="pg">16</span></li>
+    <li class="sub"><span class="num">6.1–6.5</span><span>条件模型、十种操作符、并列通道、四层结论、雷达与日历</span></li>
+    <li><span class="num">07</span><span>页面体系与视觉设计：八个路由与两套主题</span><span class="dots"></span><span class="pg">18</span></li>
+    <li class="sub"><span class="num">7.1–7.4</span><span>路由与页面职责、交互一致性、双主题语义色板、响应式适配</span></li>
+    <li><span class="num">08</span><span>质量保障：79 项测试与可复现的验证方法</span><span class="dots"></span><span class="pg">20</span></li>
+    <li class="sub"><span class="num">8.1–8.4</span><span>测试分层、数据契约测试、构建与部署流水线、可视化验收</span></li>
+    <li><span class="num">09</span><span>重大版本更新记录</span><span class="dots"></span><span class="pg">22</span></li>
+    <li class="sub"><span class="num">9.1–9.7</span><span>七个里程碑：骨架与引擎 → 政策库扩容 → 账号体系 → 静态部署 → 横向能力 → 体验重构 → 决策回滚</span></li>
+    <li><span class="num">10</span><span>缺陷修复记录</span><span class="dots"></span><span class="pg">25</span></li>
+    <li class="sub"><span class="num">10.1–10.4</span><span>判定正确性缺陷、体验与工程缺陷、修复方法论、回归保障</span></li>
+    <li><span class="num">11</span><span>已知边界、风险与后续规划</span><span class="dots"></span><span class="pg">27</span></li>
+    <li><span class="num">A</span><span>附录：接口清单、数据字典、提交统计</span><span class="dots"></span><span class="pg">29</span></li>
+  </ol>
+  <div class="box info" style="margin-top:8mm">
+    <div class="h"><span class="tag">阅读提示</span>本文档的数据口径</div>
+    <p>文中所有数字均由仓库代码与数据在 <code>2026-10-27</code> 实际统计得出，统计脚本随文档存放于
+    <code>docs/tech-report/</code>，可复跑复核。政策条款、金额、时间节点均以原文为准；本文档只描述系统如何判定，
+    不构成任何政策解释或申请承诺。</p>
+  </div>
+</section>
+
+<!-- ==================== 第一章 ==================== -->
+<section class="chapter">
+  <h1 class="ch"><span class="cn">01</span>项目概述<span class="en">Overview</span></h1>
+
+  <h2 class="sec"><span class="n">1.1</span>问题：政策文本与「我能不能申」之间的缺口</h2>
+  <p>学生资助、专项补贴、推免保研、基层就业代偿这类政策，几乎都有一个共同形态：<b>一份上万字的公文，加上若干个附件，
+  真正的资格条件散落在条文、括号、脚注和「原则上」「一般应」这类弹性表述里。</b>本项目收录的 32 份国家级政策，
+  原文合计 10.2 万字，被拆出 339 条可判定条件——平均每份政策 10.6 条，最多的《事实无人抚养儿童保障意见》有 23 条。</p>
+  <p>而用户的问题只有一个：<b>「我这种情况，到底能不能申？」</b>现行的解决方式都不理想：逐份读原文（读完仍不确定自己算不算
+  「家庭经济困难」）、问辅导员和学长（口径因人而异）、直接去资助中心（跑了才知道缺材料）。信息不对称的成本，最终由
+  最不熟悉流程的那部分学生承担。</p>
+  <div class="two">
+    <div class="box warn">
+      <div class="h"><span class="tag">痛点</span>政策文本不是给人「算」的</div>
+      <p>同一件事有 285 种字段写法：<code>education.level</code>、<code>student.educationLevel</code>、
+      <code>education.stage</code>、<code>school.type</code>……跨政策复用极少，最高频的学历字段也只出现在 7 份政策里。
+      逐份填一遍，等于把同一份简历抄 32 次。</p>
+    </div>
+    <div class="box ok">
+      <div class="h"><span class="tag">机会</span>把「读」变成「算」</div>
+      <p>政策条文一旦被拆成「字段 + 操作符 + 阈值」的结构化条件，就可以像代码一样被逐条求值：给一份用户画像，
+      引擎输出每条条件是符合、不符合还是待补充，并给出原文出处。判定这件事，本就不该交给概率模型。</p>
+    </div>
+  </div>
+
+  <h2 class="sec"><span class="n">1.2</span>产品定位：不是政策问答，是资格判定</h2>
+  <p>市面上同类工具大多是「政策问答机器人」或「办事清单助手」：前者回答「政策说了什么」，后者列出「要准备什么」。
+  它们都停在<b>信息整理</b>这一层，没有回答最关键的那一步——<b>以你个人的情况去逐条比对，你到底卡在哪一条</b>。
+  本项目的差异点集中在三件事上：</p>
+  <table>
+    <thead><tr><th style="width:22%">维度</th><th style="width:39%">常见做法</th><th>能申吗的做法</th></tr></thead>
+    <tbody>
+      <tr><td><b>输出结论</b></td><td>生成一段回答或一份清单，由用户自己对照</td>
+          <td>逐条给出「符合 / 不符合 / 待补充 + 建议」，并汇总为一句人话结论（可申 / 暂不符合 / 还不能下结论）</td></tr>
+      <tr><td><b>结论依据</b></td><td>模型生成，无法验证，可能编造</td>
+          <td>每条条件绑定 <code>docRef</code> 与原文 <code>quote</code>，页面可点回原文段落并高亮原句；测试断言引文 100% 可在原文中逐字定位</td></tr>
+      <tr><td><b>运行成本</b></td><td>每次提问调用大模型，结果不稳定、有 token 成本</td>
+          <td>大模型只在开发期「建库」用一次；用户每次判定都是本地确定性引擎，零 token、断网可跑、结果可复现</td></tr>
+    </tbody>
+  </table>
+
+  <h2 class="sec"><span class="n">1.3</span>功能全景</h2>
+  <p>产品把「贴政策 → 判自己」拆成六个可验证的步骤。前四步发生在开发期与入库期，后两步是用户每次使用都会走的链路：</p>
+  <table class="compact">
+    <thead><tr><th style="width:6%">#</th><th style="width:16%">步骤</th><th style="width:34%">做什么</th><th style="width:18%">谁执行</th><th>对应页面 / 产物</th></tr></thead>
+    <tbody>
+      <tr><td>01</td><td>政策入库</td><td>从教育部、全国学生资助管理中心等官网抓取原文，逐字存档不加工</td><td>人工 + 脚本</td><td><code>data/policies/raw/*.txt</code></td></tr>
+      <tr><td>02</td><td>AI 抽条件</td><td>DeepSeek 把原文抽成「条件组 / 条件 / 字段 / 材料 / 时间节点」的 JSON 条件树</td><td>DeepSeek <code>deepseek-chat</code></td><td><code>data/policies/*.json</code> + <code>docs/ai-log/</code></td></tr>
+      <tr><td>03</td><td>人工复核</td><td>逐条核对条款、引用、判定口径，修正模型输出的分类与逻辑错误，过时条款写进 notes</td><td>团队（57 条复核记录）</td><td><code>review.changes[]</code></td></tr>
+      <tr><td>04</td><td>填自己</td><td>表单字段由政策动态生成，只问这份政策真正用得上的信息；留空不算不符合</td><td>用户</td><td><code>/match/:id</code></td></tr>
+      <tr><td>05</td><td>本地判定</td><td>规则引擎在服务端（或浏览器内）逐条求值，输出四类状态与汇总结论</td><td>判定引擎</td><td><code>matcher.ts</code> / <code>evaluate()</code></td></tr>
+      <tr><td>06</td><td>回溯原文</td><td>每条结论可点回原文段落，命中的句子高亮；附材料清单与时间节点</td><td>用户</td><td>判定报告 + 政策原文标签页</td></tr>
+    </tbody>
+  </table>
+  <p class="tbl-cap"><b>表 1-1</b>　六步链路：前四步保证「条件是对的」，后两步保证「结论是可查的」。</p>
+
+  <p>围绕这条主链路，系统还长出了四个横向能力，解决主链路之外的三个问题：<b>不知道该看哪份</b>（政策雷达：26 项画像横向判定 32 份）、
+  <b>不知道什么时候申</b>（年度申报日历：60 个时间节点按月摊开）、<b>想把条件看明白再填</b>（政策详情页：条件树 / 材料 / 时间节点 / 原文一页读完）、
+  <b>想换设备接着填</b>（账号体系与个人中心）。</p>
+
+  <h2 class="sec"><span class="n">1.4</span>一个真实的使用场景</h2>
+  <div class="box info">
+    <div class="h"><span class="tag">场景</span>大二学生小李，想知道自己能申哪些钱</div>
+    <p>她打开政策库，32 份政策一眼望不到底。于是点开<b>政策雷达</b>，只填了 19 项共性信息（学历层次、年级、入学年份、学校类型、
+    成绩排名、家庭是否困难……）。页面当场给出分层结论：<b>4 份初筛适合、11 份差几项、2 份信息不够、15 份不符</b>。</p>
+    <p>她点进「国家奖学金」，判定页已经从画像带入了 8 项信息（可改），剩下的几项按提示补上。点「开始判定」，
+    13 条条件逐条列出：11 条符合、2 条待补充，并明确写出「成绩排名前 10% 属于常规通道；若排名在前 10%–30% 之间，
+    需要同时提供其他方面表现特别突出的证明材料」——这句话直接对应原文第七条（二）。</p>
+    <p>她顺手点开<b>申报日历</b>：10 月有 4 个节点，其中「学生向学校提出申请」标着<b>「个人要办」</b>。整个流程没有一个字是模型现编的。</p>
+  </div>
+
+  <h2 class="sec"><span class="n">1.5</span>文档结构</h2>
+  <p>本文档按「问题 → 架构 → 流程 → AI → 数据 → 引擎 → 界面 → 质量 → 演进 → 缺陷 → 边界」组织。
+  其中<b>第九章（重大版本更新）与第十章（缺陷修复记录）</b>是本文档的重点：它们记录了项目从空仓库到当前版本的全部关键决策，
+  包括三次判断失误与一次整体回滚。<b>系统如何工作</b>是前八章的内容，<b>它为什么会变成现在这样</b>是后三章的内容——后者同样重要，
+  因为一个 32 份政策、339 条条件的判定系统，真正的风险从来不在代码写不出来，而在「判定口径悄悄错了却没人发现」。</p>
+</section>

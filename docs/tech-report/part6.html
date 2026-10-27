@@ -1,0 +1,167 @@
+<!-- ==================== 第十一章 ==================== -->
+<section class="chapter">
+  <h1 class="ch"><span class="cn">11</span>已知边界与后续规划<span class="en">Limits & Roadmap</span></h1>
+
+  <p class="lead">一个诚实的工程文档必须写清「什么没做、什么做不到、什么做了但有局限」。这一章把边界摊开，
+  既是为了避免用户误用，也是为了给后续迭代留下明确的起点。</p>
+
+  <h2 class="sec"><span class="n">11.1</span>已知边界</h2>
+  <table class="compact">
+    <thead><tr><th style="width:20%">边界</th><th style="width:34%">具体表现</th><th>为什么现在这样</th></tr></thead>
+    <tbody>
+      <tr><td><b>只覆盖国家级政策</b></td><td>32 份均为全国性文件；省市级实施细则、校级评审办法不在库内</td>
+        <td>地方文件数量级大、时效差异大、格式更不规范；先把「全国通用骨架」跑通再谈扩展</td></tr>
+      <tr><td><b>政策会过期</b></td><td>库内文件年份跨 2005–2025，部分额度与范围已被新文件替代</td>
+        <td>已在 notes 标注【现行标准】并在判定页展示；但无法保证实时同步官方更新</td></tr>
+      <tr><td><b>静态版无账号</b></td><td>gh-pages 上不能注册登录，判定记录与进度不跨设备</td>
+        <td>静态站没有服务端；演示与真机使用走同一套判定引擎，仅账号能力缺失</td></tr>
+      <tr><td><b>不做图片识别</b></td><td>不能拍照识别证书、成绩单</td>
+        <td>所用模型（DeepSeek）当前不支持图像输入；强行做会引入不可控的识别误差</td></tr>
+      <tr><td><b>主观条件靠自述</b></td><td>「家庭经济困难」「品行端正」由用户自己填是/否</td>
+        <td>这类判断本就只能由学校评审环节认定，产品只能如实呈现，不能替用户下结论</td></tr>
+      <tr><td><b>数据存储为单机 JSON</b></td><td>账号与用户数据存在 <code>data/*.json</code>，无数据库、无并发控制</td>
+        <td>面向演示与本机使用，量级在百人内足够；换成 SQLite/Postgres 是明确的后续项</td></tr>
+      <tr><td><b>无端到端自动化测试</b></td><td>页面交互依赖人工验收清单</td>
+        <td>判定正确性由领域层单测覆盖，E2E 收益低；若后续页面复杂化再引入 Playwright</td></tr>
+    </tbody>
+  </table>
+  <p class="tbl-cap"><b>表 11-1</b>　七条已知边界。每一条都在页面上有对应的用户提示，不靠文档单方面声明。</p>
+
+  <h2 class="sec"><span class="n">11.2</span>已知技术债</h2>
+  <ul>
+    <li><code>radar.ts</code> 顶部注释仍写「21 个抽取槽位」，实际已扩到 <b>26 项</b>（<code>RADAR_SLOTS</code> 与界面均为 26）——注释未同步。</li>
+    <li>README 中「70 个单元测试」的表述已过时，当前为 <b>79</b> 个用例。</li>
+    <li>提交历史里有 2 条通过 GitHub 网页直接修改 README 产生的提交（<code>1a6ac60</code>、<code>aeef746</code>），未走 <code>type:</code> 前缀规范。</li>
+    <li>时间解析（<code>parseDeadlineText</code>）基于正则规则，能覆盖「每年 X 月 X 日前」「X 月底」「X-X 月」「每学年」等常见表述，
+    但遇到「以当年通知为准」「9—10 月」这类模糊表述会归入「其他流程节点」而非硬解析——这是有意保守，不是遗漏。</li>
+    <li>界面文案中仍有少量「大概率可以申」等口语化措辞，属于产品语气选择，但需在文档中明确其<b>非承诺</b>属性。</li>
+  </ul>
+
+  <h2 class="sec"><span class="n">11.3</span>后续规划</h2>
+  <table class="compact">
+    <thead><tr><th style="width:10%">优先级</th><th style="width:26%">方向</th><th>具体内容</th></tr></thead>
+    <tbody>
+      <tr><td><span class="chip b">P0</span></td><td>数据时效保障</td><td>为每份政策记录「官方上次核对日期 + 下一次复核期限」，超期政策在列表与详情页显式降权提示</td></tr>
+      <tr><td><span class="chip b">P0</span></td><td>地方/校级扩展</td><td>按「省级通用条件 + 校级补充条件」两层建模，让用户填一次画像即可叠加本地细则</td></tr>
+      <tr><td><span class="chip u">P1</span></td><td>账号与存储升级</td><td>JSON 文件 → SQLite，补并发写与迁移脚本；静态版保留本地存储降级方案</td></tr>
+      <tr><td><span class="chip u">P1</span></td><td>材料清单可勾选与导出</td><td>材料清单加勾选进度与 A4 打印/PDF 导出，形成「去办事前的一张纸」</td></tr>
+      <tr><td><span class="chip u">P1</span></td><td>政策对比</td><td>2–3 份政策并排比较条件差异，回答「国奖 vs 励志，我更适合哪个」</td></tr>
+      <tr><td><span class="chip">P2</span></td><td>抽取流水线工程化</td><td>把「抓取 → 清洗 → 抽取 → 校验 → 人审」做成一条可重跑的命令，支持增量新增政策</td></tr>
+      <tr><td><span class="chip">P2</span></td><td>端到端测试</td><td>引入 Playwright 覆盖 5 条主链路，把人工验收清单自动化</td></tr>
+    </tbody>
+  </table>
+  <p class="tbl-cap"><b>表 11-2</b>　后续规划按「对结论可信度的影响」排序，而不是按实现难度排序。</p>
+
+  <h2 class="sec"><span class="n">11.4</span>结语：这个项目到底做了什么</h2>
+  <p>如果只用一句话概括：<b>它把「读政策」这件需要经验和耐心的事，拆成了「AI 编译 + 规则判定 + 原文回链」三段，并让每一段都可检查。</b></p>
+  <p>对用户，价值是具体的：填一次表，看到自己与目标政策的差距在哪、还缺什么材料、下个月该做什么；每一条结论都能点开原文自己核对。</p>
+  <p>对比赛评审，这个项目刻意展示的是<b>工程判断力</b>而非功能数量：为什么把大模型限制在建库阶段、为什么愿意花 57 条记录做人工复核、
+  为什么一次修复要回头检查 32 份政策、为什么功能改坏了要选择回滚而不是硬着头皮改。这些选择都写在提交历史与本文档里。</p>
+  <div class="box ok">
+    <div class="h"><span class="tag">一句话总结</span>让 AI 只在最需要它的地方出现一次，然后让确定性的部分足够可靠。</div>
+    <p>32 份政策、339 条条件、79 个测试、64 个提交、0 次运行期模型调用——这组数字构成了这个项目的全部。</p>
+  </div>
+</section>
+
+<!-- ==================== 附录 ==================== -->
+<section class="chapter">
+  <h1 class="ch"><span class="cn">附</span>附录<span class="en">Appendix</span></h1>
+
+  <h2 class="sec"><span class="n">A</span>接口清单（20 个端点）</h2>
+  <p>后端为 Express，全部挂在 <code>/api</code> 前缀下。<b>带「鉴权」标记的接口需要 <code>Authorization: Bearer &lt;token&gt;</code></b>。</p>
+  <table class="compact">
+    <thead><tr><th style="width:12%">方法</th><th style="width:32%">路径</th><th style="width:10%">鉴权</th><th>说明</th></tr></thead>
+    <tbody>
+      <tr><td>GET</td><td><code>/health</code></td><td>—</td><td>健康检查，返回 <code>{ok:true}</code></td></tr>
+      <tr><td>POST</td><td><code>/auth/register</code></td><td>—</td><td>注册：账号 3–20 位字母数字下划线，密码 ≥6 位</td></tr>
+      <tr><td>POST</td><td><code>/auth/login</code></td><td>—</td><td>登录，返回无状态令牌</td></tr>
+      <tr><td>GET</td><td><code>/auth/me</code></td><td>✔</td><td>当前登录用户信息</td></tr>
+      <tr><td>POST</td><td><code>/auth/logout</code></td><td>—</td><td>前端清除令牌（服务端无会话）</td></tr>
+      <tr><td>GET</td><td><code>/policies</code></td><td>—</td><td>政策列表（只返回列表所需字段）</td></tr>
+      <tr><td>GET</td><td><code>/policies/:id</code></td><td>—</td><td>政策详情：条件树、原文、材料、节点、复核记录</td></tr>
+      <tr><td>POST</td><td><code>/policies/:id/evaluate</code></td><td>—</td><td><b>核心判定接口</b>：body <code>{profile}</code> → 逐条状态 + 结论 + 建议</td></tr>
+      <tr><td>GET</td><td><code>/calendar</code></td><td>—</td><td>申报日历：60 个节点按月份聚合</td></tr>
+      <tr><td>GET</td><td><code>/radar</code></td><td>—</td><td>雷达元数据：26 项画像槽位 + 映射规则</td></tr>
+      <tr><td>POST</td><td><code>/radar/scan</code></td><td>—</td><td>雷达扫描：body <code>{profile}</code> → 32 份政策四层分层</td></tr>
+      <tr><td>GET</td><td><code>/me/drafts/:policyId</code></td><td>✔</td><td>读取某份政策的填报进度（只存已填项数）</td></tr>
+      <tr><td>PUT</td><td><code>/me/drafts/:policyId</code></td><td>✔</td><td>写入/更新填报进度</td></tr>
+      <tr><td>DELETE</td><td><code>/me/drafts/:policyId</code></td><td>✔</td><td>删除单条进度</td></tr>
+      <tr><td>GET</td><td><code>/me/records</code></td><td>✔</td><td>判定记录列表（最多 20 条，时间倒序）</td></tr>
+      <tr><td>POST</td><td><code>/me/records</code></td><td>✔</td><td>追加一条判定记录</td></tr>
+      <tr><td>DELETE</td><td><code>/me/records</code></td><td>✔</td><td>清空判定记录</td></tr>
+      <tr><td>GET</td><td><code>/me/progress</code></td><td>✔</td><td>全部填报进度汇总</td></tr>
+      <tr><td>PUT</td><td><code>/me/progress/:policyId</code></td><td>✔</td><td>更新进度</td></tr>
+      <tr><td>DELETE</td><td><code>/me/data</code></td><td>✔</td><td><b>一键清空</b>当前账号全部数据（判定记录 + 进度）</td></tr>
+    </tbody>
+  </table>
+  <p class="tbl-cap"><b>表 A-1</b>　接口清单。<code>/policies</code>、<code>/calendar</code>、<code>/radar</code> 三组在静态模式下由预导出 JSON 替代。</p>
+
+  <h2 class="sec"><span class="n">B</span>政策数据字典</h2>
+  <table class="compact">
+    <thead><tr><th style="width:16%">字段</th><th style="width:14%">类型</th><th>说明</th></tr></thead>
+    <tbody>
+      <tr><td><code>id</code></td><td>string</td><td>政策唯一标识（英文短横线命名），同时作为静态 JSON 文件名</td></tr>
+      <tr><td><code>title</code> / <code>issuer</code></td><td>string</td><td>政策全称 / 发布单位</td></tr>
+      <tr><td><code>level</code> / <code>category</code></td><td>string</td><td>层级（国家级）/ 类别（奖学金、助学金…共 14 类）</td></tr>
+      <tr><td><code>year</code> / <code>sourceUrl</code></td><td>number / string</td><td>发布年份 / 官方原文链接</td></tr>
+      <tr><td><code>sections[]</code></td><td>array</td><td>原文分段：<code>{id, heading, text, start, end}</code>，偏移用于原文定位</td></tr>
+      <tr><td><code>fields[]</code></td><td>array</td><td>需填写字段：<code>{key, label, type, group, options?, unit?, required?}</code></td></tr>
+      <tr><td><code>conditions[]</code></td><td>array</td><td>条件组：<code>{id, name, logic:'all'|'any', items[]}</code></td></tr>
+      <tr><td><code>conditions[].items[]</code></td><td>array</td><td>单条条件：<code>{id, field, label, operator, value, required, docRef, quote, hint}</code></td></tr>
+      <tr><td><code>channels[]</code></td><td>array?</td><td>并列通道：<code>{id, name, description, groupIds[]}</code>，通道之间满足任一即可</td></tr>
+      <tr><td><code>materials[]</code></td><td>array</td><td>申请材料：<code>{name, note, required, conditionId?}</code>，可按条件筛选</td></tr>
+      <tr><td><code>deadlines[]</code></td><td>array</td><td>时间节点：<code>{name, date, note, owner, kind}</code>，<code>owner</code> 区分个人/学校/主管部门</td></tr>
+      <tr><td><code>notes[]</code></td><td>array</td><td>提示与【现行标准】说明，判定页折叠展示</td></tr>
+      <tr><td><code>extraction</code></td><td>object</td><td>抽取留痕：<code>{engine, model, at}</code></td></tr>
+      <tr><td><code>review</code></td><td>object</td><td>人工复核：<code>{humanReviewed, reviewedAt, reviewer, changes[]}</code></td></tr>
+      <tr><td><code>cleaning</code></td><td>object?</td><td>清洗记录：<code>{removedChars, removedFrom[]}</code>，仅 7 份有</td></tr>
+      <tr><td><code>originalText</code></td><td>string</td><td>清洗后的政策原文（条件 quote 必须能在其中逐字定位）</td></tr>
+    </tbody>
+  </table>
+  <p class="tbl-cap"><b>表 B-1</b>　政策 JSON 顶层结构。完整类型定义见 <code>server/src/domain/types.ts</code>（241 行）。</p>
+
+  <h2 class="sec"><span class="n">C</span>提交统计</h2>
+  <table class="compact center">
+    <thead><tr><th style="width:30%">类别</th><th class="num" style="width:16%">数量</th><th>主要分布</th></tr></thead>
+    <tbody>
+      <tr><td><code>feat</code> 新功能</td><td class="num">34</td><td>骨架、引擎、抽取、页面、雷达、日历、账号、部署</td></tr>
+      <tr><td><code>fix</code> 缺陷修复</td><td class="num">9</td><td>判定语义 4、数据与证据链 2、同步与构建 3</td></tr>
+      <tr><td><code>docs</code> 文档</td><td class="num">7</td><td>README、协作约定、部署说明、演示账号说明</td></tr>
+      <tr><td><code>style</code> 样式</td><td class="num">5</td><td>标题字号、入口按钮、状态文案、首页配色</td></tr>
+      <tr><td><code>test</code> 测试</td><td class="num">2</td><td>数据契约测试、原文清洗与偏移校验</td></tr>
+      <tr><td><code>refactor</code> 重构</td><td class="num">2</td><td>登录页单栏化、移除首页常见问题</td></tr>
+      <tr><td>其他</td><td class="num">5</td><td>初始化仓库、API 同步工具、GitHub 网页改 README ×2、回滚 ×1</td></tr>
+      <tr><td><b>合计</b></td><td class="num"><b>64</b></td><td>2026-10-24 ~ 10-27，4 天；平均每天 16 个提交</td></tr>
+    </tbody>
+  </table>
+  <p class="tbl-cap"><b>表 C-1</b>　提交类型分布。完整历史见仓库 <code>git log --oneline</code>，关键节点均已打 tag。</p>
+
+  <h2 class="sec"><span class="n">D</span>复现与验证</h2>
+  <pre><span class="c"># 1. 安装依赖（Node.js ≥ 20.19、pnpm ≥ 9）</span>
+pnpm install
+
+<span class="c"># 2. 配置环境变量（AI 抽取才需要，浏览与判定不需要 Key）</span>
+cp .env.example .env
+#   DEEPSEEK_API_KEY=sk-xxxx      <span class="c"># 仅重新抽取政策时使用</span>
+
+<span class="c"># 3. 启动开发环境：前端 5173 / 后端 8787</span>
+pnpm dev
+curl http://localhost:8787/api/health
+
+<span class="c"># 4. 质量校验（本项目每次提交前执行）</span>
+pnpm --filter server typecheck
+pnpm --filter web typecheck
+pnpm --filter server test        <span class="c"># 79 个用例</span>
+
+<span class="c"># 5. 静态演示版构建与发布</span>
+pnpm --filter server exec tsx scripts/export-static-data.mjs
+pnpm --filter web run build:pages
+node tools/deploy-pages.mjs
+
+<span class="c"># 6. 验证数据契约（不启动服务，只查数据是否正确）</span>
+pnpm --filter server exec tsx --test src/domain/policies.test.ts</pre>
+  <p class="tbl-cap"><b>表 D-1</b>　从零复现的完整命令序列。步骤 2 可跳过——不配置 Key 也能完整使用全部判定功能。</p>
+
+  <p class="small" style="margin-top:22px">本文档由项目仓库 <code>docs/tech-report/</code> 下的 HTML 源文件生成，源文件与代码同仓库、同版本，
+  可与其他提交一起回溯。文档版本 v1.0，对应提交 <code>6b13d6c</code>，生成日期 2026-10-27。</p>
+</section>

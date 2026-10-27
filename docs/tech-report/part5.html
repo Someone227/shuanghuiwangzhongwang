@@ -1,0 +1,205 @@
+<!-- ==================== 第九章 ==================== -->
+<section class="chapter">
+  <h1 class="ch"><span class="cn">09</span>重大版本更新<span class="en">Milestones</span></h1>
+
+  <p class="lead">项目在 <b>4 天</b>内完成从空仓库到可演示成品，共 <b>64 个提交</b>（34 feat / 9 fix / 7 docs / 5 style / 2 test / 2 refactor / 4 其他）。
+  这一章按里程碑回放「每次重大更新解决了什么问题、产生了什么」，而不是流水账式列出所有提交。</p>
+
+  <h2 class="sec"><span class="n">9.1</span>演进总览</h2>
+  <table class="compact center">
+    <thead><tr><th style="width:9%">里程碑</th><th style="width:13%">时间</th><th style="width:26%">主题</th><th class="num" style="width:9%">政策</th><th class="num" style="width:8%">页面</th><th>关键产出</th></tr></thead>
+    <tbody>
+      <tr><td>M0</td><td>10-24</td><td>仓库与协作约定</td><td class="num">0</td><td class="num">0</td><td>AGENTS.md 铁律、回档 SOP、GitHub API 同步工具</td></tr>
+      <tr><td>M1</td><td>10-25 上午</td><td>骨架 · 引擎 · 首批政策</td><td class="num">5</td><td class="num">3</td><td>条件树模型、判定引擎、抽取脚本、数据契约测试</td></tr>
+      <tr><td>M2</td><td>10-25 下午–晚</td><td>账号 · 扩容到 32 · 静态化</td><td class="num">32</td><td class="num">5</td><td>账号体系、政策库筛选/搜索、纯静态部署能力</td></tr>
+      <tr><td>M3</td><td>10-25 夜</td><td>gh-pages 在线演示</td><td class="num">32</td><td class="num">5</td><td>可公开访问的演示地址、深链回退</td></tr>
+      <tr><td>M4</td><td>10-26 白天</td><td>雷达 · 日历 · 详情页 · 双主题</td><td class="num">32</td><td class="num">8</td><td>横向初筛、时间规划、单政策全景页、深色主题</td></tr>
+      <tr><td>M5</td><td>10-26 夜</td><td>体验重构与搜索增强</td><td class="num">32</td><td class="num">8</td><td>模糊搜索、原文命中、首页主入口重构</td></tr>
+      <tr><td>M6</td><td>10-27 凌晨</td><td>一次被完整回滚的尝试</td><td class="num">32</td><td class="num">8</td><td>口语化改造 → revert，验证回档能力</td></tr>
+    </tbody>
+  </table>
+  <p class="tbl-cap"><b>表 9-1</b>　六个里程碑。政策数从 5 到 32，页面数从 3 到 8，测试从 8 到 79 个用例。</p>
+
+  <h2 class="sec"><span class="n">9.2</span>M1：把「解释政策」变成「编译政策」（10-25 上午）</h2>
+  <p>这是整个项目最关键的四个小时，确立了后面所有工作的地基。按提交顺序有四步：</p>
+  <div class="tl">
+    <div class="ti"><b>① 领域模型先于界面</b><p><code>93c54de</code> 先写 <code>types.ts</code>（条件树 schema）与 <code>matcher.ts</code>（纯函数引擎），配 8 个单测覆盖缺失字段、any 组、边界值。
+    此时还没有任何页面——先用测试把「判定语义」钉死，界面才不会被数据牵着走。</p></div>
+    <div class="ti"><b>② 首批 5 份政策踩了一个坑</b><p><code>d5bf8fa</code> 抓的第一批里有《南京租房补贴》——地方性政策，与「全国普适」定位冲突。
+    <code>a3b4a6d</code> 立刻把原文统一替换为 5 份全国性政策，并留下 <code>_sources.json</code> 记录来源与抓取时间。<b>选题定位在这一步被纠正。</b></p></div>
+    <div class="ti"><b>③ 抽取链路与「证据链」同时成型</b><p><code>9fa9fd1</code> 完成 5 份政策的 AI 抽取 + 人工复核，同时引入 <code>review</code> 字段与 <code>apply-review.mjs</code>；
+    第一次处理过时条款（助学贷款 6000 元额度、5 个试点省份）。<code>6f0267d</code> 紧跟一步写出数据契约测试，把「quote 必须可回溯」变成构建门槛。</p></div>
+    <div class="ti"><b>④ 引擎与前端第一次对接就暴露结构差异</b><p><code>abb040f</code> 出 API，<code>a12520e</code> 出页面，随即 <code>ff68877</code> 修扁平键画像兼容（详见 D-01）。
+    <b>「设计先行、对接暴露、当天修复」的节奏从这里开始固定下来。</b></p></div>
+  </div>
+
+  <h2 class="sec"><span class="n">9.3</span>M2：从「能判一份」到「能当产品用」（10-25 下午–晚）</h2>
+  <p>这个阶段提交最密集（约 28 个），有三条主线并行推进：</p>
+  <table class="compact">
+    <thead><tr><th style="width:16%">主线</th><th style="width:40%">做了什么</th><th>为什么是这一步</th></tr></thead>
+    <tbody>
+      <tr><td>账号体系</td><td><code>70227b5</code> 注册/登录/令牌鉴权/个人数据；<code>f2baf3e</code> 登录页与个人中心；<code>e938ee2</code> 草稿与判定记录按账号同步</td>
+        <td>用户换设备（机房→宿舍）时不想从零填起；但填写内容本身不保存，只存进度与记录</td></tr>
+      <tr><td>政策扩容</td><td>8 份（<code>3fc9b1b</code>）→ 12 份（<code>ce81cb2</code>）→ 31 份（<code>f2a01bf</code>，一次 +19）→ 32 份（<code>0c04264</code>）</td>
+        <td>32 份覆盖从学前到研究生、从奖助到社会救助的全学段；一次扩 19 份是效率最高的一步</td></tr>
+      <tr><td>静态化</td><td><code>af10133</code> 判定引擎可在浏览器本地跑 → <code>ff35f16</code> 发布脚本 → <code>717c3af</code> 在线演示</td>
+        <td>在线演示是比赛加分项，且能让评审不装环境就看到成品</td></tr>
+    </tbody>
+  </table>
+  <p>同时做了两个<b>产品口径上的重要决定</b>，它们不是功能，但影响全部页面：</p>
+  <div class="two">
+    <div class="mini"><h4>取消「需人工确认」状态（<code>e61820f</code>）</h4><p>早期对「家庭经济困难」这类主观条件统一标为「需人工确认」，结果所有政策都被这条占据，
+    用户看不出自己到底还差什么。改为<b>把主观条件也做成可填字段，由用户自填是/否，引擎照常判定</b>——把「无法判定」变成「请回答」。</p></div>
+    <div class="mini"><h4>填写内容不再保存（<code>11f3a55</code>）</h4><p>原先判定页会把表单存进服务端，后来判断：这类数据敏感、且用户不需要「下次接着改」，
+    于是改为<b>只存在页面内存，离开即清空</b>，服务端只记「判定过哪份政策、填了几项」。这是隐私与体验的双赢。</p></div>
+  </div>
+
+  <h2 class="sec"><span class="n">9.4</span>M3：把成品搬到公网（10-25 夜）</h2>
+  <p>静态部署不是「打个包上传」，而是三个连锁问题：</p>
+  <ul>
+    <li><b>判定要在浏览器里跑</b>：服务端 <code>/api/policies/:id/evaluate</code> 在静态站不存在，于是前端加 <code>isStaticMode</code> 分支，
+    静态模式下直接调用同一个 <code>matcher.ts</code>（通过 Vite 别名 <code>@domain</code> 复用 server 的领域代码，<b>不是复制一份</b>）。</li>
+    <li><b>数据要变成静态 JSON</b>：<code>export-static-data.mjs</code>（94 行）把政策库、雷达、日历全部导出到 <code>web/public/static-data/</code>。</li>
+    <li><b>项目页有子路径</b>：站点部署在 <code>/shuanghuiwangzhongwang/</code>，路由 base 与资源路径都要带前缀，
+    否则一刷新就 404（详见 D-13）。</li>
+  </ul>
+
+  <h2 class="sec"><span class="n">9.5</span>M4：三个新页面 + 一次系统性纠偏（10-26 白天）</h2>
+  <p>这一天是「内容密度」跃升最大的一天，新增三个页面：</p>
+  <table class="compact">
+    <thead><tr><th style="width:16%">新增</th><th style="width:34%">解决的问题</th><th>实现要点</th></tr></thead>
+    <tbody>
+      <tr><td>政策雷达 <code>/radar</code></td><td>32 份政策逐份填不现实，用户不知道该看哪份</td><td>26 项共性画像 + 规则表映射 285 种字段写法，四层分层；缺失信息只标「信息不够」</td></tr>
+      <tr><td>申报日历 <code>/calendar</code></td><td>知道够不够格之后，不知道什么时候动手</td><td>纯规则解析 60 个节点（不调用模型），区分固定/非固定节点，标责任方</td></tr>
+      <tr><td>政策详情 <code>/policies/:id</code></td><td>政策库只有卡片，原文与条件树 90% 没展示</td><td>条件树格式化（算子转中文）、五段正文、同类政策推荐打分</td></tr>
+    </tbody>
+  </table>
+  <p>同一天还完成了<b>双主题改造</b>（<code>03e5bb8</code>）：把全站写死的 <code>slate/white</code> 类名迁移到语义 token，新增 <code>theme.ts</code> 管理切换与记忆。
+  以及<b>个人中心</b>（<code>195fa7d</code>）：汇总判定记录、填报进度、画像概览。</p>
+  <div class="box warn">
+    <div class="h"><span class="tag">关键纠偏</span>提交 <code>b0caaca</code>：一次修复四类「看起来对但错」的问题</div>
+    <p>这一天末尾的 <code>b0caaca</code> 是整个项目最重要的一个修复提交，一次处理了四件事：<b>多通道判定被错误叠加成 AND</b>（D-05）、
+    <b>入学年份与年限被直接比较</b>（D-04）、<b>雷达四层命名误导</b>（D-10）、<b>日历缺责任方导致用户误把学校流程当自己的待办</b>（D-11）。
+    测试从 54 个扩到 70 个。这些问题的共同点是：<b>功能都「能用」，但结论会骗人</b>。</p>
+  </div>
+
+  <h2 class="sec"><span class="n">9.6</span>M5：体验重构与搜索增强（10-26 夜）</h2>
+  <ul>
+    <li><b>入口重构</b>：首页主按钮从「开始匹配」改为「政策雷达·横评 32 份」，标题改为「填一次自己的情况，30 秒知道哪些钱能申」。
+    理由是真实使用路径：<b>先用雷达定位，再进单份政策</b>，而不是让用户先猜一份政策。</li>
+    <li><b>搜索增强</b>（<code>90ca2b2</code>）：原先只做严格子串匹配，「困难认定」搜不到「家庭经济困难学生认定」；
+    改为分词式模糊匹配 + 原文命中，并按「原文命中」标注结果来源。</li>
+    <li><b>字段细节</b>：残疾等级补「没有残疾」选项与「选填」标记——此前用户没有残疾证时被迫留空，引擎判为「待补充」，体验很别扭。</li>
+  </ul>
+
+  <h2 class="sec"><span class="n">9.7</span>M6：一次被完整回滚的尝试（10-27 凌晨）</h2>
+  <p>最后一天的提交是一次<b>从上线到回滚、12 分钟内完成的完整回环</b>，值得单独记录：</p>
+  <div class="tl">
+    <div class="ti"><b>12:00 前后 · 改造</b><p><code>8166d8d</code>：把政策表单的所有选项改成口语化表述（例如「本科或专科（含第二学士学位、预科生）」改为更口语的说法），
+    涉及 30 个文件、234 处改动，原文与判定逻辑不变。</p></div>
+    <div class="ti"><b>上线验收</b><p>测试 79 个用例仍全过、类型检查通过、静态部署成功。技术上这次改动是「正确」的。</p></div>
+    <div class="ti"><b>00:15 · 回滚</b><p>用户反馈「还是改回原来的吧」。执行 <code>git revert --no-edit 8166d8d</code>（<code>6b13d6c</code>），
+    <code>git diff --stat 90ca2b2 HEAD</code> 输出为空——<b>文件树与改造前逐字节一致</b>。随后重新测试、重新部署、验证线上恢复原选项。</p></div>
+  </div>
+  <p>这次回滚验证了三件事：① <code>git revert</code> 比手改回去可靠，因为它保留了「为什么改回去」的历史；
+  ② 回档后的状态可以用 diff 客观验证（空 diff），而不是靠感觉；③ 比赛要求的「完整开发过程」不排斥回滚——<b>回滚本身也是一次真实的工程决策，值得留在历史里</b>。</p>
+</section>
+
+<!-- ==================== 第十章 ==================== -->
+<section class="chapter">
+  <h1 class="ch"><span class="cn">10</span>缺陷修复记录<span class="en">Bug Fixes</span></h1>
+
+  <p class="lead">9 个 <code>fix</code> 提交 + 1 次 revert 看起来不多，但<b>被修复的问题里有 5 个会让用户拿到错误结论</b>。
+  这一章按「严重程度」而不是「修复时间」组织，重点讲清每个缺陷的根因与防回归手段。</p>
+
+  <h2 class="sec"><span class="n">10.1</span>A 类：会导致错误结论的判定缺陷</h2>
+  <p>这类缺陷的共同特征是：<b>页面正常渲染、没有报错、测试也全绿，但结论是错的</b>。它们只能靠「读原文 + 人工核对判定结果」发现，
+  因此每一个修复都补了对应的单测。</p>
+  <table class="compact">
+    <thead><tr><th style="width:6%">编号</th><th style="width:24%">现象</th><th style="width:24%">根因</th><th style="width:26%">修复</th><th>防回归</th></tr></thead>
+    <tbody>
+      <tr><td>D-01</td><td>服务端判定正常，从页面提交却整份政策「全部待补充」</td><td>前端表单产出扁平键（<code>identity.nationality</code> 作为字面 key），
+        引擎按点路径下钻嵌套对象，<code>getField</code> 取不到值</td><td><code>getField</code> 先查扁平键、再按点路径下钻，两种画像结构都能判定</td><td>新增「扁平键画像驱动真实政策判定」用例 + 两种结构一致性用例</td></tr>
+      <tr><td>D-02</td><td>同时显示「0 项不符合」却给出「暂不符合」结论</td><td>条件组 <code>logic=any</code> 时按「硬性条件集合」判断是否通过；
+        若组内条件全为 <code>required=false</code>，硬性集合为空 → 整组判 fail</td><td>先剔除建议项，规则改为「任一条 pass 即 pass；否则有待补充即 unknown；只有明确不满足才 fail」</td><td><code>channel.test.ts</code> 覆盖「全建议项 any 组」</td></tr>
+      <tr><td>D-03</td><td>符合条件的学生被判「暂不符合」</td><td>入学门槛按 <b>字段值直接比较</b>：把「入学年份 2024」与「年限 5」相比</td><td>改为按<b>年级</b>判断（2 ≤ 年级 ≤ 5），入学年份只用于推算年级</td><td>新增年级语义用例；判定页增加「年级」为显式字段</td></tr>
+      <tr><td>D-04</td><td>国家奖学金对所有人判不符合</td><td>「常规成绩通道」与「突出表现通道」是<b>或</b>关系，抽出后被写进同一组用 all 合并 → 要求同时满足</td><td>引入 <code>channels</code> 并列通道模型：通道内仍需满足，通道之间取任一，通道外条件组照常全部满足</td><td><code>channel.test.ts</code> 6 个用例 + 3 份政策的数据契约断言</td></tr>
+      <tr><td>D-05</td><td>少数民族骨干计划对任何人都不符合</td><td>「报考硕士（年龄 ≤40）」与「报考博士（年龄 ≤45）」同处一个 all 组——不可能同时是硕士和博士</td><td>拆成两条并列通道（<code>g3a</code>/<code>g3b</code>）</td><td>同上；并在复核清单中记录该次修正</td></tr>
+      <tr><td>D-06</td><td>布尔条件理由显示「你的情况是 true」</td><td>引擎直接输出原始布尔值，未转成用户语言</td><td>理由渲染统一为「是 / 否 / 未填写」</td><td>判断结果文案由 <code>verdictOf()</code> 统一生成，页面不再自行格式化</td></tr>
+    </tbody>
+  </table>
+  <p class="tbl-cap"><b>表 10-1</b>　A 类缺陷 6 个。修复全部落在领域层，页面无需改动即可受益。</p>
+
+  <div class="box warn">
+    <div class="h"><span class="tag">深度剖析</span>为什么「逻辑组合」是这类系统最大的风险</div>
+    <p>D-04 与 D-05 是同一类错误的两个变体：<b>单条条件都忠实于原文，组合方式却错了</b>。模型被要求「逐条抽条件」，
+    它确实做到了；但「这些条件之间是且还是或」需要理解整体语义，而这恰恰是提示词最难约束的部分。</p>
+    <p>更麻烦的是，<b>这类错误在数据层面完全合法</b>：JSON 结构正确、docRef 有效、quote 可回溯、测试全绿。它只会在「拿一个真实的人去跑一遍」时暴露。
+    这就是为什么项目必须做两件看起来「笨」的事：<b>每份政策抽完人读一遍原文</b>；<b>每个里程碑用真实场景点一遍全流程</b>。
+    目前 3 份政策、6 条通道的并列结构，全部来自这种人工核对。</p>
+  </div>
+
+  <h2 class="sec"><span class="n">10.2</span>B 类：数据与证据链缺陷</h2>
+  <table class="compact">
+    <thead><tr><th style="width:6%">编号</th><th style="width:26%">现象</th><th style="width:26%">根因</th><th>修复</th></tr></thead>
+    <tbody>
+      <tr><td>D-07</td><td>AI 返回的段落文本与原文对不上，<code>indexOf</code> 定位失败，原文高亮失效</td>
+        <td>原文含换行与全角空格，模型输出的段落常把空白规范化，直接按字符匹配必然失败</td>
+        <td>改为「去空白后匹配 + 索引映射回原文」，并配套 <code>repair-sections</code> 按原文补齐被截断的段落</td></tr>
+      <tr><td>D-08</td><td>部分条件在原文中搜不到（引文跨行被切断）</td>
+        <td>人工复核时手工复制引文，跨行处少复制了半句</td>
+        <td>修复基层就业代偿两处跨行引文；数据契约测试断言「quote 必须是 originalText 的连续子串」，这类错误从此过不了构建</td></tr>
+      <tr><td>D-09</td><td>三处段落文本无法回溯</td><td>抓取时截断了段落尾部，条件引用了被截断的内容</td><td>重新抓取全文并重算段落偏移（<code>f2a01bf</code> 同期修正）</td></tr>
+      <tr><td>D-10</td><td><code>data/policies/raw/</code> 被 gitignore 排除，仓库里没有原文</td>
+        <td><code>.gitignore</code> 的 <code>data/</code> 规则过宽，连政策库一起忽略</td><td>收窄为只忽略运行期数据（SQLite、上传缓存），原文与来源清单入库</td></tr>
+      <tr><td>D-11</td><td>「需人工确认」占据大量条件，用户看不出真正差什么</td><td>把主观条件当成「引擎无法判定」处理</td><td>取消该状态，主观条件改为可填字段由用户自答；状态文案统一为「待补充」（<code>e61820f</code>、<code>a153c58</code>）</td></tr>
+      <tr><td>D-12</td><td>残疾等级没有「没有残疾」选项</td><td>表单选项直接取自模型抽取的枚举值，缺「无」这一档</td><td>补「没有残疾」选项并标记为选填（<code>90ca2b2</code>）</td></tr>
+    </tbody>
+  </table>
+  <p class="tbl-cap"><b>表 10-2</b>　B 类缺陷 6 个。D-08 之后，同类问题从「靠人复查」升级为「靠测试拦截」。</p>
+
+  <h2 class="sec"><span class="n">10.3</span>C 类：工程与部署缺陷</h2>
+  <p>这类缺陷不影响结论正确性，但会让「演示当场翻车」，因此修复优先级同样很高。</p>
+  <table class="compact">
+    <thead><tr><th style="width:6%">编号</th><th style="width:24%">现象</th><th style="width:26%">根因</th><th>修复</th></tr></thead>
+    <tbody>
+      <tr><td>D-13</td><td>gh-pages 上直接打开 <code>/match/xxx</code> 刷新落到 GitHub 404 页；或刷新后被重定向回首页</td>
+        <td>① 静态站没有服务端路由回退；② 项目页部署在子路径，路由 base 未带前缀</td>
+        <td>发布脚本额外产出一份内容同 <code>index.html</code> 的 <code>404.html</code>；<code>createRouter</code> 传入 <code>import.meta.env.BASE_URL</code></td></tr>
+      <tr><td>D-14</td><td><code>git-sync</code> 偶发失败：GitHub 建 tree 后提交返回 <code>422</code></td>
+        <td>GitHub 侧对刚创建的 tree 存在可见性延迟，紧接着的 commit 请求会拿到 422</td>
+        <td>对 422 也纳入瞬态重试（<code>8e2bab1</code>），并覆盖「建树后提交」这一阶段（<code>ba53044</code>）</td></tr>
+      <tr><td>D-15</td><td><code>git-sync</code> 因网络抖动直接终止</td><td>把 <code>fetch failed</code>（连接重置 / DNS 波动）当永久错误</td>
+        <td>网络异常按瞬态错误重试 4 次（<code>96c88ef</code>）</td></tr>
+      <tr><td>D-16</td><td>编辑政策 JSON 时 dev server 崩溃，报 <code>EBUSY</code></td><td>Vite 文件监听与 Windows 文件锁冲突</td>
+        <td>加固 <code>server.watch</code> 配置（<code>3077327</code>），忽略 <code>data/*.json</code> 的热更新触发</td></tr>
+      <tr><td>D-17</td><td>本地重建的 commit 与 GitHub 返回的 SHA 不一致，分支无法对齐</td>
+        <td>commit 对象文本的差异（message 尾换行、时区写法 <code>+0800</code> vs <code>+0000</code>）会导致不同 SHA</td>
+        <td><code>git-sync</code> 遇 SHA 不一致时，按远端元数据<b>穷举变体重建本地对象</b>，命中后再对齐 <code>refs/heads/main</code>（<code>aabbe50</code>）</td></tr>
+      <tr><td>D-18</td><td>搜索「困难认定」搜不到「家庭经济困难学生认定」</td><td>只做严格子串匹配</td><td>改为分词式模糊匹配 + 原文命中，并标注命中来源（<code>90ca2b2</code>）</td></tr>
+    </tbody>
+  </table>
+  <p class="tbl-cap"><b>表 10-3</b>　C 类缺陷 6 个。D-14 与 D-15 让同步脚本从「能跑通」变成「能连续跑通 64 次」。</p>
+
+  <h2 class="sec"><span class="n">10.4</span>D 类：界面与体验缺陷</h2>
+  <table class="compact">
+    <thead><tr><th style="width:6%">编号</th><th style="width:30%">现象</th><th>修复</th></tr></thead>
+    <tbody>
+      <tr><td>D-19</td><td>深色主题下登录页 tab 选中态露白、部分按钮仍是白底黑字</td><td>全站颜色收敛为语义 token，选中态加深青底、按钮改深板浅字（<code>03e5bb8</code>）</td></tr>
+      <tr><td>D-20</td><td>窄屏下顶栏按钮挤成两行、后台连接徽章占位</td><td>窄屏隐藏连接徽章，按钮组允许换行并收紧间距（<code>03e5bb8</code>）</td></tr>
+      <tr><td>D-21</td><td>雷达四层命名「能申 / 差一点 / 还缺信息 / 不符合」被理解成审核结论</td><td>改称「初筛适合 / 差几项 / 信息不够 / 不符」，并写明「还有几项要进政策页核对」（<code>b0caaca</code>）</td></tr>
+      <tr><td>D-22</td><td>日历把学校/主管部门的流程节点与个人待办混在一起，用户以为都要自己办</td><td>每个节点标责任方（个人要办 / 学校院系 / 主管部门），新增「只看个人要办」筛选（<code>b0caaca</code>）</td></tr>
+    </tbody>
+  </table>
+  <p class="tbl-cap"><b>表 10-4</b>　D 类缺陷 4 个。D-21 表面是文案问题，实质是<b>降低用户对结论的期待值</b>，属于必要的诚实。</p>
+
+  <h2 class="sec"><span class="n">10.5</span>修复方法论：四步闭环</h2>
+  <p>22 个缺陷（D-01 ~ D-22）不是随机修的，整个过程收敛成一套固定动作：</p>
+  <div class="two">
+    <div class="mini"><h4>① 用真实场景复现</h4><p>每条缺陷都对应一个具体的「用户路径 + 输入 + 错误输出」，
+    例如「本科二年级、排名 5%，国奖被判定不符合」。复现不出来的一律不当作缺陷处理。</p>
+    <p style="margin-top:6px"><b>② 定位到领域层还是展示层</b>：先确认是引擎算错，还是页面显示错。前者必须补单测，后者必须收敛到统一的格式化函数。</p></div>
+    <div class="mini"><h4>③ 修复 + 补测试 + 数据检查</h4><p>代码修完后，<b>回头检查已有 32 份政策是否都受同一问题影响</b>——D-04 修复时就顺带发现了中职国奖与少数民族骨干计划两处同类问题。</p>
+    <p style="margin-top:6px"><b>④ 记录成文档</b>：每个缺陷的根因写进提交正文与本文档，避免「同样的错换个地方再犯」。回滚也走同样的流程（<code>revert</code> + diff 验证 + 重新部署）。</p></div>
+  </div>
+</section>
