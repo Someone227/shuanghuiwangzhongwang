@@ -274,8 +274,8 @@ const parts = ['part1.html', 'part2.html', 'part3.html', 'part4.html', 'part5.ht
 let body = parts.join('\n');
 
 const figs = {
-  'FIG:ARCH': { svg: figArch(), cap: '<b>图 2-1</b>　总体架构：建库期（有 AI）与运行期（零 AI）之间只有构建产物一条通路。' },
-  'FIG:PIPELINE': { svg: figPipeline(), cap: '<b>图 3-1</b>　建库链路五步：原文 → 清洗 → 抽取 → 校验 → 人审，每一环都有可核查的产物。' },
+  'FIG:ARCH': { svg: figArch(), cap: '<b>图 2-1</b>　总体架构：建库期（有 AI）产出条件树，运行期（零 AI）只读该产物。' },
+  'FIG:PIPELINE': { svg: figPipeline(), cap: '<b>图 3-1</b>　建库链路五步：原文 → 清洗 → 抽取 → 校验 → 人审。' },
   'FIG:EVAL': { svg: figEval(), cap: '<b>图 3-2</b>　判定数据流：profile 经逐条求值、组内合并、通道合并，输出结论与证据。' },
   'FIG:AI': { svg: figAI(), cap: '<b>图 4-1</b>　AI 调用边界：大模型只出现在左侧开发期，右侧运行期不 import 任何 AI 依赖。' },
 };

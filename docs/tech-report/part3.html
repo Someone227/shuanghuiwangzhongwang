@@ -2,8 +2,8 @@
 <section class="chapter">
   <h1 class="ch"><span class="cn">04</span>AI 调用链路<span class="en">AI Pipeline</span></h1>
 
-  <p class="lead">这个项目对「AI 用在哪」有一条硬边界：<b>大模型只在开发期把政策原文编译成结构化条件树，运行期一次也不调用。</b>
-  好处不是省 token，而是把「不确定的生成」隔离在可人工复核的建库阶段，让用户每次看到的结论都是确定、可复现、可解释的。</p>
+  <p class="lead">大模型只在开发期把政策原文编译成结构化条件树，运行期不调用。不确定的生成被限制在可人工复核的建库阶段，
+    用户看到的结论由规则引擎给出，可复现、可解释。</p>
 
   <h2 class="sec"><span class="n">4.1</span>调用边界：一道运行期防火墙</h2>
   <!--FIG:AI-->
@@ -17,7 +17,7 @@
       <tr><td>4</td><td>人工复核</td><td>条件树 + 原文</td><td><code>review.changes[]</code>（57 条复核记录）+ 修正后的 JSON</td></tr>
     </tbody>
   </table>
-  <p class="tbl-cap"><b>表 4-1</b>　建库期调用链。所有节点都是一次性脚本，运行期代码不 import 任何 AI SDK。</p>
+  <p class="tbl-cap"><b>表 4-1</b>　建库期调用链。运行期代码不 import 任何 AI SDK。</p>
 
   <h2 class="sec"><span class="n">4.2</span>提示词设计：把「解释政策」改成「编译政策」</h2>
   <p>系统提示词只有 9 条要求，但每一条都对应一个具体的失败模式。核心思路是<b>先约束输出形态，再约束内容质量</b>：</p>
@@ -59,8 +59,7 @@ POST {BASE_URL}/chat/completions
     <div class="mini"><h4>③ 修正层</h4><p>校验失败时，把「上一次模型输出」作为 assistant 消息、把错误清单作为下一条 user 消息，
     要求模型<b>修正后重新输出</b>；最多 2 次尝试，仍失败则该政策不入库。</p></div>
   </div>
-  <p>三层闸门的效果可以从日志里直接验证：<b>37 次调用中，5 份政策在第 1 次未通过校验，带错误修正后全部通过，没有一份被丢弃</b>。
-  换句话说，最终入库的 32 份政策，每一份都通过了完整的结构校验。</p>
+  <p>三层闸门的效果可以从日志里直接验证：<b>37 次调用中，5 份政策在第 1 次未通过校验，带错误修正后全部通过，没有一份被丢弃</b>。</p>
 
   <h2 class="sec"><span class="n">4.4</span>实测统计：一次建库的完整成本</h2>
   <div class="kpis">
@@ -80,8 +79,7 @@ POST {BASE_URL}/chat/completions
       <tr><td>运行期 AI 成本</td><td class="num">0</td><td>用户无论判定多少次，都不产生模型调用</td></tr>
     </tbody>
   </table>
-  <p class="tbl-cap"><b>表 4-3</b>　建库成本（<code>docs/ai-log/policies/*.json</code> 全量统计）。按 DeepSeek 官方定价，
-  一次完整建库的成本在<b>人民币 1 元以内</b>——这意味着新增一份政策、重跑一次抽取，几乎没有成本顾虑。</p>
+  <p class="tbl-cap"><b>表 4-3</b>　建库成本（<code>docs/ai-log/policies/*.json</code> 全量统计）。按 DeepSeek 官方定价，一次完整建库的成本在人民币 1 元以内。</p>
 
   <h2 class="sec"><span class="n">4.5</span>留痕与人工复核：AI 只是「初稿」</h2>
   <p>每份政策的 AI 调用都完整留痕，字段结构固定：</p>
@@ -111,9 +109,9 @@ POST {BASE_URL}/chat/completions
       <tr><td>逐条核对条件与引用</td><td class="num">4</td><td>「身份（全日制硕士/博士）、政治品行、学业科研三项为硬性条件」</td></tr>
     </tbody>
   </table>
-  <p class="tbl-cap"><b>表 4-4</b>　57 条人工复核记录的分类。它们既修正了模型错误，也把「判定口径」写成了可追溯的书面依据。</p>
+  <p class="tbl-cap"><b>表 4-4</b>　57 条人工复核记录的分类。</p>
   <div class="box warn">
-    <div class="h"><span class="tag">关键教训</span>模型最危险的不是编造条款，而是「看起来对」的逻辑组合</div>
+    <div class="h"><span class="tag">错误来源</span>模型的主要错误是条件之间的逻辑组合，不是单条条款</div>
     <p>三条「判定逻辑修正」有一个共同点：<b>每一条单独看都忠实于原文，但组合起来就错了</b>。例如少数民族骨干计划原先把「报考硕士（年龄 ≤ 40）」
     与「报考博士（年龄 ≤ 45）」写进同一个 all 组——对任何一个人，都不可能同时是硕士和博士，于是这份政策对所有人判为不符合。
     这类错误不会被 JSON 结构校验发现，只能靠人读原文、对照判定结果才会暴露。这也是为什么项目坚持「AI 抽完必须人工复核」的原因。</p>
@@ -124,8 +122,8 @@ POST {BASE_URL}/chat/completions
 <section class="chapter">
   <h1 class="ch"><span class="cn">05</span>数据来源与风险控制<span class="en">Data & Risk</span></h1>
 
-  <p class="lead">政策判定系统的风险，八成不来自代码，而来自<b>数据是否真实、是否时效、是否被误读</b>。
-  这一章把「数据从哪来、怎么处理、可能错在哪、错了怎么办」全部摊开。</p>
+  <p class="lead">政策判定系统的多数风险来自数据：原文是否真实、是否仍在时效内、是否被误读。
+    本章说明数据来源、清洗过程、已知缺陷与处理方式。</p>
 
   <h2 class="sec"><span class="n">5.1</span>来源：只取官方原文</h2>
   <p>32 份政策全部来自官方渠道，每份 JSON 都保留 <code>sourceUrl</code>，页面详情页可一键跳转原文：</p>
@@ -137,7 +135,7 @@ POST {BASE_URL}/chat/completions
       <tr><td>财政部 / 民政部 / 人社部 / 国务院</td><td class="num">约 4</td><td>低保、特困人员供养、残疾人两项补贴、临时救助、就业见习岗位募集</td></tr>
     </tbody>
   </table>
-  <p class="tbl-cap"><b>表 5-1</b>　来源分布。所有原文逐字存档于 <code>data/policies/raw/</code>，与条件树同仓库、同版本、可 diff。</p>
+  <p class="tbl-cap"><b>表 5-1</b>　来源分布。原文逐字存档于 <code>data/policies/raw/</code>，随仓库版本控制。</p>
   <p>强调一点：<b>不抓第三方转载、不抓公众号、不用模型「凭记忆」补全条款</b>。原文是唯一事实来源，
   条件树里每一条 <code>quote</code> 都能在 <code>raw/</code> 的对应文本中逐字定位——这一条由测试断言（见 8.2）。</p>
 
@@ -153,7 +151,7 @@ POST {BASE_URL}/chat/completions
       <tr><td>正文改动</td><td class="num">0</td><td>清洗只截头尾，条款一字未改；段落偏移已重算</td></tr>
     </tbody>
   </table>
-  <p class="tbl-cap"><b>表 5-2</b>　原文清洗统计。每份政策都记录 <code>cleaning.removedChars</code> 与 <code>removedFrom</code>，可复核。</p>
+  <p class="tbl-cap"><b>表 5-2</b>　原文清洗统计。每份政策都记录 <code>cleaning.removedChars</code> 与 <code>removedFrom</code>。</p>
 
   <h2 class="sec"><span class="n">5.3</span>时效性：过时条款不参与判定</h2>
   <p>政策库里有相当一部分文件是「老办法」——奖励金额、贷款额度、试点范围早已被新文件替代。直接按原文判定会给出错误建议，
@@ -170,7 +168,7 @@ POST {BASE_URL}/chat/completions
       <tr><td>贷款试点省份</td><td>2008 年试点省份名单</td><td>已全国推开，试点条款不再作为条件</td></tr>
     </tbody>
   </table>
-  <p class="tbl-cap"><b>表 5-3</b>　过时条款处理。原则：<b>不当有效条件用，但要告诉用户「为什么你看到的原文金额和现在不一样」。</b></p>
+  <p class="tbl-cap"><b>表 5-3</b>　过时条款处理。过时条款不作为判定条件，页面上标注原值与现行标准。</p>
 
   <h2 class="sec"><span class="n">5.4</span>风险清单与对策</h2>
   <table class="compact">
@@ -186,7 +184,7 @@ POST {BASE_URL}/chat/completions
       <tr><td>用户误读为官方结论</td><td><span class="chip u">中</span></td><td>把「大概率可以申」当审核通过</td><td>结论措辞克制（「初筛」「大概率」）；报告页固定免责声明；hints 写明线下核验环节</td></tr>
     </tbody>
   </table>
-  <p class="tbl-cap"><b>表 5-4</b>　风险清单。高等级风险全部有对应工程手段，而不是只写在免责声明里。</p>
+  <p class="tbl-cap"><b>表 5-4</b>　风险清单。高等级风险均有对应的工程处理。</p>
 
   <h2 class="sec"><span class="n">5.5</span>合规、隐私与免责</h2>
   <ul>
@@ -202,8 +200,8 @@ POST {BASE_URL}/chat/completions
 <section class="chapter">
   <h1 class="ch"><span class="cn">06</span>判定引擎与横向能力<span class="en">Rule Engine</span></h1>
 
-  <p class="lead">判定引擎是这套系统真正「不可替代」的部分：375 行纯函数，10 种操作符，4 种状态，2 种合并规则，
-  支撑起 32 份政策 339 条条件的逐条求值。它不联网、不读时钟、不依赖随机数——同样的输入永远得到同样的输出。</p>
+  <p class="lead">判定引擎共 375 行纯函数，含 10 种操作符、4 种状态、2 种合并规则，支撑 32 份政策 339 条条件的逐条求值。
+    不联网、不读时钟、不使用随机数，相同输入必得相同输出。</p>
 
   <h2 class="sec"><span class="n">6.1</span>条件数据模型</h2>
   <table class="compact">
@@ -220,7 +218,7 @@ POST {BASE_URL}/chat/completions
       <tr><td><code>hint</code></td><td>string?</td><td>不满足时的可操作建议</td></tr>
     </tbody>
   </table>
-  <p class="tbl-cap"><b>表 6-1</b>　条件结构。所有字段都由 AI 初稿 + 人工复核产出，不允许运行期修改。</p>
+  <p class="tbl-cap"><b>表 6-1</b>　条件结构。字段由 AI 初稿加人工复核产出，运行期不可修改。</p>
 
   <h2 class="sec"><span class="n">6.2</span>十种操作符</h2>
   <table class="compact">
@@ -233,7 +231,7 @@ POST {BASE_URL}/chat/completions
       <tr><td><code>exists</code></td><td>是否提供了该项信息</td><td>是否持有有效《残疾人证》</td></tr>
     </tbody>
   </table>
-  <p class="tbl-cap"><b>表 6-2</b>　操作符一律是白名单枚举，模型输出不在枚举内会被结构校验打回。</p>
+  <p class="tbl-cap"><b>表 6-2</b>　操作符为白名单枚举，模型输出不在枚举内会被结构校验打回。</p>
 
   <h2 class="sec"><span class="n">6.3</span>三个容易被忽略的实现细节</h2>
   <div class="three">
@@ -256,7 +254,7 @@ POST {BASE_URL}/chat/completions
       <tr><td>少数民族骨干计划</td><td>报考硕士研究生 / 报考博士研究生</td><td>年龄限制按报考层次分别为 ≤40 与 ≤45</td></tr>
     </tbody>
   </table>
-  <p class="tbl-cap"><b>表 6-3</b>　3 份政策、6 条并列通道。这套模型是为了修一个真实缺陷而引入的（见 10.1 缺陷 D-02）。</p>
+  <p class="tbl-cap"><b>表 6-3</b>　3 份政策、6 条并列通道。该模型为解决缺陷 D-02 引入（见 10.1）。</p>
 
   <h2 class="sec"><span class="n">6.5</span>结论生成与横向能力</h2>
   <p>引擎除了逐条状态，还负责生成三类「人话结论」，全部由确定性规则拼装，模板化输出：</p>

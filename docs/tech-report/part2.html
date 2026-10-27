@@ -2,9 +2,8 @@
 <section class="chapter">
   <h1 class="ch"><span class="cn">02</span>系统架构<span class="en">Architecture</span></h1>
 
-  <p class="lead">一句话概括架构：<b>大模型只在开发期出现一次，把「自然语言政策」编译成「结构化条件树」；
-  运行期是一套纯函数规则引擎，同一份代码既跑在 Node 服务端，也直接打包进浏览器。</b>
-  这个选择决定了整个系统的成本结构、可测试性与可解释性。</p>
+  <p class="lead">大模型只在开发期使用一次，把政策原文编译成结构化条件树；运行期是纯函数规则引擎，
+    同一份代码既跑在 Node 服务端，也打包进浏览器构建产物。运行期不调用模型、不需要网络，判定结果可复现。</p>
 
   <h2 class="sec"><span class="n">2.1</span>总体架构</h2>
   <!--FIG:ARCH-->
@@ -43,7 +42,7 @@
           <td>机房电脑装不了环境时，评审点开链接就能用；静态模式与后端模式共用同一套判定引擎</td></tr>
     </tbody>
   </table>
-  <p class="tbl-cap"><b>表 2-1</b>　技术选型。每一项都服务于同一个约束：<b>评委不装环境、不配 Key 也能完整验收</b>。</p>
+  <p class="tbl-cap"><b>表 2-1</b>　技术选型。</p>
 
   <h2 class="sec"><span class="n">2.3</span>代码地图</h2>
   <table class="compact center">
@@ -57,7 +56,7 @@
       <tr><td><code>docs/ai-log/policies</code></td><td class="num">32</td><td class="num">—</td><td>每份政策一次抽取的完整请求 / 响应 / token 用量</td></tr>
     </tbody>
   </table>
-  <p class="tbl-cap"><b>表 2-2</b>　代码规模（<code>2026-10-27</code> 统计）。核心判定逻辑只有 375 行，但被 12 个测试用例单独覆盖。</p>
+  <p class="tbl-cap"><b>表 2-2</b>　代码规模（<code>2026-10-27</code> 统计）。</p>
 
   <h2 class="sec"><span class="n">2.4</span>两种部署形态：同一套引擎，两个宿主</h2>
   <p>纯函数引擎带来一个直接好处：<b>它不需要服务端也能跑</b>。前端在 <code>vite.config.ts</code> 里把 <code>@domain</code>
@@ -74,10 +73,10 @@
     </tbody>
   </table>
   <div class="box ok">
-    <div class="h"><span class="tag">设计取舍</span>为什么用「导出静态数据」而不是在浏览器里重新实现一遍逻辑</div>
-    <p>重写一遍意味着两份实现、两套 bug。这里的做法是把<b>同一份领域代码</b>搬进浏览器：<code>matcher.ts</code>、
+    <div class="h"><span class="tag">静态模式</span>导出静态数据，浏览器复用同一份领域代码</div>
+    <p>重写一遍会带来两份实现、两套 bug。这里把<b>同一份领域代码</b>搬进浏览器：<code>matcher.ts</code>、
     <code>radar.ts</code>、<code>calendar.ts</code> 都是无 Node 依赖的纯 TS，<code>@domain</code> 别名一行配置即可复用。
-    代价是静态构建要显式导出数据（<code>export-static-data.mjs</code>），换来的是「判定行为只有一份定义」。</p>
+    代价是静态构建要显式导出数据（<code>export-static-data.mjs</code>），收益是判定行为只有一份定义。</p>
   </div>
 
   <h2 class="sec"><span class="n">2.5</span>数据边界：什么数据存在哪里</h2>
@@ -93,16 +92,15 @@
       <tr><td>模型密钥</td><td><code>.env</code></td><td>❌（gitignore）</td><td>仅建库脚本读取，运行期代码不引用</td></tr>
     </tbody>
   </table>
-  <p class="tbl-cap"><b>表 2-3</b>　数据边界。判定涉及成绩排名、家庭经济状况等敏感信息，因此「填报内容不落盘」是硬约束，
-  由提交 <code>11f3a55</code> 显式实现并在 README 中向用户明示。</p>
+  <p class="tbl-cap"><b>表 2-3</b>　数据边界。填报内容不落盘，实现见提交 <code>11f3a55</code>。</p>
 </section>
 
 <!-- ==================== 第三章 ==================== -->
 <section class="chapter">
   <h1 class="ch"><span class="cn">03</span>核心流程与时序<span class="en">Flow & Sequence</span></h1>
 
-  <p class="lead">这一章回答三个问题：<b>一份政策是怎么变成可判定的 JSON 的</b>（建库时序）、
-  <b>一个用户点「开始判定」之后发生了什么</b>（判定时序）、<b>单条条件和一个条件组是怎么得出结论的</b>（状态机）。</p>
+  <p class="lead">本章依次说明三件事：政策如何变成可判定的 JSON、用户点击判定后发生了什么、
+    单条条件与条件组如何得出结论。</p>
 
   <h2 class="sec"><span class="n">3.1</span>建库链路：一份政策的完整生命周期</h2>
   <!--FIG:PIPELINE-->
@@ -118,7 +116,7 @@
       <tr><td><code>export-static-data.mjs</code></td><td class="num">94</td><td>导出 <code>index.json</code> / <code>radar.json</code> / <code>calendar.json</code> 供静态部署使用</td></tr>
     </tbody>
   </table>
-  <p class="tbl-cap"><b>表 3-1</b>　建库脚本。6 个脚本共 868 行，全部是一次性工具，不进入运行期依赖。</p>
+  <p class="tbl-cap"><b>表 3-1</b>　建库脚本。6 个脚本共 868 行，不进入运行期依赖。</p>
 
   <h2 class="sec"><span class="n">3.2</span>判定时序：从点下按钮到看见结论</h2>
   <!--FIG:EVAL-->
@@ -174,7 +172,7 @@
       </ol>
     </div>
     <div>
-      <h3 class="sub">申报日历：60 个节点按月份摊开</h3>
+      <h3 class="sub">申报日历：60 个节点按月份排列</h3>
       <p>原文里的时间表述是自然语言（「每年 10 月 31 日前」「6 月底」「入学后两周内」），
       <code>parseDeadlineText()</code> 把它们解析成可排序的结构：</p>
       <ol class="small" style="margin-bottom:0">
@@ -198,5 +196,5 @@
       <tr><td>深链直接访问</td><td>静态部署用 <code>404.html</code> 回退 + <code>BASE_URL</code> 子路径</td><td>解决历史模式路由在 GitHub Pages 刷新 404（提交 <code>5299987</code>）</td></tr>
     </tbody>
   </table>
-  <p class="tbl-cap"><b>表 3-2</b>　失败路径。核心原则：<b>宁可说「不知道」，也不要把不确定说成「不符合」。</b></p>
+  <p class="tbl-cap"><b>表 3-2</b>　失败路径。不确定的情况输出 unknown，不输出 fail。</p>
 </section>

@@ -2,14 +2,14 @@
 <section class="chapter">
   <h1 class="ch"><span class="cn">07</span>产品页面与视觉体系<span class="en">Product & UI</span></h1>
 
-  <p class="lead">这个项目要回答的问题是「我能不能申、还差什么、什么时候申」，所以界面结构不是按技术模块切，而是按<b>用户的一次完整决策过程</b>切：
-  先横向摸底，再纵向核对，最后落到材料与时间。</p>
+  <p class="lead">用户的核心问题是「我能不能申、还差什么、什么时候申」。界面结构据此组织：
+    先横向摸底，再纵向核对，最后落到材料与时间。</p>
 
   <h2 class="sec"><span class="n">7.1</span>信息架构：8 个路由</h2>
   <table class="compact">
     <thead><tr><th style="width:19%">路由</th><th style="width:16%">页面</th><th style="width:11%">代码行</th><th>核心职责</th></tr></thead>
     <tbody>
-      <tr><td><code>/</code></td><td>首页</td><td class="num">197</td><td>一句话说清产品、4 个数据统计、六步链路、三个入口（开始匹配 / 政策雷达 / 申报日历）</td></tr>
+      <tr><td><code>/</code></td><td>首页</td><td class="num">197</td><td>产品介绍、4 个数据统计、六步链路、三个入口（开始匹配 / 政策雷达 / 申报日历）</td></tr>
       <tr><td><code>/policies</code></td><td>政策库</td><td class="num">344</td><td>32 份政策卡片，14 个分类筛选 + 模糊搜索（含原文命中），每页 8 条分页</td></tr>
       <tr><td><code>/policies/:id</code></td><td>政策详情</td><td class="num">479</td><td>条件树、材料、时间节点、原文分段、同类推荐，一页读完不做判定</td></tr>
       <tr><td><code>/match/:id</code></td><td>判定页</td><td class="num">345</td><td>动态表单 + 逐条判定 + 结论卡 + 材料清单 + 时间节点 + 原文高亮</td></tr>
@@ -19,7 +19,7 @@
       <tr><td><code>/account</code></td><td>个人中心</td><td class="num">489</td><td>判定记录、填报进度、画像概览、本地数据清除（需登录）</td></tr>
     </tbody>
   </table>
-  <p class="tbl-cap"><b>表 7-1</b>　8 个路由。前 6 个无需登录即可完整使用——这是刻意设计：<b>把注册门槛放在用户已经获得价值之后</b>。</p>
+  <p class="tbl-cap"><b>表 7-1</b>　8 个路由。前 6 个无需登录即可使用。</p>
 
   <h2 class="sec"><span class="n">7.2</span>三条主线的页面配合</h2>
   <div class="three">
@@ -44,7 +44,7 @@
         段落按 <code>sections[]</code> 折叠，点击「在原文中查看」跳转到对应段落</td></tr>
     </tbody>
   </table>
-  <p class="tbl-cap"><b>表 7-2</b>　三个组件被 4 个页面复用。表单、结论、原文三块逻辑各自收敛在一处。</p>
+  <p class="tbl-cap"><b>表 7-2</b>　三个组件被 4 个页面复用。</p>
 
   <h2 class="sec"><span class="n">7.4</span>双主题：一套语义 token，两个色板</h2>
   <p>早期版本把颜色写死在组件里，改深色主题时要逐个页面改 <code>bg-white</code>/<code>text-slate-900</code>，漏改就会出现「深色页面里一块白卡」。
@@ -62,11 +62,10 @@
       <tr><td>状态色</td><td>pass 绿 / fail 红 / unknown 琥珀 / warn 橙</td><td>同语义，降低饱和度并提高亮度以适配深底</td></tr>
     </tbody>
   </table>
-  <p class="tbl-cap"><b>表 7-3</b>　两套色板共享同一套语义 token。主题偏好存在 <code>localStorage</code>，首屏由 <code>theme.ts</code>（52 行）在挂载前同步 <code>&lt;html class="dark"&gt;</code>，避免闪烁。</p>
+  <p class="tbl-cap"><b>表 7-3</b>　两套色板共享同一套语义 token。主题在首屏挂载前同步，避免闪烁。</p>
   <div class="box info">
-    <div class="h"><span class="tag">设计取舍</span>为什么保留两套主题，而不是只做一套</div>
-    <p>深色不是「好看」，而是这个产品的场景需要：这类用户常常在晚上、在手机上翻政策。深色主题同时是一次<b>工程约束的检验</b>——
-    只有当所有颜色都收敛到语义 token 时，才可能一键切换且不漏底色。事实上第一次做深色主题时，登录页的 tab 高亮用的还是裸颜色，
+    <div class="h"><span class="tag">主题</span>两套主题共用一套语义 token</div>
+    <p>深色的依据是使用场景：这类用户常在晚上、手机上翻政策。它同时检验了<b>工程约束</b>：只有所有颜色都收敛到语义 token，才可能一键切换且不漏底色。事实上第一次做深色主题时，登录页的 tab 高亮用的还是裸颜色，
     切到深色后立刻露白，这个缺陷记录在 10.2。</p>
   </div>
 
@@ -84,11 +83,10 @@
 <section class="chapter">
   <h1 class="ch"><span class="cn">08</span>质量保障与工程实践<span class="en">Quality & Engineering</span></h1>
 
-  <p class="lead">这个项目最怕的不是页面难看，而是<b>结论错了但看起来很对</b>。所以质量保障的重心不在 UI 测试，而在两个地方：
-  判定引擎的单元测试，以及「数据与原文是否对得上」的契约测试。</p>
+  <p class="lead">质量保障的重点是判定引擎的单元测试，以及「数据与原文是否对得上」的契约测试；UI 测试不在其中。</p>
 
   <h2 class="sec"><span class="n">8.1</span>测试分层：9 个文件 / 79 个用例</h2>
-  <p>测试用 Node 原生 test runner（<code>tsx --test</code>）运行，不引入 Jest/Vitest，启动快、无额外配置。9 个文件的分布刻意按「一个失败模式一个文件」组织：</p>
+  <p>测试用 Node 原生 test runner（<code>tsx --test</code>）运行，不引入 Jest/Vitest，启动快、无额外配置。9 个文件按「一个失败模式一个文件」组织：</p>
   <table class="compact">
     <thead><tr><th style="width:22%">测试文件</th><th class="num" style="width:8%">用例</th><th>它守的是什么</th></tr></thead>
     <tbody>
@@ -103,7 +101,7 @@
       <tr><td><code>store.test.ts</code></td><td class="num">8</td><td>用户数据读写：判定记录上限 20 条、进度按政策覆盖、并发写入不丢数据</td></tr>
     </tbody>
   </table>
-  <p class="tbl-cap"><b>表 8-1</b>　9 个测试文件共 79 个用例。断言以「行为」为主，例如「留空的硬性条件返回 unknown 而不是 fail」。</p>
+  <p class="tbl-cap"><b>表 8-1</b>　9 个测试文件共 79 个用例。断言示例：留空的硬性条件返回 unknown 而不是 fail。</p>
   <p>运行方式与耗时：<code>pnpm --filter server test</code>，全部 79 个用例在 1 秒内跑完，因此可以在每次提交前无负担执行。</p>
 
   <h2 class="sec"><span class="n">8.2</span>契约测试：把「AI 可能错」变成「结构必须对」</h2>
@@ -137,7 +135,7 @@
       <tr><td>6</td><td>同步 main</td><td><code>node tools/git-sync.mjs</code>：同上机制推 main，含网络抖动与 422 瞬态重试</td></tr>
     </tbody>
   </table>
-  <p class="tbl-cap"><b>表 8-2</b>　一次完整发布的 6 个步骤。任一步失败即中止，不会发布半成品。</p>
+  <p class="tbl-cap"><b>表 8-2</b>　一次完整发布的 6 个步骤。任一步失败即中止。</p>
   <p>两个 <code>tools/*.mjs</code> 的存在有特殊背景：本机 <code>git push</code> 与 <code>git fetch</code> 走网络经常被中断（详见第九章 9.6），
   最终改用 GitHub Git Data API 直接创建 commit 与 tree，再由本地精确重建 commit 对象对齐 SHA。这是被工程约束逼出来的方案，
   但也带来一个额外好处：<b>发布脚本可以精确控制「哪些文件进 gh-pages」</b>，不需要维护额外分支的工作区。</p>
