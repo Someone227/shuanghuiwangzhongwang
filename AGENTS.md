@@ -47,20 +47,13 @@ type：`feat` 新功能 / `fix` 修复 / `docs` 文档 / `style` 样式 / `refac
    - 只撤销某次提交：`git revert <commit>`
    - 找回被删的文件：`git checkout <commit> -- <path>`
 
-## 四、网络环境与同步方式（本机，2026-10-25 实测订正）
+## 四、网络环境与同步方式（本机，2026-10-27 实测订正）
 
-- `github.com` 直连**不可用**：TLS 握手被重置（`schannel: failed to receive handshake`），`git push` / `git fetch` 均失败
-- 本机 Clash Verge 代理（`127.0.0.1:7897`）的订阅节点（ermao.net / v2nodes 免费节点）访问海外同样失败：CONNECT 隧道能建立，但对端 TLS 无响应
-- `api.github.com` 直连**可用**（HTTP 200，约 0.5s）——这是当前唯一可靠通道
-- 因此同步到 GitHub **不使用** `git push`，改用：
-
-  ```bash
-  node tools/git-sync.mjs
-  ```
-
-  该脚本通过 GitHub Git Data API 上传文件、创建 commit、更新 `main` ref，并在本地重建**同 SHA** 的 commit 对象，效果与 `git push` 等价（提交历史、内容、message 完全一致）。前置条件：在 `main` 分支、工作区干净、本地领先远端 1 个 commit。
+- **常规同步直接用 `git push`**：2026-10-27 实测 `git push origin main` 成功（`6b13d6c..f65713a`），推完 `git ls-remote` 与本地一致。此前阶段性出现的 `github.com` TLS 握手失败是代理节点故障，不是长期状态
+- 推之前先确认网络：`git ls-remote origin main`（约 3 秒返回即通）；若超时，先检查 Clash Verge 的节点与规则，而不是改仓库协议
+- 代理失效期间曾改用 GitHub Contents / Git Data API（`tools/git-sync.mjs`）绕过 `github.com`，脚本保留可用作备用方案，但**不再是首选**：它要求工作区干净、本地领先远端、且会在本地重建同 SHA 提交对象
 - token 由 `git credential fill` 从 Windows 凭据管理器自动读取，不写入仓库
-- 禁用方案：ghproxy 等镜像仅支持读（`git ls-remote` 可用），不支持 push；且会触发 Git Credential Manager 弹窗索要第三方站点凭证，**不要填写**
+- 已知陷阱：`ghproxy` 等镜像只支持读（`git ls-remote` 可用）不支持 push，且会弹出 Git Credential Manager 索要第三方站点凭证，**不要填写**
 
 ## 五、AI 协同证据
 
