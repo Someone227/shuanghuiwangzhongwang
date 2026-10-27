@@ -59,7 +59,7 @@
   为什么一次修复要回头检查 32 份政策、为什么功能改坏了要选择回滚而不是硬着头皮改。这些选择都写在提交历史与本文档里。</p>
   <div class="box ok">
     <div class="h"><span class="tag">一句话总结</span>让 AI 只在最需要它的地方出现一次，然后让确定性的部分足够可靠。</div>
-    <p>32 份政策、339 条条件、79 个测试、64 个提交、0 次运行期模型调用——这组数字构成了这个项目的全部。</p>
+    <p>32 份政策、339 条条件、79 个测试、0 次运行期模型调用——这组数字构成了这个项目的骨架。</p>
   </div>
 </section>
 
@@ -120,21 +120,20 @@
   </table>
   <p class="tbl-cap"><b>表 B-1</b>　政策 JSON 顶层结构。完整类型定义见 <code>server/src/domain/types.ts</code>（241 行）。</p>
 
-  <h2 class="sec"><span class="n">C</span>提交统计</h2>
+  <h2 class="sec"><span class="n">C</span>提交规范</h2>
   <table class="compact center">
-    <thead><tr><th style="width:30%">类别</th><th class="num" style="width:16%">数量</th><th>主要分布</th></tr></thead>
+    <thead><tr><th style="width:20%">类型</th><th style="width:32%">什么时候用</th><th>本项目示例</th></tr></thead>
     <tbody>
-      <tr><td><code>feat</code> 新功能</td><td class="num">34</td><td>骨架、引擎、抽取、页面、雷达、日历、账号、部署</td></tr>
-      <tr><td><code>fix</code> 缺陷修复</td><td class="num">9</td><td>判定语义 4、数据与证据链 2、同步与构建 3</td></tr>
-      <tr><td><code>docs</code> 文档</td><td class="num">7</td><td>README、协作约定、部署说明、演示账号说明</td></tr>
-      <tr><td><code>style</code> 样式</td><td class="num">5</td><td>标题字号、入口按钮、状态文案、首页配色</td></tr>
-      <tr><td><code>test</code> 测试</td><td class="num">2</td><td>数据契约测试、原文清洗与偏移校验</td></tr>
-      <tr><td><code>refactor</code> 重构</td><td class="num">2</td><td>登录页单栏化、移除首页常见问题</td></tr>
-      <tr><td>其他</td><td class="num">5</td><td>初始化仓库、API 同步工具、GitHub 网页改 README ×2、回滚 ×1</td></tr>
-      <tr><td><b>合计</b></td><td class="num"><b>64</b></td><td>2026-10-24 ~ 10-27，4 天；平均每天 16 个提交</td></tr>
+      <tr><td><code>feat</code></td><td>新增一个可用的功能或页面</td><td>政策雷达、申报日历、政策详情页、账号体系</td></tr>
+      <tr><td><code>fix</code></td><td>修正已交付内容中的错误</td><td>判定语义、引文偏移、深链回退、同步重试</td></tr>
+      <tr><td><code>docs</code></td><td>只改说明与文档</td><td>README、协作约定、部署说明、演示账号说明</td></tr>
+      <tr><td><code>style</code></td><td>只改样式与文案，不动逻辑</td><td>标题字号、入口按钮、状态文案、首页配色</td></tr>
+      <tr><td><code>test</code></td><td>只加或改测试</td><td>数据契约测试、原文清洗与偏移校验</td></tr>
+      <tr><td><code>refactor</code></td><td>结构整理，行为不变</td><td>登录页单栏化、移除首页常见问题</td></tr>
+      <tr><td><code>chore</code></td><td>工具、依赖与仓库设置</td><td>同步工具、静态导出脚本、初始化仓库</td></tr>
     </tbody>
   </table>
-  <p class="tbl-cap"><b>表 C-1</b>　提交类型分布。完整历史见仓库 <code>git log --oneline</code>，关键节点均已打 tag。</p>
+  <p class="tbl-cap"><b>表 C-1</b>　提交类型规范。一次提交只做一件事，提交信息写清「改了什么 + 为什么 + 怎么验证」。</p>
 
   <h2 class="sec"><span class="n">D</span>复现与验证</h2>
   <pre><span class="c"># 1. 安装依赖（Node.js ≥ 20.19、pnpm ≥ 9）</span>
