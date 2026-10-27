@@ -533,9 +533,10 @@ watch(answers, saveDraft, { deep: true });
           <!-- 政策卡片 -->
           <div class="space-y-3">
             <article
-              v-for="item in filteredItems"
+              v-for="(item, index) in filteredItems"
               :key="item.policyId"
-              class="rounded-2xl border border-line bg-surface p-4 transition hover:border-line-2"
+              :style="{ '--i': Math.min(index, 8) }"
+              class="stagger-item rounded-2xl border border-line bg-surface p-4 transition hover:border-line-2"
             >
               <div class="flex flex-wrap items-start justify-between gap-3">
                 <div class="min-w-0">

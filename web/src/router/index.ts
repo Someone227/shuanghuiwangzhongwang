@@ -38,6 +38,22 @@ const router = createRouter({
   ],
 });
 
+/** 每个页面的标签页标题：浏览器标签、收藏夹、演示录屏里都看得见 */
+const PAGE_TITLES: Record<string, string> = {
+  home: '能申吗 · 政策资格匹配器',
+  policies: '政策库 · 能申吗',
+  'policy-detail': '政策详情 · 能申吗',
+  calendar: '申报日历 · 能申吗',
+  radar: '政策雷达 · 能申吗',
+  match: '逐条判定 · 能申吗',
+  login: '登录 · 能申吗',
+  account: '个人中心 · 能申吗',
+};
+
+router.afterEach((to) => {
+  document.title = PAGE_TITLES[String(to.name)] ?? '能申吗 · 政策资格匹配器';
+});
+
 /** 需要登录的页面：先确认登录态，失效则跳登录并记住来源地址 */
 router.beforeEach(async (to) => {
   // 在线演示版没有账号后端：登录页与个人中心直接回首页

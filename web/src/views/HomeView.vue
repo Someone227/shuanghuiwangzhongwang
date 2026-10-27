@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, ref } from 'vue';
+import { onMounted, ref, watch } from 'vue';
 import { RouterLink } from 'vue-router';
 
 import { listPolicies } from '@/lib/api';
@@ -33,6 +33,41 @@ const sceneTags = [
 type Totals = { policies: number; conditions: number; fields: number; materials: number };
 
 const totals = ref<Totals | null>(null);
+
+/** 首页统计数字：从 0 滚到目标值，给首屏一点分量 */
+const display = ref<Totals>({ policies: 0, conditions: 0, fields: 0, materials: 0 });
+
+function countUp(target: Totals, duration = 900): void {
+  // 系统开启「减少动效」时不做滚动，直接给出终值（无障碍，也让自动化截图拿到真实数字）
+  const reducedMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
+  if (reducedMotion || duration <= 0) {
+    display.value = { ...target };
+    return;
+  }
+  const from = { ...display.value };
+  const start = performance.now();
+  const step = (now: number): void => {
+    const t = Math.min(1, (now - start) / duration);
+    const e = 1 - Math.pow(1 - t, 3);
+    display.value = {
+      policies: Math.round(from.policies + (target.policies - from.policies) * e),
+      conditions: Math.round(from.conditions + (target.conditions - from.conditions) * e),
+      fields: Math.round(from.fields + (target.fields - from.fields) * e),
+      materials: Math.round(from.materials + (target.materials - from.materials) * e),
+    };
+    if (t < 1) requestAnimationFrame(step);
+  };
+  requestAnimationFrame(step);
+  // 兜底：标签页在后台、系统禁用动画或截图工具冻结 rAF 时，动画可能中途停下；
+  // 定时器保证无论如何都会落到真实值，页面不会停在半路。
+  window.setTimeout(() => {
+    display.value = { ...target };
+  }, duration + 150);
+}
+
+watch(totals, (t) => {
+  if (t) countUp(t);
+});
 
 onMounted(async () => {
   try {
@@ -108,7 +143,7 @@ const statItems = [
 
     <section v-if="totals" class="mt-12 grid grid-cols-2 gap-px overflow-hidden rounded-2xl border border-line bg-line sm:grid-cols-4">
       <div v-for="item in statItems" :key="item.key" class="bg-surface px-5 py-6">
-        <div class="font-mono text-3xl font-semibold tabular-nums text-ink">{{ totals[item.key] }}</div>
+        <div class="font-mono text-3xl font-semibold tabular-nums text-ink">{{ display[item.key] }}</div>
         <div class="mt-1 text-xs text-muted">{{ item.label }}</div>
       </div>
     </section>
@@ -128,9 +163,10 @@ const statItems = [
       <h2 class="text-sm font-semibold tracking-wider text-faint uppercase">六步走完一条链路</h2>
       <div class="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         <article
-          v-for="step in steps"
+          v-for="(step, index) in steps"
           :key="step.no"
-          class="rounded-2xl border border-line bg-surface p-5 transition hover:border-brand-300 hover:shadow-sm"
+          :style="{ '--i': index }"
+          class="stagger-item rounded-2xl border border-line bg-surface p-5 transition hover:border-brand-300 hover:shadow-sm"
         >
           <div class="flex items-baseline gap-3">
             <span class="font-mono text-xs font-semibold text-brand-500">{{ step.no }}</span>

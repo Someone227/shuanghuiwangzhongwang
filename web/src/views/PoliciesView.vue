@@ -225,9 +225,10 @@ onMounted(load);
 
       <div v-else class="mt-5 grid gap-4 sm:grid-cols-2">
         <article
-          v-for="policy in paged"
+          v-for="(policy, index) in paged"
           :key="policy.id"
-          class="group flex flex-col rounded-2xl border border-line bg-surface p-5 transition hover:border-brand-300 hover:shadow-sm"
+          :style="{ '--i': index }"
+          class="stagger-item group flex flex-col rounded-2xl border border-line bg-surface p-5 transition hover:border-brand-300 hover:shadow-sm"
         >
           <div class="flex flex-wrap items-center gap-2">
             <span

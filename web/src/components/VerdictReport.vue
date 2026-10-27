@@ -16,6 +16,15 @@ const emit = defineEmits<{
 const summary = computed(() => props.result.summary);
 const meta = computed(() => VERDICT_META[props.result.overall]);
 
+/** 结论印章的描边颜色跟着结论走 */
+const sealTone = computed(() => {
+  const v = props.result.overall;
+  if (v === 'pass') return 'text-emerald-700';
+  if (v === 'fail') return 'text-rose-700';
+  if (v === 'warn') return 'text-ink-2';
+  return 'text-amber-700';
+});
+
 /** 并列通道：满足任一条即可（老数据可能没有这个字段，兜底成空数组） */
 const channels = computed(() => props.result.channels ?? []);
 
@@ -65,9 +74,7 @@ function scrollTo(conditionId: string, docRef: string, quote: string): void {
           <p class="text-xs font-medium tracking-wider opacity-70">判定结论</p>
           <h2 class="mt-1 text-2xl font-bold">{{ overallTitle(result.overall) }}</h2>
         </div>
-        <span class="shrink-0 rounded-full border bg-surface/70 px-3 py-1 text-xs font-medium" :class="meta.badge">
-          {{ meta.label }}
-        </span>
+        <span class="verdict-seal shrink-0" :class="sealTone">{{ meta.label }}</span>
       </div>
       <p class="mt-3 text-sm leading-relaxed opacity-90">{{ result.headline }}</p>
 

@@ -107,14 +107,24 @@ onMounted(async () => {
 
           <RouterLink
             to="/radar"
-            class="hidden rounded-full border border-line bg-surface px-4 py-1.5 text-xs font-medium text-ink-2 transition hover:border-brand-300 hover:text-brand-700 sm:inline-flex"
+            class="hidden rounded-full border px-4 py-1.5 text-xs font-medium transition sm:inline-flex"
+            :class="
+              route.path.startsWith('/radar')
+                ? 'border-brand-300 bg-brand-50 text-brand-700'
+                : 'border-line bg-surface text-ink-2 hover:border-brand-300 hover:text-brand-700'
+            "
           >
             政策雷达
           </RouterLink>
 
           <RouterLink
             to="/calendar"
-            class="hidden rounded-full border border-line bg-surface px-4 py-1.5 text-xs font-medium text-ink-2 transition hover:border-brand-300 hover:text-brand-700 lg:inline-flex"
+            class="hidden rounded-full border px-4 py-1.5 text-xs font-medium transition lg:inline-flex"
+            :class="
+              route.path.startsWith('/calendar')
+                ? 'border-brand-300 bg-brand-50 text-brand-700'
+                : 'border-line bg-surface text-ink-2 hover:border-brand-300 hover:text-brand-700'
+            "
           >
             申报日历
           </RouterLink>
@@ -191,7 +201,11 @@ onMounted(async () => {
     </header>
 
     <main class="flex-1">
-      <RouterView />
+      <RouterView v-slot="{ Component, route: current }">
+        <Transition name="page" mode="out-in">
+          <component :is="Component" :key="current.path" />
+        </Transition>
+      </RouterView>
     </main>
 
     <footer class="border-t border-line bg-surface">
