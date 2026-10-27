@@ -236,7 +236,7 @@ async function fetchStatic<T>(path: string): Promise<T> {
 
 /** 政策列表（摘要） */
 export function listPolicies(): Promise<PolicySummary[]> {
-  if (isStaticMode) return fetchStatic<PolicySummary[]>('policies/index.json');
+  if (isStaticMode) return fetchStatic<PolicySummary[]>('policy-data/index.json');
   return request<PolicySummary[]>('/api/policies');
 }
 
@@ -245,7 +245,7 @@ export async function getPolicy(id: string): Promise<Policy> {
   if (isStaticMode) {
     const cached = policyCache.get(id);
     if (cached) return cached;
-    const policy = await fetchStatic<Policy>(`policies/${encodeURIComponent(id)}.json`);
+    const policy = await fetchStatic<Policy>(`policy-data/${encodeURIComponent(id)}.json`);
     policyCache.set(id, policy);
     return policy;
   }
@@ -261,13 +261,13 @@ export interface RadarData {
 
 /** 政策雷达数据：静态模式读导出好的 radar.json，服务端模式走 /api/radar */
 export function getRadarData(): Promise<RadarData> {
-  if (isStaticMode) return fetchStatic<RadarData>('policies/radar.json');
+  if (isStaticMode) return fetchStatic<RadarData>('policy-data/radar.json');
   return request<RadarData>('/api/radar');
 }
 
 /** 年度申报日历：把各政策的「时间节点」按月份聚合 */
 export function getCalendar(): Promise<CalendarData> {
-  if (isStaticMode) return fetchStatic<CalendarData>('policies/calendar.json');
+  if (isStaticMode) return fetchStatic<CalendarData>('policy-data/calendar.json');
   return request<CalendarData>('/api/calendar');
 }
 

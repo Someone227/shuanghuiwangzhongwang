@@ -1,11 +1,14 @@
 #!/usr/bin/env node
 /**
- * 导出静态数据：把 data/policies/*.json 复制到 web/public/policies/。
+ * 导出静态数据：把 data/policies/*.json 复制到 web/public/policy-data/。
+ *
+ * 目录名不用 policies，是为了避免和前端路由 /policies 撞车：静态站上请求 /policies
+ * 会命中同名目录，返回 JSON 而不是页面。
  *
  * 用途：纯静态托管（GitHub Pages）—— 判定引擎在前端浏览器里跑，不需要后端。
  * 生成物：
- *   web/public/policies/index.json   列表页摘要（不含原文，避免首页一次拉 1MB）
- *   web/public/policies/<id>.json    每份政策全量（原文 + 条件树 + 材料 + 时限）
+ *   web/public/policy-data/index.json   列表页摘要（不含原文，避免首页一次拉 1MB）
+ *   web/public/policy-data/<id>.json    每份政策全量（原文 + 条件树 + 材料 + 时限）
  *
  * 生成目录已被 .gitignore 忽略，构建前跑一次即可（CI 也是如此）。
  */
@@ -17,7 +20,7 @@ import { fileURLToPath } from 'node:url';
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = path.resolve(HERE, '..', '..');
 const SRC_DIR = path.join(REPO_ROOT, 'data', 'policies');
-const OUT_DIR = path.join(REPO_ROOT, 'web', 'public', 'policies');
+const OUT_DIR = path.join(REPO_ROOT, 'web', 'public', 'policy-data');
 
 const files = fs
   .readdirSync(SRC_DIR)
@@ -90,5 +93,5 @@ fs.writeFileSync(
 bytes += fs.statSync(radarOut).size;
 
 console.log(
-  `✓ 导出 ${policies.length} 份政策到 web/public/policies/（index.json + calendar.json + 每份全文，共 ${(bytes / 1024).toFixed(0)} KB）`,
+  `✓ 导出 ${policies.length} 份政策到 web/public/policy-data/（index.json + calendar.json + 每份全文，共 ${(bytes / 1024).toFixed(0)} KB）`,
 );

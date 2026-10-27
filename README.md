@@ -148,7 +148,7 @@ pnpm dev
 - 本地构建与预览：
 
 ```bash
-node server/scripts/export-static-data.mjs   # 导出政策 JSON 到 web/public/policies/
+node server/scripts/export-static-data.mjs   # 导出政策 JSON 到 web/public/policy-data/
 pnpm --filter web run build:pages            # 以 pages 模式构建（base=/shuanghuiwangzhongwang/）
 pnpm --filter web run preview:pages          # 本地预览
 ```

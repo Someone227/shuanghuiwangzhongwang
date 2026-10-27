@@ -15,7 +15,8 @@ dist/
 *.tsbuildinfo
 
 # 静态部署数据（由 server/scripts/export-static-data.mjs 从 data/policies 生成）
-web/public/policies/
+# 目录名避开 /policies 路由，否则静态站上该路径会命中同名目录
+web/public/policy-data/
 
 # Python
 __pycache__/
